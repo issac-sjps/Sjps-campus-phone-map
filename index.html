@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>新莊國小 Campus Phone &amp; Map</title>
+<style>
+  :root {
+    --primary: #1a5c8a;
+    --primary-light: #e8f2f9;
+    --primary-mid: #4a8db5;
+    --accent: #e07b39;
+    --accent-light: #fdf0e6;
+    --success: #2e7d52;
+    --success-light: #e8f5ee;
+    --bg: #f5f7fa;
+    --surface: #ffffff;
+    --border: #dde3ea;
+    --text: #1a2332;
+    --text-muted: #5a6a7e;
+    --text-light: #8a9ab0;
+    --shadow: 0 1px 4px rgba(0,0,0,0.08);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.10);
+    --radius: 8px;
+    --radius-lg: 14px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Noto Sans TC', -apple-system, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  /* ── Header ── */
+  header {
+    background: var(--primary);
+    color: #fff;
+    padding: 0 24px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+  .header-left { display: flex; align-items: center; gap: 12px; }
+  .school-name { font-size: 15px; font-weight: 600; letter-spacing: 0.02em; }
+  .year-badge {
+    background: rgba(255,255,255,0.18);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 20px;
+    padding: 3px 10px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s;
+    display: flex; align-items: center; gap: 4px;
+  }
+  .year-badge:hover { background: rgba(255,255,255,0.28); }
+  .header-right { display: flex; align-items: center; gap: 8px; }
+
+  /* Edit button */
+  #edit-btn {
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    border: 1.5px solid rgba(255,255,255,0.5);
+    background: transparent;
+    color: #fff;
+  }
+  #edit-btn:hover { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.8); }
+  #edit-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  #edit-btn svg { width: 14px; height: 14px; }
+
+  /* Edit status bar */
+  #edit-bar {
+    display: none;
+    background: var(--accent-light);
+    border-bottom: 1px solid #f0c090;
+    padding: 8px 24px;
+    font-size: 13px;
+    color: #b05010;
+    align-items: center;
+    gap: 8px;
+  }
+  #edit-bar.visible { display: flex; }
+  #edit-bar .save-btn {
+    margin-left: auto;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 5px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+    font-weight: 500;
+  }
+  #edit-bar .save-btn:hover { background: #c06028; }
+  #edit-bar .discard-btn {
+    background: transparent;
+    color: #b05010;
+    border: 1px solid #f0c090;
+    padding: 5px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+
+  /* ── Tabs ── */
+  .tabs {
+    display: flex;
+    gap: 0;
+    padding: 0 24px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+  }
+  .tab {
+    padding: 14px 20px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-bottom: 2.5px solid transparent;
+    transition: all 0.15s;
+    display: flex; align-items: center; gap: 6px;
+    user-select: none;
+  }
+  .tab:hover { color: var(--primary); }
+  .tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+  /* ── Main layout ── */
+  main { max-width: 1200px; margin: 0 auto; padding: 24px; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ── Phone tab ── */
+  .toolbar {
+    display: flex; gap: 10px; align-items: center;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .search-wrap { position: relative; flex: 1; min-width: 200px; }
+  .search-wrap svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-light); width: 16px; height: 16px; }
+  .search-input {
+    width: 100%; padding: 8px 12px 8px 34px;
+    border: 1px solid var(--border); border-radius: var(--radius);
+    font-size: 14px; background: var(--surface); color: var(--text);
+    outline: none; transition: border-color 0.15s;
+  }
+  .search-input:focus { border-color: var(--primary); }
+  .toolbar-btn {
+    display: flex; align-items: center; gap: 5px;
+    padding: 7px 14px; border-radius: var(--radius);
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    border: 1px solid var(--border); background: var(--surface);
+    color: var(--text-muted); transition: all 0.15s; white-space: nowrap;
+  }
+  .toolbar-btn:hover { border-color: var(--primary-mid); color: var(--primary); }
+  .toolbar-btn svg { width: 15px; height: 15px; }
+  .toolbar-btn.primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .toolbar-btn.primary:hover { background: #154d76; }
+
+  /* Phone table */
+  .phone-table-wrap { background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow); overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    background: var(--primary); color: #fff;
+    padding: 11px 14px; text-align: left;
+    font-size: 13px; font-weight: 500;
+  }
+  tbody tr { border-bottom: 1px solid var(--border); }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--primary-light); }
+  td { padding: 10px 14px; font-size: 14px; }
+  td.id-col { color: var(--text-light); font-size: 12px; width: 48px; }
+  td.ext-col { font-weight: 600; color: var(--primary); font-family: monospace; font-size: 15px; }
+  td.name-col .star { color: var(--accent); font-size: 11px; margin-right: 2px; }
+
+  /* Editable cells */
+  body.edit-mode td.editable {
+    cursor: pointer;
+    position: relative;
+  }
+  body.edit-mode td.editable:hover { background: #fff8e1; }
+  body.edit-mode td.editable:hover::after {
+    content: '✎';
+    position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+    font-size: 11px; color: var(--accent); opacity: 0.7;
+  }
+  .inline-edit {
+    width: 100%; border: 1.5px solid var(--accent); border-radius: 4px;
+    padding: 3px 6px; font-size: 14px; background: #fffdf8;
+    outline: none; font-family: inherit;
+  }
+
+  /* Category group header */
+  .cat-header td {
+    background: var(--primary-light);
+    color: var(--primary);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 6px 14px;
+    letter-spacing: 0.04em;
+  }
+
+  /* Add row button */
+  .add-row-btn {
+    display: none;
+    width: 100%; padding: 10px;
+    background: none; border: none;
+    color: var(--primary); font-size: 13px;
+    cursor: pointer; text-align: center;
+  }
+  body.edit-mode .add-row-btn { display: block; }
+  .add-row-btn:hover { background: var(--primary-light); }
+
+  /* Footer meta */
+  .meta-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-top: 12px; font-size: 12px; color: var(--text-light);
+    padding: 0 4px;
+  }
+
+  /* ── Map tab ── */
+  .map-controls { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+  .building-tabs { display: flex; gap: 4px; }
+  .btab {
+    padding: 7px 16px; border-radius: 20px;
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    border: 1.5px solid var(--border); background: var(--surface);
+    color: var(--text-muted); transition: all 0.15s;
+  }
+  .btab.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .btab:hover:not(.active) { border-color: var(--primary-mid); color: var(--primary); }
+
+  .building-map { background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow); padding: 20px; }
+  .building-title { font-size: 16px; font-weight: 600; color: var(--primary); margin-bottom: 16px; }
+  .floor-section { margin-bottom: 20px; }
+  .floor-label {
+    font-size: 12px; font-weight: 600; color: var(--text-muted);
+    letter-spacing: 0.06em; margin-bottom: 8px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .floor-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .rooms-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+  .room-card {
+    border: 1.5px solid var(--border); border-radius: 8px;
+    padding: 8px 12px; min-width: 110px; max-width: 160px;
+    background: var(--surface); cursor: default;
+    transition: all 0.15s; position: relative;
+  }
+  .room-card.has-class { border-left: 3px solid var(--primary); }
+  .room-card.has-office { border-left: 3px solid var(--accent); }
+  .room-card.has-special { border-left: 3px solid var(--success); }
+  .room-name { font-size: 13px; font-weight: 500; color: var(--text); line-height: 1.3; }
+  .room-code { font-size: 11px; color: var(--text-light); margin-top: 2px; }
+  .room-ext { font-size: 12px; font-weight: 600; color: var(--primary); margin-top: 3px; font-family: monospace; }
+
+  body.edit-mode .room-card { cursor: pointer; }
+  body.edit-mode .room-card:hover { border-color: var(--accent); background: #fffdf8; box-shadow: 0 2px 8px rgba(224,123,57,0.15); }
+
+  /* Room edit modal */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.4); z-index: 200;
+    align-items: center; justify-content: center;
+  }
+  .modal-overlay.visible { display: flex; }
+  .modal {
+    background: var(--surface); border-radius: var(--radius-lg);
+    padding: 24px; width: 340px; max-width: 90vw;
+    box-shadow: var(--shadow-md);
+  }
+  .modal h3 { font-size: 16px; margin-bottom: 16px; color: var(--primary); }
+  .form-group { margin-bottom: 14px; }
+  .form-group label { display: block; font-size: 12px; font-weight: 500; color: var(--text-muted); margin-bottom: 5px; }
+  .form-group input {
+    width: 100%; padding: 8px 10px;
+    border: 1px solid var(--border); border-radius: 6px;
+    font-size: 14px; outline: none; transition: border-color 0.15s;
+    font-family: inherit;
+  }
+  .form-group input:focus { border-color: var(--primary); }
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
+  .modal-actions button {
+    padding: 7px 18px; border-radius: 6px;
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    border: 1px solid var(--border);
+  }
+  .btn-save { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .btn-cancel { background: var(--surface); color: var(--text-muted); }
+
+  /* Year picker dropdown */
+  .year-dropdown {
+    display: none; position: absolute;
+    top: 52px; right: 24px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 8px;
+    box-shadow: var(--shadow-md); z-index: 150; min-width: 140px;
+  }
+  .year-dropdown.visible { display: block; }
+  .year-option {
+    padding: 8px 12px; border-radius: 6px; font-size: 14px;
+    cursor: pointer; transition: background 0.1s;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .year-option:hover { background: var(--primary-light); color: var(--primary); }
+  .year-option.active { font-weight: 600; color: var(--primary); }
+  .year-option .check { color: var(--primary); font-size: 12px; }
+  .year-new { border-top: 1px solid var(--border); margin-top: 4px; padding-top: 4px; }
+  .year-new .year-option { color: var(--text-muted); font-size: 13px; }
+
+  /* Last edited */
+  #last-edit-phone, #last-edit-map { font-size: 11px; color: var(--text-light); }
+
+  /* Print styles */
+  @media print {
+    header, .tabs, .toolbar, .edit-bar, .meta-bar, .modal-overlay { display: none !important; }
+    body { background: #fff; }
+    main { padding: 0; max-width: 100%; }
+    .phone-table-wrap { box-shadow: none; border: 1px solid #ccc; }
+    thead th { background: #1a5c8a !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .tab-panel { display: block !important; }
+    .tab-panel#panel-map { display: none !important; }
+  }
+
+  /* Responsive */
+  @media (max-width: 640px) {
+    main { padding: 12px; }
+    header { padding: 0 12px; }
+    .school-name { font-size: 13px; }
+    td { padding: 8px 10px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="school-name">新莊國小 Campus Phone &amp; Map</div>
+    <div class="year-badge" id="year-toggle" onclick="toggleYearPicker()">
+      <span id="current-year-label">114學年度</span>
+      <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    </div>
+  </div>
+  <div class="header-right">
+    <button id="edit-btn" onclick="toggleEdit()">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+        <path d="M11 2L14 5L6 13H3V10L11 2Z"/>
+      </svg>
+      <span id="edit-label">編輯</span>
+    </button>
+  </div>
+</header>
+
+<!-- Year picker dropdown -->
+<div class="year-dropdown" id="year-dropdown">
+  <div id="year-list"></div>
+  <div class="year-new">
+    <div class="year-option" onclick="newYear()">＋ 建立新學年</div>
+  </div>
+</div>
+
+<!-- Edit mode bar -->
+<div id="edit-bar">
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="6"/><path d="M8 5v3.5l2 1.5"/></svg>
+  編輯模式 — 點擊任意欄位修改，完成後記得儲存
+  <button class="discard-btn" onclick="discardEdit()">取消</button>
+  <button class="save-btn" onclick="saveAll()">💾 儲存</button>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('phone', this)">
+    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 2h3l1.5 3-2 1.5a9 9 0 003 3L10 8l3 1.5V13a1 1 0 01-1 1C5 14 1 10 1 4a1 1 0 011-1z"/></svg>
+    分機一覽
+  </div>
+  <div class="tab" onclick="switchTab('map', this)">
+    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="1" y="1" width="13" height="13" rx="1.5"/><path d="M1 5h13M5 5v9"/></svg>
+    場地配置
+  </div>
+</div>
+
+<main>
+  <!-- ── Phone Panel ── -->
+  <div class="tab-panel active" id="panel-phone">
+    <div class="toolbar">
+      <div class="search-wrap">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M10 10l3 3"/></svg>
+        <input class="search-input" type="text" placeholder="搜尋姓名、職稱或分機號碼…" id="phone-search" oninput="filterPhone()">
+      </div>
+      <button class="toolbar-btn" onclick="window.print()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="5" width="12" height="8" rx="1"/><path d="M5 5V2h6v3M5 12h6"/></svg>
+        列印
+      </button>
+      <button class="toolbar-btn" onclick="exportExcel()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M9 2H4a1 1 0 00-1 1v10a1 1 0 001 1h8a1 1 0 001-1V6L9 2z"/><path d="M9 2v4h4M6 9l4 4M10 9l-4 4"/></svg>
+        下載 Excel
+      </button>
+    </div>
+    <div class="phone-table-wrap">
+      <table id="phone-table">
+        <thead>
+          <tr>
+            <th style="width:48px">#</th>
+            <th>職　稱</th>
+            <th>姓　名</th>
+            <th>分機號碼</th>
+          </tr>
+        </thead>
+        <tbody id="phone-tbody"></tbody>
+      </table>
+      <button class="add-row-btn" onclick="addRow()">＋ 新增一筆</button>
+    </div>
+    <div class="meta-bar">
+      <span id="phone-count"></span>
+      <span id="last-edit-phone"></span>
+    </div>
+  </div>
+
+  <!-- ── Map Panel ── -->
+  <div class="tab-panel" id="panel-map">
+    <div class="map-controls">
+      <div class="building-tabs">
+        <div class="btab active" onclick="switchBuilding('A', this)">A棟</div>
+        <div class="btab" onclick="switchBuilding('B', this)">B棟（至美樓）</div>
+        <div class="btab" onclick="switchBuilding('F', this)">F棟（至誠樓）</div>
+      </div>
+      <button class="toolbar-btn" style="margin-left:auto" onclick="window.print()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="5" width="12" height="8" rx="1"/><path d="M5 5V2h6v3M5 12h6"/></svg>
+        列印
+      </button>
+    </div>
+    <div class="building-map" id="building-map"></div>
+    <div class="meta-bar">
+      <span></span>
+      <span id="last-edit-map"></span>
+    </div>
+  </div>
+</main>
+
+<!-- Room edit modal -->
+<div class="modal-overlay" id="room-modal">
+  <div class="modal">
+    <h3>編輯教室資訊</h3>
+    <div class="form-group">
+      <label>教室名稱</label>
+      <input type="text" id="modal-name" placeholder="例：一年01班">
+    </div>
+    <div class="form-group">
+      <label>房號</label>
+      <input type="text" id="modal-code" placeholder="例：A101">
+    </div>
+    <div class="form-group">
+      <label>分機號碼</label>
+      <input type="text" id="modal-ext" placeholder="例：213">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">取消</button>
+      <button class="btn-save" onclick="saveRoom()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Password modal -->
+<div class="modal-overlay" id="pw-modal">
+  <div class="modal" style="width:300px">
+    <h3>🔒 請輸入編輯密碼</h3>
+    <div class="form-group" style="margin-top:8px">
+      <input type="password" id="pw-input" placeholder="輸入密碼…"
+        onkeydown="if(event.key==='Enter')checkPassword()"
+        style="letter-spacing:0.1em">
+      <div id="pw-error" style="color:#c0392b;font-size:12px;margin-top:6px;display:none">密碼錯誤，請再試一次</div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closePwModal()">取消</button>
+      <button class="btn-save" onclick="checkPassword()">確認</button>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase + SheetJS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc, collection } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDK-YvxvjAee_VDUmcfK3O-3YhubMyKx-4",
+  authDomain: "sjps-campus-phone-map.firebaseapp.com",
+  projectId: "sjps-campus-phone-map",
+  storageBucket: "sjps-campus-phone-map.firebasestorage.app",
+  messagingSenderId: "796761997242",
+  appId: "1:796761997242:web:4d6aa9ad791b0ed9e16783",
+  measurementId: "G-E741WSKVPR"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+window._db = db;
+window._doc = doc;
+window._getDoc = getDoc;
+window._setDoc = setDoc;
+
+// Load data for current year
+async function loadYear(year) {
+  try {
+    const phoneRef = doc(db, 'extensions', String(year));
+    const mapRef = doc(db, 'rooms', String(year));
+    const [phoneSnap, mapSnap] = await Promise.all([getDoc(phoneRef), getDoc(mapRef)]);
+
+    if (phoneSnap.exists()) {
+      window.APP.phoneData = phoneSnap.data().staff || window.APP.defaultPhone;
+      window.APP.phoneLastEdit = phoneSnap.data().last_edited || '';
+    } else {
+      window.APP.phoneData = JSON.parse(JSON.stringify(window.APP.defaultPhone));
+    }
+    if (mapSnap.exists()) {
+      window.APP.mapData = mapSnap.data().buildings || window.APP.defaultMap;
+      window.APP.mapLastEdit = mapSnap.data().last_edited || '';
+    } else {
+      window.APP.mapData = JSON.parse(JSON.stringify(window.APP.defaultMap));
+    }
+  } catch(e) {
+    console.warn('Firebase load failed, using local data:', e);
+    window.APP.phoneData = JSON.parse(JSON.stringify(window.APP.defaultPhone));
+    window.APP.mapData = JSON.parse(JSON.stringify(window.APP.defaultMap));
+  }
+  window.renderPhone();
+  window.renderMap();
+}
+
+async function saveToFirebase(year) {
+  try {
+    const now = new Date().toLocaleString('zh-TW', {timeZone:'Asia/Taipei'});
+    await window._setDoc(window._doc(window._db, 'extensions', String(year)), {
+      staff: window.APP.phoneData,
+      last_edited: now
+    });
+    await window._setDoc(window._doc(window._db, 'rooms', String(year)), {
+      buildings: window.APP.mapData,
+      last_edited: now
+    });
+    window.APP.phoneLastEdit = now;
+    window.APP.mapLastEdit = now;
+    document.getElementById('last-edit-phone').textContent = '最後編輯：' + now;
+    document.getElementById('last-edit-map').textContent = '最後編輯：' + now;
+    return true;
+  } catch(e) {
+    alert('儲存失敗，請確認網路連線。\n' + e.message);
+    return false;
+  }
+}
+
+window._loadYear = loadYear;
+window._saveToFirebase = saveToFirebase;
+
+// Init
+window.APP.currentYear = 114;
+loadYear(114);
+</script>
+
+<script>
+// ─── App State ───────────────────────────────────────────
+window.APP = {
+  currentYear: 114,
+  years: [114],
+  editMode: false,
+  phoneData: [],
+  mapData: {},
+  phoneLastEdit: '',
+  mapLastEdit: '',
+  currentBuilding: 'A',
+  editingRoomKey: null,
+  pendingChanges: false,
+
+  // ── Default phone data (114學年度) ──
+  defaultPhone: [
+  {"id":"1","title":"校　　長","name":"劉瑞政","ext":"110"},
+  {"id":"2","title":"教務主任","name":"周佳蓉","ext":"111"},
+  {"id":"3","title":"學務主任","name":"高明惠","ext":"121"},
+  {"id":"4","title":"總務主任","name":"顏英全","ext":"131"},
+  {"id":"5","title":"輔導主任","name":"林春壬","ext":"141"},
+  {"id":"6","title":"會計主任","name":"李淑珠","ext":"161"},
+  {"id":"7","title":"人事主任","name":"黃文貞","ext":"151"},
+  {"id":"11","title":"組長教學","name":"吳季珊","ext":"120、115"},
+  {"id":"12","title":"組長研發","name":"包智淵","ext":"113、255"},
+  {"id":"13","title":"組長註冊","name":"沈鈺翔","ext":"112、116"},
+  {"id":"14","title":"組長資訊","name":"顏溢志","ext":"119、118"},
+  {"id":"15","title":"組長生教","name":"邱文美","ext":"122、251"},
+  {"id":"16","title":"組長訓育","name":"陳琇芳","ext":"125、255"},
+  {"id":"17","title":"組長衛生","name":"陳逸茜","ext":"125、251"},
+  {"id":"18","title":"組長體育","name":"潘惠貞","ext":"122"},
+  {"id":"19","title":"組長事務","name":"王畇蓁","ext":"137"},
+  {"id":"20","title":"組長文資","name":"謝佩珩","ext":"133、116"},
+  {"id":"21","title":"組長出納","name":"張云馨","ext":"134"},
+  {"id":"22","title":"組長輔導","name":"高美蕙","ext":"143、241"},
+  {"id":"23","title":"組長親職","name":"陳蒂勻","ext":"142、241"},
+  {"id":"24","title":"組長特教","name":"詹謹菁","ext":"143、321"},
+  {"id":"27","title":"一年級101","name":"朱薏雯","ext":"321"},
+  {"id":"28","title":"一年級102","name":"林淑芬","ext":"322"},
+  {"id":"29","title":"一年級103","name":"黃珮玲","ext":"323"},
+  {"id":"30","title":"一年級104","name":"陳廷程","ext":"324"},
+  {"id":"31","title":"一年級105","name":"★郭秋美","ext":"325"},
+  {"id":"32","title":"一年級106","name":"郭惠婷","ext":"314"},
+  {"id":"37","title":"二年級201","name":"★涂暄宜","ext":"213"},
+  {"id":"38","title":"二年級202","name":"周若涵","ext":"214"},
+  {"id":"39","title":"二年級203","name":"陸怡蒨","ext":"221"},
+  {"id":"40","title":"二年級204","name":"曾麗玲","ext":"222"},
+  {"id":"41","title":"二年級205","name":"郭乃菁","ext":"223"},
+  {"id":"42","title":"二年級206","name":"紀淑萍","ext":"224"},
+  {"id":"47","title":"三年級301","name":"林宗彥","ext":"821"},
+  {"id":"48","title":"三年級302","name":"陳依雯","ext":"822"},
+  {"id":"49","title":"三年級303","name":"★柯萍萍","ext":"823"},
+  {"id":"50","title":"三年級304","name":"李敏綾","ext":"824"},
+  {"id":"51","title":"三年級305","name":"洪淑文","ext":"831"},
+  {"id":"52","title":"三年級306","name":"凃曲文","ext":"832"},
+  {"id":"53","title":"三年級307","name":"馬英豪","ext":"833"},
+  {"id":"57","title":"四年級401","name":"郭佳鄞","ext":"225"},
+  {"id":"58","title":"四年級402","name":"吳淑妃","ext":"226"},
+  {"id":"59","title":"四年級403","name":"楊麗燕","ext":"234"},
+  {"id":"60","title":"四年級404","name":"林春慧","ext":"235"},
+  {"id":"61","title":"四年級405","name":"★高曰美","ext":"236"},
+  {"id":"62","title":"四年級406","name":"林千琪","ext":"243"},
+  {"id":"63","title":"四年級407","name":"許毓潔","ext":"244"},
+  {"id":"64","title":"四年級408","name":"葉淑綾","ext":"245"},
+  {"id":"65","title":"四年級409","name":"蕭婉如","ext":"246"},
+  {"id":"67","title":"五年級501","name":"洪子茵","ext":"331"},
+  {"id":"68","title":"五年級502","name":"邱妙芬","ext":"332"},
+  {"id":"69","title":"五年級503","name":"許秀美","ext":"333"},
+  {"id":"70","title":"五年級504","name":"許端容","ext":"334"},
+  {"id":"71","title":"五年級505","name":"梁素嬅","ext":"335"},
+  {"id":"72","title":"五年級506","name":"★邱薰葵","ext":"842"},
+  {"id":"73","title":"五年級507","name":"曾川榮","ext":"843"},
+  {"id":"74","title":"五年級508","name":"吳峙儫","ext":"844"},
+  {"id":"77","title":"六年級601","name":"蔡延秀","ext":"311"},
+  {"id":"78","title":"六年級602","name":"蘇威誌","ext":"312"},
+  {"id":"79","title":"六年級603","name":"李怡均","ext":"341"},
+  {"id":"80","title":"六年級604","name":"劉佳宜","ext":"342"},
+  {"id":"81","title":"六年級605","name":"白玲慈","ext":"343"},
+  {"id":"82","title":"六年級606","name":"★王新蕾","ext":"344"},
+  {"id":"83","title":"六年級607","name":"郭雅杏","ext":"345"},
+  {"id":"84","title":"六年級608","name":"吳金穎","ext":"315"},
+  {"id":"87","title":"科任教師藝文","name":"黃瑛琳","ext":"356"},
+  {"id":"88","title":"科任教師藝文","name":"柯秀頻","ext":"354"},
+  {"id":"89","title":"科任教師藝文","name":"吳佳縈","ext":"255"},
+  {"id":"90","title":"科任教師本土語","name":"黃冠熹","ext":"811、834"},
+  {"id":"91","title":"科任教師本土語","name":"蔡賜婷","ext":"811、326"},
+  {"id":"92","title":"科任教師英語","name":"林愛惠","ext":"811、346"},
+  {"id":"93","title":"科任教師英語","name":"齊安仁","ext":"811、336"},
+  {"id":"94","title":"科任教師健體","name":"黃立婷","ext":"122"},
+  {"id":"95","title":"科任教師健體","name":"林辰輿","ext":"122"},
+  {"id":"96","title":"科任教師自然","name":"李彥慧","ext":"351"},
+  {"id":"99","title":"代課教師英語1","name":"許淑鈴","ext":"114、532"},
+  {"id":"100","title":"代課教師英語2","name":"謝佳蓉","ext":"114、531"},
+  {"id":"101","title":"代課教師自然1","name":"林鴻志","ext":"253"},
+  {"id":"102","title":"代課教師自然2","name":"郭美夆","ext":"254"},
+  {"id":"103","title":"代課教師自然3","name":"陳曉蘋","ext":"351"},
+  {"id":"104","title":"代課教師自然4","name":"葉佳芬","ext":"353"},
+  {"id":"105","title":"代課教師健體1","name":"李京霏","ext":"114、533"},
+  {"id":"106","title":"代課教師健體2","name":"朱佳晉","ext":"114、115"},
+  {"id":"107","title":"代課教師社會1","name":"陳蓓瑤","ext":"114"},
+  {"id":"108","title":"代課教師社會2","name":"李姒蓉","ext":"114"},
+  {"id":"109","title":"代課教師藝文1","name":"王筱菡","ext":"354"},
+  {"id":"110","title":"代課教師社閱1","name":"黃善鈴","ext":"114、534"},
+  {"id":"113","title":"資優班三","name":"陳嘉雯","ext":"252"},
+  {"id":"114","title":"資優班四","name":"林瓊楓","ext":"140、522"},
+  {"id":"115","title":"資優班五","name":"楊青純","ext":"521"},
+  {"id":"116","title":"資優班六","name":"詹謹菁","ext":"143.233.523"},
+  {"id":"117","title":"資優班代課","name":"韓秉霖","ext":"233"},
+  {"id":"118","title":"資源班1","name":"洪惠娟","ext":"231"},
+  {"id":"119","title":"資源班2","name":"楊淑惠","ext":"232"},
+  {"id":"120","title":"資源班3","name":"黃琇每","ext":"232"},
+  {"id":"121","title":"資源班4","name":"伍啟良","ext":"233"},
+  {"id":"122","title":"資源班代理","name":"楊旻蒨","ext":"231"},
+  {"id":"123","title":"學前巡迴教師","name":"鄭婷尹","ext":"147"},
+  {"id":"124","title":"學前巡迴教師","name":"侯郁慧","ext":"147"},
+  {"id":"125","title":"學前巡迴代課","name":"葉凱琳","ext":"147"},
+  {"id":"126","title":"學前巡迴代課","name":"洪鳳琴","ext":"147"},
+  {"id":"127","title":"專任特教助理員","name":"潘筱茜","ext":"811"},
+  {"id":"128","title":"專任特教助理員","name":"林愛鳳","ext":"811"},
+  {"id":"129","title":"專任輔導","name":"盧姿菁","ext":"142"},
+  {"id":"130","title":"專任輔導","name":"林葶瑜","ext":"142"},
+  {"id":"134","title":"教支人員客家語","name":"張素珠","ext":"313"},
+  {"id":"135","title":"教支人員客家語","name":"鍾煥玲","ext":"313"},
+  {"id":"136","title":"教支人員閩南語","name":"孫鈴嬌","ext":"313"},
+  {"id":"137","title":"教支人員太魯閣","name":"高新景","ext":"313"},
+  {"id":"138","title":"教支人員阿美語","name":"林紜安","ext":"115"},
+  {"id":"139","title":"教支人員排灣語","name":"柳柳美","ext":"313"},
+  {"id":"140","title":"教支人員菲律賓","name":"蘇慧玲","ext":"313"},
+  {"id":"141","title":"教支人員越南語","name":"張永芬","ext":"313"},
+  {"id":"147","title":"幼兒園1","name":"陳沛緹","ext":"812"},
+  {"id":"148","title":"幼兒園2","name":"陳惠敏","ext":"813、814"},
+  {"id":"149","title":"幼兒園3","name":"陳慧瑜","ext":"813、814"},
+  {"id":"150","title":"幼兒園教保","name":"謝佩蓉","ext":"813、814"},
+  {"id":"153","title":"外籍教師","name":"Clint","ext":"811"},
+  {"id":"154","title":"人事助理","name":"孫靜如","ext":"152"},
+  {"id":"155","title":"護 理 師","name":"吳昭瑩","ext":"126"},
+  {"id":"156","title":"護 理 師","name":"蔡淑萍","ext":"123"},
+  {"id":"157","title":"營 養 師","name":"蘇慧如","ext":"128、127"},
+  {"id":"158","title":"幹　　事","name":"黃幸萍","ext":"132、117"},
+  {"id":"159","title":"幹　　事","name":"楊立凱","ext":"135"},
+  {"id":"160","title":"技　　工","name":"陳櫻水","ext":"130"},
+  {"id":"161","title":"技    工","name":"盧泰山","ext":"127"},
+  {"id":"162","title":"委    外","name":"顏雅惠","ext":"171、136"},
+  {"id":"163","title":"委    外","name":"吳建界","ext":"137"},
+  {"id":"164","title":"委    外","name":"楊文山","ext":"137"}
+  ],
+
+  // ── Default map data ──
+  defaultMap: {
+    "A": {
+      "1F": [
+        {"name":"靜思閱讀書軒","code":"A108","ext":"215","type":"special"},
+        {"name":"一年01班","code":"A106","ext":"213","type":"class"},
+        {"name":"一年02班","code":"A107","ext":"214","type":"class"},
+        {"name":"小川堂","code":"","ext":"","type":"special"},
+        {"name":"專科教室1","code":"A105","ext":"212","type":"special"},
+        {"name":"人事會計","code":"A104","ext":"151/152/161","type":"office"},
+        {"name":"總務處","code":"A103","ext":"131/132/133/134/135","type":"office"},
+        {"name":"學務處","code":"A102","ext":"121/122/125","type":"office"},
+        {"name":"健康中心","code":"A101","ext":"123/126","type":"office"}
+      ],
+      "2F": [
+        {"name":"一年03班","code":"A204","ext":"221","type":"class"},
+        {"name":"一年04班","code":"A205","ext":"222","type":"class"},
+        {"name":"一年05班","code":"A206","ext":"223","type":"class"},
+        {"name":"一年06班","code":"A207","ext":"224","type":"class"},
+        {"name":"專科教室2","code":"A208","ext":"225","type":"special"},
+        {"name":"三年01班","code":"A209","ext":"226","type":"class"},
+        {"name":"校長室","code":"A201","ext":"110/171","type":"office"},
+        {"name":"教務處","code":"A203","ext":"111/112/113/120","type":"office"}
+      ],
+      "3F": [
+        {"name":"資源班1","code":"A305","ext":"231","type":"special"},
+        {"name":"資源班2","code":"A306","ext":"232","type":"special"},
+        {"name":"三年02班","code":"A307","ext":"233","type":"class"},
+        {"name":"三年03班","code":"A308","ext":"234","type":"class"},
+        {"name":"三年04班","code":"A309","ext":"235","type":"class"},
+        {"name":"三年05班","code":"A310","ext":"236","type":"class"},
+        {"name":"校史室","code":"A301","ext":"173","type":"office"},
+        {"name":"輔導處","code":"A304","ext":"141/142/143","type":"office"},
+        {"name":"視聽教室","code":"A303","ext":"174","type":"special"}
+      ],
+      "4F": [
+        {"name":"資優班","code":"A407","ext":"242","type":"special"},
+        {"name":"e化教室5","code":"A406","ext":"241","type":"special"},
+        {"name":"三年06班","code":"A408","ext":"243","type":"class"},
+        {"name":"三年07班","code":"A409","ext":"244","type":"class"},
+        {"name":"三年08班","code":"A410","ext":"245","type":"class"},
+        {"name":"三年09班","code":"A411","ext":"246","type":"class"},
+        {"name":"家長會","code":"A401","ext":"139","type":"office"},
+        {"name":"圖書室","code":"A403","ext":"117","type":"special"},
+        {"name":"電腦教室1","code":"A404","ext":"118","type":"special"}
+      ],
+      "5F": [
+        {"name":"e化教室2","code":"A503","ext":"251","type":"special"},
+        {"name":"點子實驗室","code":"A504","ext":"252","type":"special"},
+        {"name":"e化教室3","code":"A505","ext":"253","type":"special"},
+        {"name":"e化教室4","code":"A506","ext":"254","type":"special"},
+        {"name":"專科教室3","code":"A507","ext":"255","type":"special"},
+        {"name":"活動中心","code":"A501","ext":"175","type":"special"}
+      ]
+    },
+    "B": {
+      "1F": [
+        {"name":"二年01班","code":"B101","ext":"311","type":"class"},
+        {"name":"二年02班","code":"B102","ext":"312","type":"class"},
+        {"name":"五年01班","code":"B103","ext":"313","type":"class"},
+        {"name":"五年02班","code":"B104","ext":"314","type":"class"},
+        {"name":"專科教室4","code":"B105","ext":"315","type":"special"},
+        {"name":"體育器材室","code":"B106","ext":"316","type":"special"},
+        {"name":"警衛室","code":"","ext":"130","type":"office"}
+      ],
+      "2F": [
+        {"name":"資源班3","code":"B201","ext":"321","type":"special"},
+        {"name":"二年03班","code":"B202","ext":"322","type":"class"},
+        {"name":"二年04班","code":"B203","ext":"323","type":"class"},
+        {"name":"二年05班","code":"B204","ext":"324","type":"class"},
+        {"name":"二年06班","code":"B205","ext":"325","type":"class"},
+        {"name":"二年07班","code":"B206","ext":"326","type":"class"}
+      ],
+      "3F": [
+        {"name":"六年01班","code":"B301","ext":"331","type":"class"},
+        {"name":"六年02班","code":"B302","ext":"332","type":"class"},
+        {"name":"六年03班","code":"B303","ext":"333","type":"class"},
+        {"name":"六年04班","code":"B304","ext":"334","type":"class"},
+        {"name":"六年05班","code":"B305","ext":"335","type":"class"},
+        {"name":"六年06班","code":"B306","ext":"336","type":"class"},
+        {"name":"廚房","code":"B107","ext":"128","type":"office"},
+        {"name":"幼兒園備餐室","code":"","ext":"129","type":"office"}
+      ],
+      "4F": [
+        {"name":"五年03班","code":"B401","ext":"341","type":"class"},
+        {"name":"五年04班","code":"B402","ext":"342","type":"class"},
+        {"name":"五年05班","code":"B403","ext":"343","type":"class"},
+        {"name":"五年06班","code":"B404","ext":"344","type":"class"},
+        {"name":"五年07班","code":"B405","ext":"345","type":"class"},
+        {"name":"五年08班","code":"B406","ext":"346","type":"class"}
+      ],
+      "5F": [
+        {"name":"自然教室1","code":"B501","ext":"351","type":"special"},
+        {"name":"準備室","code":"B502","ext":"352","type":"special"},
+        {"name":"自然教室2","code":"B503","ext":"353","type":"special"},
+        {"name":"音樂教室1","code":"B504","ext":"354","type":"special"},
+        {"name":"準備室","code":"B505","ext":"355","type":"special"},
+        {"name":"音樂教室2","code":"B506","ext":"356","type":"special"}
+      ]
+    },
+    "F": {
+      "1F": [
+        {"name":"教師備課室","code":"F101","ext":"811","type":"office"},
+        {"name":"附幼辦公室","code":"F102","ext":"812","type":"office"},
+        {"name":"幼稚班","code":"F103","ext":"813","type":"class"},
+        {"name":"幼稚班","code":"F104","ext":"814","type":"class"}
+      ],
+      "2F": [
+        {"name":"四年01班","code":"F201","ext":"821","type":"class"},
+        {"name":"四年02班","code":"F202","ext":"822","type":"class"},
+        {"name":"四年03班","code":"F203","ext":"823","type":"class"},
+        {"name":"四年04班","code":"F204","ext":"824","type":"class"}
+      ],
+      "3F": [
+        {"name":"四年05班","code":"F301","ext":"831","type":"class"},
+        {"name":"四年06班","code":"F302","ext":"832","type":"class"},
+        {"name":"四年07班","code":"F303","ext":"833","type":"class"},
+        {"name":"四年08班","code":"F304","ext":"834","type":"class"},
+        {"name":"學前特教巡迴班","code":"","ext":"147","type":"special"}
+      ],
+      "4F": [
+        {"name":"樂活教室","code":"F401","ext":"841","type":"special"},
+        {"name":"六年07班","code":"F402","ext":"842","type":"class"},
+        {"name":"六年08班","code":"F403","ext":"843","type":"class"},
+        {"name":"六年09班","code":"F404","ext":"844","type":"class"},
+        {"name":"學前特教巡迴班","code":"","ext":"147","type":"special"}
+      ]
+    }
+  }
+};
+
+// ─── Category mapping ─────────────────────────────────────
+const CAT_ORDER = [
+  { key: 'admin', label: '行政人員', match: t => ['校　　長','教務主任','學務主任','總務主任','輔導主任','會計主任','人事主任'].includes(t) },
+  { key: 'group', label: '各組組長', match: t => t.startsWith('組長') },
+  { key: 'g1', label: '一年級', match: t => t.startsWith('一年級') },
+  { key: 'g2', label: '二年級', match: t => t.startsWith('二年級') },
+  { key: 'g3', label: '三年級', match: t => t.startsWith('三年級') },
+  { key: 'g4', label: '四年級', match: t => t.startsWith('四年級') },
+  { key: 'g5', label: '五年級', match: t => t.startsWith('五年級') },
+  { key: 'g6', label: '六年級', match: t => t.startsWith('六年級') },
+  { key: 'sub', label: '科任／代課教師', match: t => t.startsWith('科任') || t.startsWith('代課') },
+  { key: 'sp', label: '特殊班級', match: t => t.startsWith('資優') || t.startsWith('資源') },
+  { key: 'kinder', label: '幼兒園', match: t => t.startsWith('幼兒') || t.startsWith('學前') },
+  { key: 'support', label: '支援人員', match: t => true }
+];
+
+function getCategory(title) {
+  for (const cat of CAT_ORDER) if (cat.match(title)) return cat;
+  return CAT_ORDER[CAT_ORDER.length - 1];
+}
+
+// ─── Phone render ─────────────────────────────────────────
+window.renderPhone = function(filter = '') {
+  const tbody = document.getElementById('phone-tbody');
+  const data = APP.phoneData;
+  const q = filter.trim().toLowerCase();
+  const filtered = q ? data.filter(r =>
+    r.name.toLowerCase().includes(q) ||
+    r.title.toLowerCase().includes(q) ||
+    r.ext.includes(q)
+  ) : data;
+
+  // Group by category
+  const groups = {};
+  filtered.forEach(r => {
+    const cat = getCategory(r.title);
+    if (!groups[cat.key]) groups[cat.key] = { label: cat.label, rows: [] };
+    groups[cat.key].rows.push(r);
+  });
+
+  let html = '';
+  CAT_ORDER.forEach(cat => {
+    if (!groups[cat.key] || !groups[cat.key].rows.length) return;
+    html += `<tr class="cat-header"><td colspan="4">${cat.label}</td></tr>`;
+    groups[cat.key].rows.forEach((r, i) => {
+      const displayName = r.name.startsWith('★') ?
+        `<span class="star">★</span>${r.name.slice(1)}` : r.name;
+      html += `<tr data-id="${r.id}">
+        <td class="id-col">${r.id}</td>
+        <td class="editable" onclick="editCell(this,'title')">${r.title}</td>
+        <td class="name-col editable" onclick="editCell(this,'name')">${displayName}</td>
+        <td class="ext-col editable" onclick="editCell(this,'ext')">${r.ext}</td>
+      </tr>`;
+    });
+  });
+
+  tbody.innerHTML = html;
+  const total = filtered.length;
+  document.getElementById('phone-count').textContent = `共 ${total} 筆${q ? '（篩選中）' : ''}`;
+  if (APP.phoneLastEdit) document.getElementById('last-edit-phone').textContent = '最後編輯：' + APP.phoneLastEdit;
+};
+
+window.filterPhone = function() {
+  renderPhone(document.getElementById('phone-search').value);
+};
+
+// ─── Inline cell edit ─────────────────────────────────────
+window.editCell = function(td, field) {
+  if (!APP.editMode) return;
+  if (td.querySelector('input')) return;
+  const row = td.closest('tr');
+  const id = row.dataset.id;
+  const record = APP.phoneData.find(r => String(r.id) === String(id));
+  if (!record) return;
+  const orig = record[field];
+  const val = field === 'name' && orig.startsWith('★') ? orig.slice(1) : orig;
+  td.innerHTML = `<input class="inline-edit" value="${val}" onblur="commitCell(this,'${id}','${field}')" onkeydown="if(event.key==='Enter')this.blur();if(event.key==='Escape'){this.value='${val}';this.blur();}">`;
+  td.querySelector('input').focus();
+  APP.pendingChanges = true;
+};
+
+window.commitCell = function(input, id, field) {
+  const record = APP.phoneData.find(r => String(r.id) === String(id));
+  if (record) record[field] = input.value.trim();
+  renderPhone(document.getElementById('phone-search').value);
+};
+
+window.addRow = function() {
+  const newId = String(Math.max(...APP.phoneData.map(r => parseInt(r.id) || 0)) + 1);
+  APP.phoneData.push({ id: newId, title: '新職稱', name: '姓名', ext: '000' });
+  APP.pendingChanges = true;
+  renderPhone();
+};
+
+// ─── Map render ───────────────────────────────────────────
+window.renderMap = function() {
+  const bdata = APP.mapData[APP.currentBuilding] || {};
+  const bnames = { A: 'A棟', B: 'B棟（至美樓）', F: 'F棟（至誠樓）' };
+  let html = `<div class="building-title">${bnames[APP.currentBuilding]}</div>`;
+
+  const floorOrder = ['5F','4F','3F','2F','1F'];
+  floorOrder.forEach(floor => {
+    const rooms = bdata[floor];
+    if (!rooms || !rooms.length) return;
+    html += `<div class="floor-section">
+      <div class="floor-label">${floor}</div>
+      <div class="rooms-grid">`;
+    rooms.forEach((room, idx) => {
+      const typeClass = room.type === 'class' ? 'has-class' : room.type === 'office' ? 'has-office' : 'has-special';
+      html += `<div class="room-card ${typeClass}" onclick="openRoomEdit('${APP.currentBuilding}','${floor}',${idx})">
+        <div class="room-name">${room.name}</div>
+        ${room.code ? `<div class="room-code">${room.code}</div>` : ''}
+        ${room.ext ? `<div class="room-ext">☎ ${room.ext}</div>` : ''}
+      </div>`;
+    });
+    html += `</div></div>`;
+  });
+
+  // Legend
+  html += `<div style="margin-top:20px;display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--text-muted)">
+    <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:var(--primary);display:inline-block"></span>班級教室</span>
+    <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:var(--accent);display:inline-block"></span>行政辦公室</span>
+    <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:var(--success);display:inline-block"></span>特殊/專科</span>
+  </div>`;
+
+  document.getElementById('building-map').innerHTML = html;
+  if (APP.mapLastEdit) document.getElementById('last-edit-map').textContent = '最後編輯：' + APP.mapLastEdit;
+};
+
+window.switchBuilding = function(b, el) {
+  APP.currentBuilding = b;
+  document.querySelectorAll('.btab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderMap();
+};
+
+// ─── Room modal ───────────────────────────────────────────
+window.openRoomEdit = function(building, floor, idx) {
+  if (!APP.editMode) return;
+  const room = APP.mapData[building][floor][idx];
+  APP.editingRoomKey = { building, floor, idx };
+  document.getElementById('modal-name').value = room.name;
+  document.getElementById('modal-code').value = room.code || '';
+  document.getElementById('modal-ext').value = room.ext || '';
+  document.getElementById('room-modal').classList.add('visible');
+};
+
+window.closeModal = function() {
+  document.getElementById('room-modal').classList.remove('visible');
+};
+
+window.saveRoom = function() {
+  const { building, floor, idx } = APP.editingRoomKey;
+  APP.mapData[building][floor][idx] = {
+    ...APP.mapData[building][floor][idx],
+    name: document.getElementById('modal-name').value.trim(),
+    code: document.getElementById('modal-code').value.trim(),
+    ext: document.getElementById('modal-ext').value.trim()
+  };
+  APP.pendingChanges = true;
+  closeModal();
+  renderMap();
+};
+
+// Close modal on overlay click
+document.getElementById('room-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+// ─── Edit mode ────────────────────────────────────────────
+const EDIT_PASSWORD = '073411373';
+
+window.toggleEdit = function() {
+  if (!APP.editMode) {
+    // Show password modal to enter edit mode
+    document.getElementById('pw-input').value = '';
+    document.getElementById('pw-error').style.display = 'none';
+    document.getElementById('pw-modal').classList.add('visible');
+    setTimeout(() => document.getElementById('pw-input').focus(), 100);
+  } else {
+    _exitEditMode();
+  }
+};
+
+function _enterEditMode() {
+  APP.editMode = true;
+  document.body.classList.add('edit-mode');
+  document.getElementById('edit-btn').classList.add('active');
+  document.getElementById('edit-label').textContent = '編輯中';
+  document.getElementById('edit-bar').classList.add('visible');
+}
+
+function _exitEditMode() {
+  APP.editMode = false;
+  document.body.classList.remove('edit-mode');
+  document.getElementById('edit-btn').classList.remove('active');
+  document.getElementById('edit-label').textContent = '編輯';
+  document.getElementById('edit-bar').classList.remove('visible');
+}
+
+window.checkPassword = function() {
+  const val = document.getElementById('pw-input').value;
+  if (val === EDIT_PASSWORD) {
+    document.getElementById('pw-modal').classList.remove('visible');
+    _enterEditMode();
+  } else {
+    const err = document.getElementById('pw-error');
+    err.style.display = 'block';
+    document.getElementById('pw-input').value = '';
+    document.getElementById('pw-input').focus();
+  }
+};
+
+window.closePwModal = function() {
+  document.getElementById('pw-modal').classList.remove('visible');
+};
+
+window.discardEdit = function() {
+  if (APP.pendingChanges && !confirm('確定要放棄所有未儲存的變更？')) return;
+  APP.pendingChanges = false;
+  _exitEditMode();
+  // Reload from Firebase
+  if (window._loadYear) window._loadYear(APP.currentYear);
+};
+
+window.saveAll = async function() {
+  const btn = document.querySelector('#edit-bar .save-btn');
+  btn.textContent = '儲存中…'; btn.disabled = true;
+  const ok = await window._saveToFirebase(APP.currentYear);
+  btn.textContent = '💾 儲存'; btn.disabled = false;
+  if (ok) {
+    APP.pendingChanges = false;
+    _exitEditMode();
+    showToast('✅ 已儲存');
+  }
+};
+
+function showToast(msg) {
+  let t = document.getElementById('toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'toast';
+    t.style = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1a2332;color:#fff;padding:10px 20px;border-radius:20px;font-size:14px;z-index:300;opacity:0;transition:opacity 0.3s';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.opacity = '1';
+  setTimeout(() => t.style.opacity = '0', 2500);
+}
+
+// ─── Tab switch ───────────────────────────────────────────
+window.switchTab = function(name, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('panel-' + name).classList.add('active');
+};
+
+// ─── Year picker ──────────────────────────────────────────
+window.toggleYearPicker = function() {
+  const dd = document.getElementById('year-dropdown');
+  dd.classList.toggle('visible');
+  if (dd.classList.contains('visible')) renderYearList();
+  document.addEventListener('click', closeYearPickerOutside, { once: true });
+};
+
+function closeYearPickerOutside(e) {
+  const dd = document.getElementById('year-dropdown');
+  const toggle = document.getElementById('year-toggle');
+  if (!dd.contains(e.target) && !toggle.contains(e.target)) dd.classList.remove('visible');
+}
+
+function renderYearList() {
+  const list = document.getElementById('year-list');
+  list.innerHTML = APP.years.map(y =>
+    `<div class="year-option ${y === APP.currentYear ? 'active' : ''}" onclick="selectYear(${y})">
+      ${y}學年度 ${y === APP.currentYear ? '<span class="check">✓</span>' : ''}
+    </div>`
+  ).join('');
+}
+
+window.selectYear = function(y) {
+  APP.currentYear = y;
+  document.getElementById('current-year-label').textContent = y + '學年度';
+  document.getElementById('year-dropdown').classList.remove('visible');
+  if (window._loadYear) window._loadYear(y);
+};
+
+window.newYear = function() {
+  const next = Math.max(...APP.years) + 1;
+  const confirm_ = confirm(`建立 ${next}學年度？\n將複製 ${APP.currentYear}學年度的資料做為起點。`);
+  if (!confirm_) return;
+  APP.years.push(next);
+  APP.currentYear = next;
+  document.getElementById('current-year-label').textContent = next + '學年度';
+  document.getElementById('year-dropdown').classList.remove('visible');
+  // Data already loaded in memory from current year — just save
+  if (window._saveToFirebase) window._saveToFirebase(next).then(() => showToast(`✅ ${next}學年度已建立`));
+};
+
+// ─── Export Excel ─────────────────────────────────────────
+window.exportExcel = function() {
+  if (typeof XLSX === 'undefined') { alert('Excel 套件載入中，請稍後再試'); return; }
+  const data = [['編號','職稱','姓名','分機號碼']];
+  APP.phoneData.forEach(r => data.push([r.id, r.title, r.name, r.ext]));
+  const ws = XLSX.utils.aoa_to_sheet(data);
+  ws['!cols'] = [{wch:6},{wch:16},{wch:10},{wch:14}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, `${APP.currentYear}學年度分機`);
+  XLSX.writeFile(wb, `新莊國小${APP.currentYear}學年度分機一覽表.xlsx`);
+};
+
+// ─── Init ─────────────────────────────────────────────────
+// Firebase module will call renderPhone + renderMap after loading
+// Fallback if Firebase not available yet
+setTimeout(() => {
+  if (!APP.phoneData.length) {
+    APP.phoneData = JSON.parse(JSON.stringify(APP.defaultPhone));
+    APP.mapData = JSON.parse(JSON.stringify(APP.defaultMap));
+    renderPhone();
+    renderMap();
+  }
+}, 1500);
+</script>
+</body>
+</html>
