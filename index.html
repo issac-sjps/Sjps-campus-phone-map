@@ -32,16 +32,19 @@
     background: var(--primary);
     color: #fff;
     padding: 0 24px;
-    height: 56px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
     position: sticky;
     top: 0;
     z-index: 100;
     box-shadow: 0 2px 8px rgba(0,0,0,0.15);
   }
-  .header-left { display: flex; align-items: center; gap: 12px; }
+  .header-top {
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .header-left { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
   .school-name { font-size: 15px; font-weight: 600; letter-spacing: 0.02em; }
   .year-badge {
     background: rgba(255,255,255,0.18);
@@ -53,11 +56,85 @@
     cursor: pointer;
     transition: background 0.15s;
     display: flex; align-items: center; gap: 4px;
+    flex-shrink: 0;
   }
   .year-badge:hover { background: rgba(255,255,255,0.28); }
-  .header-right { display: flex; align-items: center; gap: 8px; }
 
-  /* Edit button */
+  /* Search bar embedded in header */
+  .header-search {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    max-width: 680px;
+  }
+  .header-search-wrap { position: relative; flex: 1; }
+  .header-search-wrap svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: rgba(255,255,255,0.6); width: 14px; height: 14px; }
+  .header-search-input {
+    width: 100%; padding: 6px 12px 6px 32px;
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 20px;
+    font-size: 13px;
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+    outline: none;
+    transition: all 0.15s;
+  }
+  .header-search-input::placeholder { color: rgba(255,255,255,0.6); }
+  .header-search-input:focus { background: rgba(255,255,255,0.25); border-color: rgba(255,255,255,0.7); }
+  .header-search-btn {
+    display: flex; align-items: center; gap: 5px;
+    padding: 5px 12px;
+    border-radius: 16px;
+    font-size: 12px; font-weight: 500;
+    cursor: pointer;
+    border: 1px solid rgba(255,255,255,0.4);
+    background: rgba(255,255,255,0.12);
+    color: #fff;
+    transition: all 0.15s; white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .header-search-btn:hover { background: rgba(255,255,255,0.22); }
+  .header-search-btn svg { width: 13px; height: 13px; }
+
+  .header-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+  /* Tabs inside header */
+  .header-tabs {
+    display: flex;
+    align-items: flex-end;
+    gap: 0;
+    padding: 0 0;
+    border-top: 1px solid rgba(255,255,255,0.15);
+  }
+  .tab {
+    padding: 8px 18px;
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.65);
+    cursor: pointer;
+    border-bottom: 2.5px solid transparent;
+    transition: all 0.15s;
+    display: flex; align-items: center; gap: 6px;
+    user-select: none;
+  }
+  .tab:hover { color: #fff; }
+  .tab.active { color: #fff; border-bottom-color: #fff; }
+
+  /* Legend text in tab row */
+  .tab-legend {
+    margin-left: 12px;
+    font-size: 11px;
+    color: rgba(255,255,255,0.55);
+    display: flex; align-items: center; gap: 10px;
+    padding-bottom: 10px;
+    flex: 1;
+  }
+  .tab-legend span { display: flex; align-items: center; gap: 4px; }
+  .tab-legend .dot { width: 8px; height: 8px; border-radius: 2px; display: inline-block; flex-shrink: 0; }
+
+  /* Old .tabs class fallback (unused now) */
+  .tabs-unused { display: none; }
   #edit-btn {
     display: flex; align-items: center; gap: 6px;
     padding: 6px 14px;
@@ -108,30 +185,8 @@
     cursor: pointer;
   }
 
-  /* ── Tabs ── */
-  .tabs {
-    display: flex;
-    gap: 0;
-    padding: 0 24px;
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-  }
-  .tab {
-    padding: 14px 20px;
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--text-muted);
-    cursor: pointer;
-    border-bottom: 2.5px solid transparent;
-    transition: all 0.15s;
-    display: flex; align-items: center; gap: 6px;
-    user-select: none;
-  }
-  .tab:hover { color: var(--primary); }
-  .tab.active { color: var(--primary); border-bottom-color: var(--primary); }
-
-  /* ── Main layout ── */
-  main { max-width: 1200px; margin: 0 auto; padding: 24px; }
+  /* Edit button */
+  main { max-width: 100%; margin: 0; padding: 14px 16px; }
   .tab-panel { display: none; }
   .tab-panel.active { display: block; }
 
@@ -167,10 +222,10 @@
     background: var(--surface); border-radius: var(--radius-lg);
     box-shadow: var(--shadow); overflow: hidden;
   }
-  /* 3-column grid layout for phone table */
+  /* 4-column grid layout for phone table */
   .phone-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 0 1px;
     background: var(--border);
   }
@@ -380,7 +435,7 @@
     /* Split phone data into 3 columns */
     #phone-print-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
       gap: 0 4mm;
       width: 100%;
     }
@@ -454,20 +509,55 @@
 <body>
 
 <header>
-  <div class="header-left">
-    <div class="school-name">新莊國小 Campus Phone &amp; Map</div>
-    <div class="year-badge" id="year-toggle" onclick="toggleYearPicker()">
-      <span id="current-year-label">114學年度</span>
-      <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+  <div class="header-top">
+    <div class="header-left">
+      <div class="school-name">新莊國小 Campus Phone &amp; Map</div>
+      <div class="year-badge" id="year-toggle" onclick="toggleYearPicker()">
+        <span id="current-year-label">114學年度</span>
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </div>
+    </div>
+    <div class="header-search" id="header-search-area">
+      <div class="header-search-wrap">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M10 10l3 3"/></svg>
+        <input class="header-search-input" type="text" placeholder="搜尋姓名、職稱或分機號碼…" id="phone-search" oninput="filterPhone()">
+      </div>
+      <button class="header-search-btn" onclick="window.print()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="5" width="12" height="8" rx="1"/><path d="M5 5V2h6v3M5 12h6"/></svg>
+        列印
+      </button>
+      <button class="header-search-btn" onclick="exportExcel()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M9 2H4a1 1 0 00-1 1v10a1 1 0 001 1h8a1 1 0 001-1V6L9 2z"/><path d="M9 2v4h4M6 9l4 4M10 9l-4 4"/></svg>
+        下載 Excel
+      </button>
+    </div>
+    <div class="header-right">
+      <button id="edit-btn" onclick="toggleEdit()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+          <path d="M11 2L14 5L6 13H3V10L11 2Z"/>
+        </svg>
+        <span id="edit-label">編輯</span>
+      </button>
     </div>
   </div>
-  <div class="header-right">
-    <button id="edit-btn" onclick="toggleEdit()">
-      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
-        <path d="M11 2L14 5L6 13H3V10L11 2Z"/>
-      </svg>
-      <span id="edit-label">編輯</span>
-    </button>
+  <div class="header-tabs">
+    <div class="tab active" onclick="switchTab('phone', this)" id="tab-phone">
+      <svg width="13" height="13" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 2h3l1.5 3-2 1.5a9 9 0 003 3L10 8l3 1.5V13a1 1 0 01-1 1C5 14 1 10 1 4a1 1 0 011-1z"/></svg>
+      分機一覽
+    </div>
+    <div class="tab" onclick="switchTab('map', this)" id="tab-map">
+      <svg width="13" height="13" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="1" y="1" width="13" height="13" rx="1.5"/><path d="M1 5h13M5 5v9"/></svg>
+      場地配置
+    </div>
+    <div class="tab-legend" id="tab-legend-phone">
+      <span><span style="color:var(--accent);font-size:13px">★</span> 點擊 # 欄位標記／取消學年主任</span>
+    </div>
+    <div class="tab-legend" id="tab-legend-map" style="display:none">
+      <span><span class="dot" style="background:#1a5c8a"></span>班級教室</span>
+      <span><span class="dot" style="background:#e07b39"></span>行政辦公室</span>
+      <span><span class="dot" style="background:#2e7d52"></span>特殊／專科</span>
+      <span style="color:rgba(255,255,255,0.4)">編輯模式下點擊格子可修改</span>
+    </div>
   </div>
 </header>
 
@@ -487,44 +577,22 @@
   <button class="save-btn" onclick="saveAll()">💾 儲存</button>
 </div>
 
-<div class="tabs">
-  <div class="tab active" onclick="switchTab('phone', this)">
-    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 2h3l1.5 3-2 1.5a9 9 0 003 3L10 8l3 1.5V13a1 1 0 01-1 1C5 14 1 10 1 4a1 1 0 011-1z"/></svg>
-    分機一覽
-  </div>
-  <div class="tab" onclick="switchTab('map', this)">
-    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="1" y="1" width="13" height="13" rx="1.5"/><path d="M1 5h13M5 5v9"/></svg>
-    場地配置
-  </div>
-</div>
-
 <main>
   <!-- ── Phone Panel ── -->
   <div class="tab-panel active" id="panel-phone">
-    <div class="toolbar">
-      <div class="search-wrap">
-        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M10 10l3 3"/></svg>
-        <input class="search-input" type="text" placeholder="搜尋姓名、職稱或分機號碼…" id="phone-search" oninput="filterPhone()">
-      </div>
-      <button class="toolbar-btn" onclick="window.print()">
-        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="5" width="12" height="8" rx="1"/><path d="M5 5V2h6v3M5 12h6"/></svg>
-        列印
-      </button>
-      <button class="toolbar-btn" onclick="exportExcel()">
-        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M9 2H4a1 1 0 00-1 1v10a1 1 0 001 1h8a1 1 0 001-1V6L9 2z"/><path d="M9 2v4h4M6 9l4 4M10 9l-4 4"/></svg>
-        下載 Excel
-      </button>
-    </div>
     <div class="phone-table-wrap">
       <div class="phone-grid" id="phone-grid">
         <div class="phone-col" id="phone-col-0">
-          <table><thead><tr><th>#</th><th>職稱</th><th>姓名</th><th>分機</th></tr></thead><tbody id="phone-tbody-0"></tbody></table>
+          <table><thead><tr><th title="點擊切換★學年主任">#</th><th>職稱</th><th>姓名</th><th>分機</th></tr></thead><tbody id="phone-tbody-0"></tbody></table>
         </div>
         <div class="phone-col" id="phone-col-1">
-          <table><thead><tr><th>#</th><th>職稱</th><th>姓名</th><th>分機</th></tr></thead><tbody id="phone-tbody-1"></tbody></table>
+          <table><thead><tr><th title="點擊切換★學年主任">#</th><th>職稱</th><th>姓名</th><th>分機</th></tr></thead><tbody id="phone-tbody-1"></tbody></table>
         </div>
         <div class="phone-col" id="phone-col-2">
-          <table><thead><tr><th>#</th><th>職稱</th><th>姓名</th><th>分機</th></tr></thead><tbody id="phone-tbody-2"></tbody></table>
+          <table><thead><tr><th title="點擊切換★學年主任">#</th><th>職稱</th><th>姓名</th><th>分機</th></tr></thead><tbody id="phone-tbody-2"></tbody></table>
+        </div>
+        <div class="phone-col" id="phone-col-3">
+          <table><thead><tr><th title="點擊切換★學年主任">#</th><th>職稱</th><th>姓名</th><th>分機</th></tr></thead><tbody id="phone-tbody-3"></tbody></table>
         </div>
       </div>
       <button class="add-row-btn" onclick="addRow()">＋ 新增一筆（其他）</button>
@@ -1014,13 +1082,14 @@ window.renderPhone = function(filter = '') {
     groups[cat.key].rows.forEach(r => flat.push({ isCat: false, ...r }));
   });
 
-  // Distribute evenly across 3 columns
+  // Distribute evenly across 4 columns
   const total = flat.length;
-  const colSize = Math.ceil(total / 3);
+  const colSize = Math.ceil(total / 4);
   const cols = [
     flat.slice(0, colSize),
     flat.slice(colSize, colSize * 2),
-    flat.slice(colSize * 2)
+    flat.slice(colSize * 2, colSize * 3),
+    flat.slice(colSize * 3)
   ];
 
   function rowHtml(item) {
@@ -1032,10 +1101,12 @@ window.renderPhone = function(filter = '') {
         </td>
       </tr>`;
     }
-    const displayName = item.name.startsWith('★') ?
+    const isStar = item.name.startsWith('★');
+    const displayName = isStar ?
       `<span class="star">★</span>${item.name.slice(1)}` : item.name;
+    const idCellStyle = isStar ? 'style="cursor:pointer;color:var(--accent);font-weight:700" title="點擊取消學年主任"' : 'style="cursor:pointer" title="點擊標記為學年主任"';
     return `<tr data-id="${item.id}">
-      <td class="id-col">${item.id}</td>
+      <td class="id-col" onclick="toggleStar('${item.id}')" ${idCellStyle}>${isStar ? '★' : item.id}</td>
       <td class="editable" onclick="editCell(this,'title')">${item.title}</td>
       <td class="name-col editable" onclick="editCell(this,'name')">${displayName}</td>
       <td class="ext-col editable" onclick="editCell(this,'ext')">${item.ext}</td>
@@ -1043,7 +1114,8 @@ window.renderPhone = function(filter = '') {
   }
 
   cols.forEach((col, i) => {
-    document.getElementById(`phone-tbody-${i}`).innerHTML = col.map(rowHtml).join('');
+    const el = document.getElementById(`phone-tbody-${i}`);
+    if (el) el.innerHTML = col.map(rowHtml).join('');
   });
 
   const total2 = filtered.length;
@@ -1052,6 +1124,18 @@ window.renderPhone = function(filter = '') {
 };
 
 window.filterPhone = function() {
+  renderPhone(document.getElementById('phone-search').value);
+};
+
+window.toggleStar = function(id) {
+  const record = APP.phoneData.find(r => String(r.id) === String(id));
+  if (!record) return;
+  if (record.name.startsWith('★')) {
+    record.name = record.name.slice(1);
+  } else {
+    record.name = '★' + record.name;
+  }
+  APP.pendingChanges = true;
   renderPhone(document.getElementById('phone-search').value);
 };
 
@@ -1175,10 +1259,10 @@ function buildPhonePrint() {
     g.rows.forEach(r => allRows.push({ isCat: false, ...r }));
   });
 
-  // Split into 3 columns as evenly as possible
+  // Split into 4 columns as evenly as possible
   const total = allRows.length;
-  const colSize = Math.ceil(total / 3);
-  const cols = [allRows.slice(0, colSize), allRows.slice(colSize, colSize * 2), allRows.slice(colSize * 2)];
+  const colSize = Math.ceil(total / 4);
+  const cols = [allRows.slice(0, colSize), allRows.slice(colSize, colSize * 2), allRows.slice(colSize * 2, colSize * 3), allRows.slice(colSize * 3)];
 
   function colHtml(rows) {
     if (!rows.length) return '';
@@ -1205,6 +1289,7 @@ function buildPhonePrint() {
       <div>${colHtml(cols[0])}</div>
       <div>${colHtml(cols[1])}</div>
       <div>${colHtml(cols[2])}</div>
+      <div>${colHtml(cols[3])}</div>
     </div>`;
 }
 
@@ -1384,6 +1469,14 @@ window.switchTab = function(name, el) {
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
   el.classList.add('active');
   document.getElementById('panel-' + name).classList.add('active');
+  // Toggle search area (only on phone tab)
+  const searchArea = document.getElementById('header-search-area');
+  if (searchArea) searchArea.style.display = name === 'phone' ? 'flex' : 'none';
+  // Toggle legend
+  const legendPhone = document.getElementById('tab-legend-phone');
+  const legendMap = document.getElementById('tab-legend-map');
+  if (legendPhone) legendPhone.style.display = name === 'phone' ? 'flex' : 'none';
+  if (legendMap) legendMap.style.display = name === 'map' ? 'flex' : 'none';
 };
 
 // ─── Year picker ──────────────────────────────────────────
