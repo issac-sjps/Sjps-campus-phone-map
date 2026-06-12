@@ -204,6 +204,20 @@
     padding: 6px 14px;
     letter-spacing: 0.04em;
   }
+  .cat-add-btn {
+    display: none;
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-size: 11px;
+    cursor: pointer;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  body.edit-mode .cat-add-btn { display: inline-block; }
+  body.edit-mode .cat-add-btn:hover { background: #154d76; }
 
   /* Add row button */
   .add-row-btn {
@@ -235,31 +249,42 @@
   .btab.active { background: var(--primary); color: #fff; border-color: var(--primary); }
   .btab:hover:not(.active) { border-color: var(--primary-mid); color: var(--primary); }
 
-  .building-map { background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow); padding: 20px; }
-  .building-title { font-size: 16px; font-weight: 600; color: var(--primary); margin-bottom: 16px; }
-  .floor-section { margin-bottom: 20px; }
+  .building-map { background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow); padding: 16px; }
+  .building-title { font-size: 15px; font-weight: 600; color: var(--primary); margin-bottom: 12px; }
+  .floor-section { margin-bottom: 12px; }
   .floor-label {
-    font-size: 12px; font-weight: 600; color: var(--text-muted);
-    letter-spacing: 0.06em; margin-bottom: 8px;
+    font-size: 11px; font-weight: 600; color: var(--text-muted);
+    letter-spacing: 0.06em; margin-bottom: 6px;
     display: flex; align-items: center; gap: 6px;
   }
   .floor-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
-  .rooms-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+  .rooms-grid { display: flex; flex-wrap: wrap; gap: 4px; }
   .room-card {
-    border: 1.5px solid var(--border); border-radius: 8px;
-    padding: 8px 12px; min-width: 110px; max-width: 160px;
+    border: 1.5px solid var(--border); border-radius: 6px;
+    padding: 5px 8px; min-width: 88px; max-width: 130px;
     background: var(--surface); cursor: default;
     transition: all 0.15s; position: relative;
   }
   .room-card.has-class { border-left: 3px solid var(--primary); }
   .room-card.has-office { border-left: 3px solid var(--accent); }
   .room-card.has-special { border-left: 3px solid var(--success); }
-  .room-name { font-size: 13px; font-weight: 500; color: var(--text); line-height: 1.3; }
-  .room-code { font-size: 11px; color: var(--text-light); margin-top: 2px; }
-  .room-ext { font-size: 12px; font-weight: 600; color: var(--primary); margin-top: 3px; font-family: monospace; }
+  .room-name { font-size: 11px; font-weight: 500; color: var(--text); line-height: 1.3; }
+  .room-code { font-size: 10px; color: var(--text-light); margin-top: 1px; }
+  .room-ext { font-size: 11px; font-weight: 600; color: var(--primary); margin-top: 2px; font-family: monospace; }
 
   body.edit-mode .room-card { cursor: pointer; }
   body.edit-mode .room-card:hover { border-color: var(--accent); background: #fffdf8; box-shadow: 0 2px 8px rgba(224,123,57,0.15); }
+
+  /* Add room button (edit mode) */
+  .add-room-btn {
+    display: none;
+    border: 1.5px dashed var(--border); border-radius: 6px;
+    padding: 5px 8px; min-width: 72px;
+    background: none; color: var(--text-light);
+    font-size: 11px; cursor: pointer; transition: all 0.15s;
+  }
+  body.edit-mode .add-room-btn { display: flex; align-items: center; justify-content: center; gap: 3px; }
+  body.edit-mode .add-room-btn:hover { border-color: var(--accent); color: var(--accent); background: #fffdf8; }
 
   /* Room edit modal */
   .modal-overlay {
@@ -537,6 +562,14 @@
     <div class="form-group">
       <label>分機號碼</label>
       <input type="text" id="modal-ext" placeholder="例：213">
+    </div>
+    <div class="form-group">
+      <label>類型</label>
+      <select id="modal-type" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:14px;outline:none;font-family:inherit;background:var(--surface)">
+        <option value="class">班級教室</option>
+        <option value="office">行政辦公室</option>
+        <option value="special">特殊／專科</option>
+      </select>
     </div>
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeModal()">取消</button>
@@ -964,7 +997,12 @@ window.renderPhone = function(filter = '') {
   let html = '';
   CAT_ORDER.forEach(cat => {
     if (!groups[cat.key] || !groups[cat.key].rows.length) return;
-    html += `<tr class="cat-header"><td colspan="4">${cat.label}</td></tr>`;
+    html += `<tr class="cat-header">
+      <td colspan="3">${cat.label}</td>
+      <td style="text-align:right;padding-right:10px">
+        <button class="cat-add-btn" onclick="addRowInCat('${cat.key}')" title="在此分類新增一筆">＋ 新增</button>
+      </td>
+    </tr>`;
     groups[cat.key].rows.forEach((r, i) => {
       const displayName = r.name.startsWith('★') ?
         `<span class="star">★</span>${r.name.slice(1)}` : r.name;
@@ -1015,6 +1053,32 @@ window.addRow = function() {
   renderPhone();
 };
 
+window.addRowInCat = function(catKey) {
+  if (!APP.editMode) return;
+  // Find the last row of this category to insert after it
+  const cat = CAT_ORDER.find(c => c.key === catKey);
+  if (!cat) return;
+  // Find insertion index: after last matching item
+  let insertAfter = -1;
+  APP.phoneData.forEach((r, i) => { if (cat.match(r.title)) insertAfter = i; });
+  const newId = String(Math.max(...APP.phoneData.map(r => parseInt(r.id) || 0)) + 1);
+  // Use the category's typical title as default
+  const defaultTitle = APP.phoneData.find(r => cat.match(r.title))?.title || cat.label;
+  const newRow = { id: newId, title: defaultTitle, name: '姓名', ext: '000' };
+  if (insertAfter >= 0) {
+    APP.phoneData.splice(insertAfter + 1, 0, newRow);
+  } else {
+    APP.phoneData.push(newRow);
+  }
+  APP.pendingChanges = true;
+  renderPhone();
+  // Focus on the new row's name cell after render
+  setTimeout(() => {
+    const row = document.querySelector(`tr[data-id="${newId}"] td.name-col`);
+    if (row) row.click();
+  }, 50);
+};
+
 // ─── Map render ───────────────────────────────────────────
 window.renderMap = function() {
   const bdata = APP.mapData[APP.currentBuilding] || {};
@@ -1036,6 +1100,7 @@ window.renderMap = function() {
         ${room.ext ? `<div class="room-ext">☎ ${room.ext}</div>` : ''}
       </div>`;
     });
+    html += `<button class="add-room-btn" onclick="addRoom('${APP.currentBuilding}','${floor}')">＋</button>`;
     html += `</div></div>`;
   });
 
@@ -1163,6 +1228,7 @@ window.openRoomEdit = function(building, floor, idx) {
   document.getElementById('modal-name').value = room.name;
   document.getElementById('modal-code').value = room.code || '';
   document.getElementById('modal-ext').value = room.ext || '';
+  document.getElementById('modal-type').value = room.type || 'special';
   document.getElementById('room-modal').classList.add('visible');
 };
 
@@ -1176,11 +1242,24 @@ window.saveRoom = function() {
     ...APP.mapData[building][floor][idx],
     name: document.getElementById('modal-name').value.trim(),
     code: document.getElementById('modal-code').value.trim(),
-    ext: document.getElementById('modal-ext').value.trim()
+    ext: document.getElementById('modal-ext').value.trim(),
+    type: document.getElementById('modal-type').value
   };
   APP.pendingChanges = true;
   closeModal();
   renderMap();
+};
+
+window.addRoom = function(building, floor) {
+  if (!APP.editMode) return;
+  APP.editingRoomKey = { building, floor, idx: APP.mapData[building][floor].length };
+  APP.mapData[building][floor].push({ name: '新教室', code: '', ext: '', type: 'special' });
+  document.getElementById('modal-name').value = '';
+  document.getElementById('modal-code').value = '';
+  document.getElementById('modal-ext').value = '';
+  document.getElementById('room-modal').classList.add('visible');
+  setTimeout(() => document.getElementById('modal-name').focus(), 100);
+  APP.pendingChanges = true;
 };
 
 // Close modal on overlay click
