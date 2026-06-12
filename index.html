@@ -336,7 +336,50 @@
     border-radius: 5px; padding: 4px 8px;
     text-align: center; letter-spacing: 0.06em;
     margin-bottom: 2px;
+    display: flex; align-items: center; justify-content: space-between; gap: 4px;
   }
+
+  /* Delete room button */
+  .room-del-btn {
+    display: none;
+    position: absolute; top: 2px; right: 3px;
+    background: none; border: none;
+    color: #c0392b; font-size: 10px; cursor: pointer;
+    padding: 1px 3px; border-radius: 3px; line-height: 1;
+  }
+  body.edit-mode .room-del-btn { display: block; }
+  .room-del-btn:hover { background: #fde8e8; }
+
+  /* Delete floor button */
+  .del-floor-btn {
+    display: none;
+    background: none; border: none;
+    color: #c0392b; font-size: 11px; cursor: pointer;
+    padding: 1px 4px; border-radius: 3px; opacity: 0.7;
+  }
+  body.edit-mode .del-floor-btn { display: inline-block; }
+  .del-floor-btn:hover { opacity: 1; background: #fde8e8; }
+
+  /* Add floor button */
+  .add-floor-btn {
+    display: none;
+    margin-left: 10px;
+    background: var(--primary-light); color: var(--primary);
+    border: 1px solid var(--primary-mid); border-radius: 5px;
+    font-size: 11px; font-weight: 500; cursor: pointer;
+    padding: 3px 10px;
+  }
+  body.edit-mode .add-floor-btn { display: inline-block; }
+  .add-floor-btn:hover { background: var(--primary); color: #fff; }
+
+  /* Floor label actions */
+  .floor-actions { display: flex; align-items: center; gap: 4px; margin-left: 8px; }
+
+  /* Drag styles */
+  .room-card { position: relative; }
+  body.edit-mode .room-card { cursor: grab; }
+  body.edit-mode .room-card:active { cursor: grabbing; }
+  .room-card.drag-over { border-color: var(--accent) !important; background: #fffdf8 !important; }
   .building-title { font-size: 15px; font-weight: 600; color: var(--primary); margin-bottom: 12px; }
   .floor-section { margin-bottom: 12px; }
   .floor-label {
@@ -629,13 +672,15 @@
   <div class="tab-panel" id="panel-map">
     <div class="map-layout">
       <div class="map-sidebar">
-        <div class="btab active" onclick="switchBuilding('A', this)">新莊樓</div>
+        <div class="btab active" onclick="switchBuilding('F', this)">至誠樓</div>
         <div class="btab" onclick="switchBuilding('B', this)">至美樓</div>
-        <div class="btab" onclick="switchBuilding('F', this)">至誠樓</div>
         <div class="btab" onclick="switchBuilding('C', this)">至善樓</div>
-        <div class="btab disabled">至真樓<br><span style="font-size:10px;opacity:0.7">暫不開放</span></div>
+        <div class="btab" onclick="switchBuilding('Z', this)">至真樓</div>
+        <hr style="border:none;border-top:1px solid var(--border);margin:4px 0">
+        <div class="btab" onclick="switchBuilding('A', this)">新莊樓</div>
+        <div class="btab" onclick="switchBuilding('X', this)">其他</div>
         <div style="margin-top:8px;border-top:1px solid var(--border);padding-top:8px;">
-          <button class="toolbar-btn" style="width:100%;justify-content:center" onclick="window.print()">
+          <button class="toolbar-btn" style="width:100%;justify-content:center;font-size:12px" onclick="window.print()">
             <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="5" width="12" height="8" rx="1"/><path d="M5 5V2h6v3M5 12h6"/></svg>
             列印
           </button>
@@ -793,7 +838,7 @@ window.APP = {
   mapData: {},
   phoneLastEdit: '',
   mapLastEdit: '',
-  currentBuilding: 'A',
+  currentBuilding: 'F',
   editingRoomKey: null,
   pendingChanges: false,
 
@@ -1120,6 +1165,14 @@ window.APP = {
         {"name":"教室","code":"C402","ext":"541","type":"class"},
         {"name":"資優班","code":"C401","ext":"545","type":"special"}
       ]
+    },
+    "X": {
+      "其他": [
+        {"name":"廚房","code":"B107","ext":"128","type":"office"},
+        {"name":"幼兒園備餐室","code":"","ext":"129","type":"office"},
+        {"name":"警衛室","code":"","ext":"130","type":"office"},
+        {"name":"川　堂","code":"","ext":"","type":"special"}
+      ]
     }
   }
 };
@@ -1286,49 +1339,66 @@ window.addRowInCat = function(catKey) {
 };
 
 // ─── Map render ───────────────────────────────────────────
+const BNAMES = { A: '新莊樓', B: '至美樓', F: '至誠樓', C: '至善樓', Z: '至真樓', X: '其他' };
+// Default floor order per building (bottom to top display = reversed)
+const FLOOR_ORDER_DISPLAY = ['5F','4F','3F','2F','1F','B1','其他'];
+
 window.renderMap = function() {
-  const bdata = APP.mapData[APP.currentBuilding] || {};
-  const bnames = { A: '新莊樓', B: '至美樓', F: '至誠樓', C: '至善樓', Z: '至真樓（暫不開放）' };
-  const bname = bnames[APP.currentBuilding];
-  const isRotated = APP.currentBuilding === 'A'; // 新莊樓 rotated: floors as columns
+  const b = APP.currentBuilding;
+  const bdata = APP.mapData[b] || {};
+  if (!APP.mapData[b]) APP.mapData[b] = {};
+  const isRotated = b === 'A';
+
+  // Get all floors that exist, sorted by display order (or alphabetically for custom ones)
+  const knownOrder = ['5F','4F','3F','2F','1F','B1','其他'];
+  const existingFloors = Object.keys(bdata);
+  const sortedFloors = [
+    ...knownOrder.filter(f => existingFloors.includes(f)),
+    ...existingFloors.filter(f => !knownOrder.includes(f)).sort().reverse()
+  ];
 
   function roomCardHtml(room, floor, idx) {
     const typeClass = room.type === 'class' ? 'has-class' : room.type === 'office' ? 'has-office' : 'has-special';
-    return `<div class="room-card ${typeClass}" onclick="openRoomEdit('${APP.currentBuilding}','${floor}',${idx})">
-      <div class="room-name">${room.name}</div>
+    const dragAttrs = `draggable="true" ondragstart="dragStart(event,'${b}','${floor}',${idx})" ondragover="dragOver(event)" ondrop="dropRoom(event,'${b}','${floor}',${idx})" ondragend="dragEnd(event)"`;
+    return `<div class="room-card ${typeClass}" ${dragAttrs} onclick="openRoomEdit('${b}','${floor}',${idx})">
+      <div class="room-name">${room.name || '（未命名）'}</div>
       ${room.code ? `<div class="room-code">${room.code}</div>` : ''}
       ${room.ext ? `<div class="room-ext">☎ ${room.ext}</div>` : ''}
+      <button class="room-del-btn" onclick="deleteRoom(event,'${b}','${floor}',${idx})" title="刪除">✕</button>
     </div>`;
   }
 
-  let html = `<div class="building-title">${bname}</div>`;
+  function floorSectionHtml(floor, rooms) {
+    const addBtn = `<button class="add-room-btn" onclick="addRoom('${b}','${floor}')">＋ 新增</button>`;
+    const delFloorBtn = `<button class="del-floor-btn" onclick="deleteFloor('${b}','${floor}')" title="刪除此樓層">🗑</button>`;
+    if (isRotated) {
+      return `<div class="rotated-col" ondragover="dragOver(event)" ondrop="dropRoom(event,'${b}','${floor}',999)">
+        <div class="rotated-floor-label">${floor} ${delFloorBtn}</div>
+        ${rooms.map((r,i) => roomCardHtml(r, floor, i)).join('')}
+        ${addBtn}
+      </div>`;
+    }
+    return `<div class="floor-section" ondragover="dragOver(event)" ondrop="dropRoom(event,'${b}','${floor}',999)">
+      <div class="floor-label">${floor}
+        <span class="floor-actions">${addBtn} ${delFloorBtn}</span>
+      </div>
+      <div class="rooms-grid">${rooms.map((r,i) => roomCardHtml(r,floor,i)).join('')}</div>
+    </div>`;
+  }
+
+  let html = `<div class="building-title">${BNAMES[b]}
+    <button class="add-floor-btn" onclick="addFloor('${b}')">＋ 新增樓層</button>
+  </div>`;
 
   if (isRotated) {
-    // Rotated: each floor = a column, floors go left (B1) to right (5F)
-    const floorOrder = ['B1','1F','2F','3F','4F','5F'];
-    const activeFloors = floorOrder.filter(f => bdata[f] && bdata[f].length);
     html += `<div class="rotated-map">`;
-    activeFloors.forEach(floor => {
-      const rooms = bdata[floor];
-      html += `<div class="rotated-col">
-        <div class="rotated-floor-label">${floor}</div>`;
-      rooms.forEach((room, idx) => { html += roomCardHtml(room, floor, idx); });
-      html += `<button class="add-room-btn" onclick="addRoom('${APP.currentBuilding}','${floor}')">＋</button>`;
-      html += `</div>`;
+    sortedFloors.slice().reverse().forEach(floor => {
+      html += floorSectionHtml(floor, bdata[floor] || []);
     });
     html += `</div>`;
   } else {
-    // Normal: each floor = a row (5F top, 1F bottom)
-    const floorOrder = ['5F','4F','3F','2F','1F','B1'];
-    floorOrder.forEach(floor => {
-      const rooms = bdata[floor];
-      if (!rooms || !rooms.length) return;
-      html += `<div class="floor-section">
-        <div class="floor-label">${floor}</div>
-        <div class="rooms-grid">`;
-      rooms.forEach((room, idx) => { html += roomCardHtml(room, floor, idx); });
-      html += `<button class="add-room-btn" onclick="addRoom('${APP.currentBuilding}','${floor}')">＋</button>`;
-      html += `</div></div>`;
+    sortedFloors.forEach(floor => {
+      html += floorSectionHtml(floor, bdata[floor] || []);
     });
   }
 
@@ -1338,8 +1408,85 @@ window.renderMap = function() {
 
 window.switchBuilding = function(b, el) {
   APP.currentBuilding = b;
+  if (!APP.mapData[b]) APP.mapData[b] = {};
   document.querySelectorAll('.btab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
+  renderMap();
+};
+
+// ─── Add floor ────────────────────────────────────────────
+window.addFloor = function(b) {
+  if (!APP.editMode) return;
+  const name = prompt('新樓層名稱（例：6F、地下室、屋頂）：');
+  if (!name || !name.trim()) return;
+  const key = name.trim();
+  if (APP.mapData[b][key]) { alert('此樓層已存在'); return; }
+  APP.mapData[b][key] = [];
+  APP.pendingChanges = true;
+  renderMap();
+};
+
+// ─── Delete floor ─────────────────────────────────────────
+window.deleteFloor = function(b, floor) {
+  if (!APP.editMode) return;
+  const rooms = APP.mapData[b][floor] || [];
+  if (rooms.length > 0 && !confirm(`確定刪除「${floor}」及其 ${rooms.length} 間教室？`)) return;
+  delete APP.mapData[b][floor];
+  APP.pendingChanges = true;
+  renderMap();
+};
+
+// ─── Delete room ──────────────────────────────────────────
+window.deleteRoom = function(e, b, floor, idx) {
+  e.stopPropagation();
+  if (!APP.editMode) return;
+  const room = APP.mapData[b][floor][idx];
+  if (!confirm(`確定刪除「${room.name || '此教室'}」？`)) return;
+  APP.mapData[b][floor].splice(idx, 1);
+  APP.pendingChanges = true;
+  renderMap();
+};
+
+// ─── Drag and drop ────────────────────────────────────────
+APP._drag = null;
+
+window.dragStart = function(e, b, floor, idx) {
+  if (!APP.editMode) { e.preventDefault(); return; }
+  APP._drag = { b, floor, idx };
+  e.dataTransfer.effectAllowed = 'move';
+  e.currentTarget.style.opacity = '0.4';
+};
+window.dragEnd = function(e) {
+  e.currentTarget.style.opacity = '';
+};
+window.dragOver = function(e) {
+  if (!APP.editMode || !APP._drag) return;
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+};
+window.dropRoom = function(e, targetB, targetFloor, targetIdx) {
+  e.preventDefault();
+  e.stopPropagation();
+  if (!APP._drag) return;
+  const { b: srcB, floor: srcFloor, idx: srcIdx } = APP._drag;
+  APP._drag = null;
+  if (srcB === targetB && srcFloor === targetFloor && srcIdx === targetIdx) return;
+
+  // Remove from source
+  const room = APP.mapData[srcB][srcFloor].splice(srcIdx, 1)[0];
+  if (!APP.mapData[targetB][targetFloor]) APP.mapData[targetB][targetFloor] = [];
+
+  // Insert at target position
+  let insertAt = targetIdx;
+  // If same floor, adjust for removal
+  if (srcB === targetB && srcFloor === targetFloor && srcIdx < targetIdx) insertAt--;
+  if (insertAt < 0) insertAt = 0;
+  if (insertAt >= APP.mapData[targetB][targetFloor].length) {
+    APP.mapData[targetB][targetFloor].push(room);
+  } else {
+    APP.mapData[targetB][targetFloor].splice(insertAt, 0, room);
+  }
+  APP.pendingChanges = true;
   renderMap();
 };
 
@@ -1404,11 +1551,11 @@ function buildPhonePrint() {
 function buildMapPrint() {
   const year = APP.currentYear;
   const lastEdit = APP.mapLastEdit || '';
-  const bnames = { A: '新莊樓', B: '至美樓', F: '至誠樓', C: '至善樓', Z: '至真樓（暫不開放）' };
-  const floorOrder = ['5F','4F','3F','2F','1F'];
+  const bnames = { A: '新莊樓', B: '至美樓', F: '至誠樓', C: '至善樓', Z: '至真樓', X: '其他' };
+  const floorOrder = ['5F','4F','3F','2F','1F','B1','其他'];
   let html = '';
 
-  ['A','B','F','C'].forEach((bkey, bi) => {
+  ['F','B','C','Z','A','X'].forEach((bkey, bi) => {
     const bdata = APP.mapData[bkey] || {};
     html += `<div class="map-print-page">
       <div class="map-print-title">新莊國小 ${year}學年度 場地配置圖 — ${bnames[bkey]}</div>`;
@@ -1461,13 +1608,18 @@ window.closeModal = function() {
 
 window.saveRoom = function() {
   const { building, floor, idx } = APP.editingRoomKey;
-  APP.mapData[building][floor][idx] = {
-    ...APP.mapData[building][floor][idx],
+  const roomData = {
     name: document.getElementById('modal-name').value.trim(),
     code: document.getElementById('modal-code').value.trim(),
     ext: document.getElementById('modal-ext').value.trim(),
     type: document.getElementById('modal-type').value
   };
+  if (!APP.mapData[building][floor]) APP.mapData[building][floor] = [];
+  if (idx === -1) {
+    APP.mapData[building][floor].push(roomData);
+  } else {
+    APP.mapData[building][floor][idx] = { ...APP.mapData[building][floor][idx], ...roomData };
+  }
   APP.pendingChanges = true;
   closeModal();
   renderMap();
@@ -1475,14 +1627,14 @@ window.saveRoom = function() {
 
 window.addRoom = function(building, floor) {
   if (!APP.editMode) return;
-  APP.editingRoomKey = { building, floor, idx: APP.mapData[building][floor].length };
-  APP.mapData[building][floor].push({ name: '新教室', code: '', ext: '', type: 'special' });
+  // Open modal; room is created on save
+  APP.editingRoomKey = { building, floor, idx: -1 }; // -1 = new room
   document.getElementById('modal-name').value = '';
   document.getElementById('modal-code').value = '';
   document.getElementById('modal-ext').value = '';
+  document.getElementById('modal-type').value = 'special';
   document.getElementById('room-modal').classList.add('visible');
   setTimeout(() => document.getElementById('modal-name').focus(), 100);
-  APP.pendingChanges = true;
 };
 
 // Close modal on overlay click
