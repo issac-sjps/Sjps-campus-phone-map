@@ -163,35 +163,48 @@
   .toolbar-btn.primary:hover { background: #154d76; }
 
   /* Phone table */
-  .phone-table-wrap { background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow); overflow: hidden; }
+  .phone-table-wrap {
+    background: var(--surface); border-radius: var(--radius-lg);
+    box-shadow: var(--shadow); overflow: hidden;
+  }
+  /* 3-column grid layout for phone table */
+  .phone-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0 1px;
+    background: var(--border);
+  }
+  .phone-col {
+    background: var(--surface);
+    overflow: hidden;
+  }
+  .phone-col:first-child { border-radius: var(--radius-lg) 0 0 var(--radius-lg); }
+  .phone-col:last-child  { border-radius: 0 var(--radius-lg) var(--radius-lg) 0; }
   table { width: 100%; border-collapse: collapse; }
   thead th {
     background: var(--primary); color: #fff;
-    padding: 11px 14px; text-align: left;
-    font-size: 13px; font-weight: 500;
+    padding: 7px 8px; text-align: left;
+    font-size: 11px; font-weight: 600;
   }
-  tbody tr { border-bottom: 1px solid var(--border); }
+  tbody tr { border-bottom: 1px solid #edf0f4; }
   tbody tr:last-child { border-bottom: none; }
   tbody tr:hover { background: var(--primary-light); }
-  td { padding: 10px 14px; font-size: 14px; }
-  td.id-col { color: var(--text-light); font-size: 12px; width: 48px; }
-  td.ext-col { font-weight: 600; color: var(--primary); font-family: monospace; font-size: 15px; }
-  td.name-col .star { color: var(--accent); font-size: 11px; margin-right: 2px; }
+  td { padding: 4px 8px; font-size: 12px; }
+  td.id-col { color: var(--text-light); font-size: 10px; width: 28px; }
+  td.ext-col { font-weight: 700; color: var(--primary); font-family: monospace; font-size: 12px; white-space: nowrap; }
+  td.name-col .star { color: var(--accent); font-size: 10px; margin-right: 1px; }
 
   /* Editable cells */
-  body.edit-mode td.editable {
-    cursor: pointer;
-    position: relative;
-  }
+  body.edit-mode td.editable { cursor: pointer; position: relative; }
   body.edit-mode td.editable:hover { background: #fff8e1; }
   body.edit-mode td.editable:hover::after {
     content: '✎';
-    position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
-    font-size: 11px; color: var(--accent); opacity: 0.7;
+    position: absolute; right: 4px; top: 50%; transform: translateY(-50%);
+    font-size: 10px; color: var(--accent); opacity: 0.7;
   }
   .inline-edit {
-    width: 100%; border: 1.5px solid var(--accent); border-radius: 4px;
-    padding: 3px 6px; font-size: 14px; background: #fffdf8;
+    width: 100%; border: 1.5px solid var(--accent); border-radius: 3px;
+    padding: 2px 4px; font-size: 12px; background: #fffdf8;
     outline: none; font-family: inherit;
   }
 
@@ -199,9 +212,9 @@
   .cat-header td {
     background: var(--primary-light);
     color: var(--primary);
-    font-size: 12px;
-    font-weight: 600;
-    padding: 6px 14px;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 4px 8px;
     letter-spacing: 0.04em;
   }
   .cat-add-btn {
@@ -503,18 +516,18 @@
       </button>
     </div>
     <div class="phone-table-wrap">
-      <table id="phone-table">
-        <thead>
-          <tr>
-            <th style="width:48px">#</th>
-            <th>職　稱</th>
-            <th>姓　名</th>
-            <th>分機號碼</th>
-          </tr>
-        </thead>
-        <tbody id="phone-tbody"></tbody>
-      </table>
-      <button class="add-row-btn" onclick="addRow()">＋ 新增一筆</button>
+      <div class="phone-grid" id="phone-grid">
+        <div class="phone-col" id="phone-col-0">
+          <table><thead><tr><th>#</th><th>職稱</th><th>姓名</th><th>分機</th></tr></thead><tbody id="phone-tbody-0"></tbody></table>
+        </div>
+        <div class="phone-col" id="phone-col-1">
+          <table><thead><tr><th>#</th><th>職稱</th><th>姓名</th><th>分機</th></tr></thead><tbody id="phone-tbody-1"></tbody></table>
+        </div>
+        <div class="phone-col" id="phone-col-2">
+          <table><thead><tr><th>#</th><th>職稱</th><th>姓名</th><th>分機</th></tr></thead><tbody id="phone-tbody-2"></tbody></table>
+        </div>
+      </div>
+      <button class="add-row-btn" onclick="addRow()">＋ 新增一筆（其他）</button>
     </div>
     <div class="meta-bar">
       <span id="phone-count"></span>
@@ -713,50 +726,50 @@ window.APP = {
   {"id":"22","title":"組長輔導","name":"高美蕙","ext":"143、241"},
   {"id":"23","title":"組長親職","name":"陳蒂勻","ext":"142、241"},
   {"id":"24","title":"組長特教","name":"詹謹菁","ext":"143、321"},
-  {"id":"27","title":"一年級101","name":"朱薏雯","ext":"321"},
-  {"id":"28","title":"一年級102","name":"林淑芬","ext":"322"},
-  {"id":"29","title":"一年級103","name":"黃珮玲","ext":"323"},
-  {"id":"30","title":"一年級104","name":"陳廷程","ext":"324"},
-  {"id":"31","title":"一年級105","name":"★郭秋美","ext":"325"},
-  {"id":"32","title":"一年級106","name":"郭惠婷","ext":"314"},
-  {"id":"37","title":"二年級201","name":"★涂暄宜","ext":"213"},
-  {"id":"38","title":"二年級202","name":"周若涵","ext":"214"},
-  {"id":"39","title":"二年級203","name":"陸怡蒨","ext":"221"},
-  {"id":"40","title":"二年級204","name":"曾麗玲","ext":"222"},
-  {"id":"41","title":"二年級205","name":"郭乃菁","ext":"223"},
-  {"id":"42","title":"二年級206","name":"紀淑萍","ext":"224"},
-  {"id":"47","title":"三年級301","name":"林宗彥","ext":"821"},
-  {"id":"48","title":"三年級302","name":"陳依雯","ext":"822"},
-  {"id":"49","title":"三年級303","name":"★柯萍萍","ext":"823"},
-  {"id":"50","title":"三年級304","name":"李敏綾","ext":"824"},
-  {"id":"51","title":"三年級305","name":"洪淑文","ext":"831"},
-  {"id":"52","title":"三年級306","name":"凃曲文","ext":"832"},
-  {"id":"53","title":"三年級307","name":"馬英豪","ext":"833"},
-  {"id":"57","title":"四年級401","name":"郭佳鄞","ext":"225"},
-  {"id":"58","title":"四年級402","name":"吳淑妃","ext":"226"},
-  {"id":"59","title":"四年級403","name":"楊麗燕","ext":"234"},
-  {"id":"60","title":"四年級404","name":"林春慧","ext":"235"},
-  {"id":"61","title":"四年級405","name":"★高曰美","ext":"236"},
-  {"id":"62","title":"四年級406","name":"林千琪","ext":"243"},
-  {"id":"63","title":"四年級407","name":"許毓潔","ext":"244"},
-  {"id":"64","title":"四年級408","name":"葉淑綾","ext":"245"},
-  {"id":"65","title":"四年級409","name":"蕭婉如","ext":"246"},
-  {"id":"67","title":"五年級501","name":"洪子茵","ext":"331"},
-  {"id":"68","title":"五年級502","name":"邱妙芬","ext":"332"},
-  {"id":"69","title":"五年級503","name":"許秀美","ext":"333"},
-  {"id":"70","title":"五年級504","name":"許端容","ext":"334"},
-  {"id":"71","title":"五年級505","name":"梁素嬅","ext":"335"},
-  {"id":"72","title":"五年級506","name":"★邱薰葵","ext":"842"},
-  {"id":"73","title":"五年級507","name":"曾川榮","ext":"843"},
-  {"id":"74","title":"五年級508","name":"吳峙儫","ext":"844"},
-  {"id":"77","title":"六年級601","name":"蔡延秀","ext":"311"},
-  {"id":"78","title":"六年級602","name":"蘇威誌","ext":"312"},
-  {"id":"79","title":"六年級603","name":"李怡均","ext":"341"},
-  {"id":"80","title":"六年級604","name":"劉佳宜","ext":"342"},
-  {"id":"81","title":"六年級605","name":"白玲慈","ext":"343"},
-  {"id":"82","title":"六年級606","name":"★王新蕾","ext":"344"},
-  {"id":"83","title":"六年級607","name":"郭雅杏","ext":"345"},
-  {"id":"84","title":"六年級608","name":"吳金穎","ext":"315"},
+  {"id":"27","title":"101","name":"朱薏雯","ext":"321"},
+  {"id":"28","title":"102","name":"林淑芬","ext":"322"},
+  {"id":"29","title":"103","name":"黃珮玲","ext":"323"},
+  {"id":"30","title":"104","name":"陳廷程","ext":"324"},
+  {"id":"31","title":"105","name":"★郭秋美","ext":"325"},
+  {"id":"32","title":"106","name":"郭惠婷","ext":"314"},
+  {"id":"37","title":"201","name":"★涂暄宜","ext":"213"},
+  {"id":"38","title":"202","name":"周若涵","ext":"214"},
+  {"id":"39","title":"203","name":"陸怡蒨","ext":"221"},
+  {"id":"40","title":"204","name":"曾麗玲","ext":"222"},
+  {"id":"41","title":"205","name":"郭乃菁","ext":"223"},
+  {"id":"42","title":"206","name":"紀淑萍","ext":"224"},
+  {"id":"47","title":"301","name":"林宗彥","ext":"821"},
+  {"id":"48","title":"302","name":"陳依雯","ext":"822"},
+  {"id":"49","title":"303","name":"★柯萍萍","ext":"823"},
+  {"id":"50","title":"304","name":"李敏綾","ext":"824"},
+  {"id":"51","title":"305","name":"洪淑文","ext":"831"},
+  {"id":"52","title":"306","name":"凃曲文","ext":"832"},
+  {"id":"53","title":"307","name":"馬英豪","ext":"833"},
+  {"id":"57","title":"401","name":"郭佳鄞","ext":"225"},
+  {"id":"58","title":"402","name":"吳淑妃","ext":"226"},
+  {"id":"59","title":"403","name":"楊麗燕","ext":"234"},
+  {"id":"60","title":"404","name":"林春慧","ext":"235"},
+  {"id":"61","title":"405","name":"★高曰美","ext":"236"},
+  {"id":"62","title":"406","name":"林千琪","ext":"243"},
+  {"id":"63","title":"407","name":"許毓潔","ext":"244"},
+  {"id":"64","title":"408","name":"葉淑綾","ext":"245"},
+  {"id":"65","title":"409","name":"蕭婉如","ext":"246"},
+  {"id":"67","title":"501","name":"洪子茵","ext":"331"},
+  {"id":"68","title":"502","name":"邱妙芬","ext":"332"},
+  {"id":"69","title":"503","name":"許秀美","ext":"333"},
+  {"id":"70","title":"504","name":"許端容","ext":"334"},
+  {"id":"71","title":"505","name":"梁素嬅","ext":"335"},
+  {"id":"72","title":"506","name":"★邱薰葵","ext":"842"},
+  {"id":"73","title":"507","name":"曾川榮","ext":"843"},
+  {"id":"74","title":"508","name":"吳峙儫","ext":"844"},
+  {"id":"77","title":"601","name":"蔡延秀","ext":"311"},
+  {"id":"78","title":"602","name":"蘇威誌","ext":"312"},
+  {"id":"79","title":"603","name":"李怡均","ext":"341"},
+  {"id":"80","title":"604","name":"劉佳宜","ext":"342"},
+  {"id":"81","title":"605","name":"白玲慈","ext":"343"},
+  {"id":"82","title":"606","name":"★王新蕾","ext":"344"},
+  {"id":"83","title":"607","name":"郭雅杏","ext":"345"},
+  {"id":"84","title":"608","name":"吳金穎","ext":"315"},
   {"id":"87","title":"科任教師藝文","name":"黃瑛琳","ext":"356"},
   {"id":"88","title":"科任教師藝文","name":"柯秀頻","ext":"354"},
   {"id":"89","title":"科任教師藝文","name":"吳佳縈","ext":"255"},
@@ -958,12 +971,12 @@ window.APP = {
 const CAT_ORDER = [
   { key: 'admin', label: '行政人員', match: t => ['校　　長','教務主任','學務主任','總務主任','輔導主任','會計主任','人事主任'].includes(t) },
   { key: 'group', label: '各組組長', match: t => t.startsWith('組長') },
-  { key: 'g1', label: '一年級', match: t => t.startsWith('一年級') },
-  { key: 'g2', label: '二年級', match: t => t.startsWith('二年級') },
-  { key: 'g3', label: '三年級', match: t => t.startsWith('三年級') },
-  { key: 'g4', label: '四年級', match: t => t.startsWith('四年級') },
-  { key: 'g5', label: '五年級', match: t => t.startsWith('五年級') },
-  { key: 'g6', label: '六年級', match: t => t.startsWith('六年級') },
+  { key: 'g1', label: '一年級', match: t => /^1\d\d$/.test(t) },
+  { key: 'g2', label: '二年級', match: t => /^2\d\d$/.test(t) },
+  { key: 'g3', label: '三年級', match: t => /^3\d\d$/.test(t) },
+  { key: 'g4', label: '四年級', match: t => /^4\d\d$/.test(t) },
+  { key: 'g5', label: '五年級', match: t => /^5\d\d$/.test(t) },
+  { key: 'g6', label: '六年級', match: t => /^6\d\d$/.test(t) },
   { key: 'sub', label: '科任／代課教師', match: t => t.startsWith('科任') || t.startsWith('代課') },
   { key: 'sp', label: '特殊班級', match: t => t.startsWith('資優') || t.startsWith('資源') },
   { key: 'kinder', label: '幼兒園', match: t => t.startsWith('幼兒') || t.startsWith('學前') },
@@ -977,7 +990,6 @@ function getCategory(title) {
 
 // ─── Phone render ─────────────────────────────────────────
 window.renderPhone = function(filter = '') {
-  const tbody = document.getElementById('phone-tbody');
   const data = APP.phoneData;
   const q = filter.trim().toLowerCase();
   const filtered = q ? data.filter(r =>
@@ -986,38 +998,56 @@ window.renderPhone = function(filter = '') {
     r.ext.includes(q)
   ) : data;
 
-  // Group by category
+  // Build ordered flat list with category headers
   const groups = {};
   filtered.forEach(r => {
     const cat = getCategory(r.title);
-    if (!groups[cat.key]) groups[cat.key] = { label: cat.label, rows: [] };
+    if (!groups[cat.key]) groups[cat.key] = { label: cat.label, key: cat.key, rows: [] };
     groups[cat.key].rows.push(r);
   });
 
-  let html = '';
+  // Flatten: [{isCat, label, key} | {row data}]
+  const flat = [];
   CAT_ORDER.forEach(cat => {
     if (!groups[cat.key] || !groups[cat.key].rows.length) return;
-    html += `<tr class="cat-header">
-      <td colspan="3">${cat.label}</td>
-      <td style="text-align:right;padding-right:10px">
-        <button class="cat-add-btn" onclick="addRowInCat('${cat.key}')" title="在此分類新增一筆">＋ 新增</button>
-      </td>
-    </tr>`;
-    groups[cat.key].rows.forEach((r, i) => {
-      const displayName = r.name.startsWith('★') ?
-        `<span class="star">★</span>${r.name.slice(1)}` : r.name;
-      html += `<tr data-id="${r.id}">
-        <td class="id-col">${r.id}</td>
-        <td class="editable" onclick="editCell(this,'title')">${r.title}</td>
-        <td class="name-col editable" onclick="editCell(this,'name')">${displayName}</td>
-        <td class="ext-col editable" onclick="editCell(this,'ext')">${r.ext}</td>
-      </tr>`;
-    });
+    flat.push({ isCat: true, label: cat.label, key: cat.key });
+    groups[cat.key].rows.forEach(r => flat.push({ isCat: false, ...r }));
   });
 
-  tbody.innerHTML = html;
-  const total = filtered.length;
-  document.getElementById('phone-count').textContent = `共 ${total} 筆${q ? '（篩選中）' : ''}`;
+  // Distribute evenly across 3 columns
+  const total = flat.length;
+  const colSize = Math.ceil(total / 3);
+  const cols = [
+    flat.slice(0, colSize),
+    flat.slice(colSize, colSize * 2),
+    flat.slice(colSize * 2)
+  ];
+
+  function rowHtml(item) {
+    if (item.isCat) {
+      return `<tr class="cat-header">
+        <td colspan="3">${item.label}</td>
+        <td style="text-align:right;padding-right:6px">
+          <button class="cat-add-btn" onclick="addRowInCat('${item.key}')">＋</button>
+        </td>
+      </tr>`;
+    }
+    const displayName = item.name.startsWith('★') ?
+      `<span class="star">★</span>${item.name.slice(1)}` : item.name;
+    return `<tr data-id="${item.id}">
+      <td class="id-col">${item.id}</td>
+      <td class="editable" onclick="editCell(this,'title')">${item.title}</td>
+      <td class="name-col editable" onclick="editCell(this,'name')">${displayName}</td>
+      <td class="ext-col editable" onclick="editCell(this,'ext')">${item.ext}</td>
+    </tr>`;
+  }
+
+  cols.forEach((col, i) => {
+    document.getElementById(`phone-tbody-${i}`).innerHTML = col.map(rowHtml).join('');
+  });
+
+  const total2 = filtered.length;
+  document.getElementById('phone-count').textContent = `共 ${total2} 筆${q ? '（篩選中）' : ''}`;
   if (APP.phoneLastEdit) document.getElementById('last-edit-phone').textContent = '最後編輯：' + APP.phoneLastEdit;
 };
 
