@@ -222,10 +222,10 @@
     background: var(--surface); border-radius: var(--radius-lg);
     box-shadow: var(--shadow); overflow: hidden;
   }
-  /* 4-column grid layout for phone table */
+  /* 5-column grid layout for phone table */
   .phone-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     gap: 0 1px;
     background: var(--border);
   }
@@ -246,6 +246,9 @@
   tbody tr:hover { background: var(--primary-light); }
   td { padding: 4px 8px; font-size: 12px; }
   td.id-col { color: var(--text-light); font-size: 10px; width: 28px; }
+  td.id-star-cell { cursor: default; }
+  body.edit-mode td.id-star-cell { cursor: pointer; }
+  body.edit-mode td.id-star-cell:hover { background: #fff8e1; }
   td.ext-col { font-weight: 700; color: var(--primary); font-family: monospace; font-size: 12px; white-space: nowrap; }
   td.name-col .star { color: var(--accent); font-size: 10px; margin-right: 1px; }
 
@@ -435,8 +438,8 @@
     /* Split phone data into 3 columns */
     #phone-print-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr 1fr 1fr;
-      gap: 0 4mm;
+      grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+      gap: 0 3mm;
       width: 100%;
     }
     #phone-print-grid table {
@@ -550,7 +553,7 @@
       場地配置
     </div>
     <div class="tab-legend" id="tab-legend-phone">
-      <span><span style="color:var(--accent);font-size:13px">★</span> 點擊 # 欄位標記／取消學年主任</span>
+      <span>編輯模式下點擊 # 欄位可標記／取消 ★ 學年主任</span>
     </div>
     <div class="tab-legend" id="tab-legend-map" style="display:none">
       <span><span class="dot" style="background:#1a5c8a"></span>班級教室</span>
@@ -593,6 +596,9 @@
         </div>
         <div class="phone-col" id="phone-col-3">
           <table><thead><tr><th title="點擊切換★學年主任">#</th><th>職稱</th><th>姓名</th><th>分機</th></tr></thead><tbody id="phone-tbody-3"></tbody></table>
+        </div>
+        <div class="phone-col" id="phone-col-4">
+          <table><thead><tr><th title="點擊切換★學年主任">#</th><th>職稱</th><th>姓名</th><th>分機</th></tr></thead><tbody id="phone-tbody-4"></tbody></table>
         </div>
       </div>
       <button class="add-row-btn" onclick="addRow()">＋ 新增一筆（其他）</button>
@@ -780,20 +786,20 @@ window.APP = {
   {"id":"5","title":"輔導主任","name":"林春壬","ext":"141"},
   {"id":"6","title":"會計主任","name":"李淑珠","ext":"161"},
   {"id":"7","title":"人事主任","name":"黃文貞","ext":"151"},
-  {"id":"11","title":"組長教學","name":"吳季珊","ext":"120、115"},
-  {"id":"12","title":"組長研發","name":"包智淵","ext":"113、255"},
-  {"id":"13","title":"組長註冊","name":"沈鈺翔","ext":"112、116"},
-  {"id":"14","title":"組長資訊","name":"顏溢志","ext":"119、118"},
-  {"id":"15","title":"組長生教","name":"邱文美","ext":"122、251"},
-  {"id":"16","title":"組長訓育","name":"陳琇芳","ext":"125、255"},
-  {"id":"17","title":"組長衛生","name":"陳逸茜","ext":"125、251"},
-  {"id":"18","title":"組長體育","name":"潘惠貞","ext":"122"},
-  {"id":"19","title":"組長事務","name":"王畇蓁","ext":"137"},
-  {"id":"20","title":"組長文資","name":"謝佩珩","ext":"133、116"},
-  {"id":"21","title":"組長出納","name":"張云馨","ext":"134"},
-  {"id":"22","title":"組長輔導","name":"高美蕙","ext":"143、241"},
-  {"id":"23","title":"組長親職","name":"陳蒂勻","ext":"142、241"},
-  {"id":"24","title":"組長特教","name":"詹謹菁","ext":"143、321"},
+  {"id":"11","title":"教務處-教學組","name":"吳季珊","ext":"120、115"},
+  {"id":"12","title":"教務處-研發組","name":"包智淵","ext":"113、255"},
+  {"id":"13","title":"教務處-註冊組","name":"沈鈺翔","ext":"112、116"},
+  {"id":"14","title":"教務處-資訊組","name":"顏溢志","ext":"119、118"},
+  {"id":"15","title":"學務處-生教組","name":"邱文美","ext":"122、251"},
+  {"id":"16","title":"學務處-訓育組","name":"陳琇芳","ext":"125、255"},
+  {"id":"17","title":"學務處-衛生組","name":"陳逸茜","ext":"125、251"},
+  {"id":"18","title":"學務處-體育組","name":"潘惠貞","ext":"122"},
+  {"id":"19","title":"總務處-事務組","name":"王畇蓁","ext":"137"},
+  {"id":"20","title":"總務處-文資組","name":"謝佩珩","ext":"133、116"},
+  {"id":"21","title":"總務處-出納組","name":"張云馨","ext":"134"},
+  {"id":"22","title":"輔導處-輔導組","name":"高美蕙","ext":"143、241"},
+  {"id":"23","title":"輔導處-親職組","name":"陳蒂勻","ext":"142、241"},
+  {"id":"24","title":"輔導處-特教組","name":"詹謹菁","ext":"143、321"},
   {"id":"27","title":"101","name":"朱薏雯","ext":"321"},
   {"id":"28","title":"102","name":"林淑芬","ext":"322"},
   {"id":"29","title":"103","name":"黃珮玲","ext":"323"},
@@ -908,55 +914,47 @@ window.APP = {
   defaultMap: {
     "A": {
       "1F": [
+        {"name":"健康中心","code":"A101","ext":"123\n126","type":"office"},
+        {"name":"學務處","code":"A102","ext":"121\n122\n125","type":"office"},
+        {"name":"總務處","code":"A103","ext":"131\n132\n133\n134\n135\n136\n137","type":"office"},
+        {"name":"教務處","code":"A203","ext":"111\n112\n113\n120\n114","type":"office"},
         {"name":"靜思閱讀書軒","code":"A108","ext":"215","type":"special"},
         {"name":"一年01班","code":"A106","ext":"213","type":"class"},
         {"name":"一年02班","code":"A107","ext":"214","type":"class"},
-        {"name":"小川堂","code":"","ext":"","type":"special"},
-        {"name":"專科教室1","code":"A105","ext":"212","type":"special"},
-        {"name":"人事會計","code":"A104","ext":"151/152/161","type":"office"},
-        {"name":"總務處","code":"A103","ext":"131/132/133/134/135","type":"office"},
-        {"name":"學務處","code":"A102","ext":"121/122/125","type":"office"},
-        {"name":"健康中心","code":"A101","ext":"123/126","type":"office"}
+        {"name":"小川堂","code":"","ext":"","type":"special"}
       ],
       "2F": [
+        {"name":"校長室","code":"A201","ext":"110\n171","type":"office"},
+        {"name":"會議室","code":"A202","ext":"172","type":"office"},
         {"name":"一年03班","code":"A204","ext":"221","type":"class"},
         {"name":"一年04班","code":"A205","ext":"222","type":"class"},
         {"name":"一年05班","code":"A206","ext":"223","type":"class"},
         {"name":"一年06班","code":"A207","ext":"224","type":"class"},
         {"name":"專科教室2","code":"A208","ext":"225","type":"special"},
-        {"name":"三年01班","code":"A209","ext":"226","type":"class"},
-        {"name":"校長室","code":"A201","ext":"110/171","type":"office"},
-        {"name":"教務處","code":"A203","ext":"111/112/113/120","type":"office"}
+        {"name":"一年07班","code":"A209","ext":"226","type":"class"}
       ],
       "3F": [
-        {"name":"資源班1","code":"A305","ext":"231","type":"special"},
-        {"name":"資源班2","code":"A306","ext":"232","type":"special"},
-        {"name":"三年02班","code":"A307","ext":"233","type":"class"},
-        {"name":"三年03班","code":"A308","ext":"234","type":"class"},
-        {"name":"三年04班","code":"A309","ext":"235","type":"class"},
-        {"name":"三年05班","code":"A310","ext":"236","type":"class"},
+        {"name":"輔導處","code":"A304","ext":"141\n142\n143\n144\n145","type":"office"},
+        {"name":"視聽教室","code":"A303","ext":"174","type":"special"},
         {"name":"校史室","code":"A301","ext":"173","type":"office"},
-        {"name":"輔導處","code":"A304","ext":"141/142/143","type":"office"},
-        {"name":"視聽教室","code":"A303","ext":"174","type":"special"}
+        {"name":"e化教室1(教務處)","code":"A302","ext":"115","type":"special"},
+        {"name":"電腦教室2","code":"A402","ext":"116","type":"special"}
       ],
       "4F": [
-        {"name":"資優班","code":"A407","ext":"242","type":"special"},
-        {"name":"e化教室5","code":"A406","ext":"241","type":"special"},
-        {"name":"三年06班","code":"A408","ext":"243","type":"class"},
-        {"name":"三年07班","code":"A409","ext":"244","type":"class"},
-        {"name":"三年08班","code":"A410","ext":"245","type":"class"},
-        {"name":"三年09班","code":"A411","ext":"246","type":"class"},
-        {"name":"家長會","code":"A401","ext":"139","type":"office"},
+        {"name":"家長會","code":"A401","ext":"139\n345\n165\n5","type":"office"},
         {"name":"圖書室","code":"A403","ext":"117","type":"special"},
-        {"name":"電腦教室1","code":"A404","ext":"118","type":"special"}
+        {"name":"電腦教室1","code":"A404","ext":"118","type":"special"},
+        {"name":"主機室","code":"A405","ext":"119","type":"office"},
+        {"name":"準備室","code":"A502","ext":"176","type":"special"}
       ],
       "5F": [
+        {"name":"儲藏室","code":"A501","ext":"","type":"special"},
+        {"name":"活動中心","code":"A501","ext":"175","type":"special"},
         {"name":"e化教室2","code":"A503","ext":"251","type":"special"},
         {"name":"點子實驗室","code":"A504","ext":"252","type":"special"},
         {"name":"e化教室3","code":"A505","ext":"253","type":"special"},
         {"name":"e化教室4","code":"A506","ext":"254","type":"special"},
-        {"name":"專科教室3","code":"A507","ext":"255","type":"special"},
-        {"name":"活動中心","code":"A501","ext":"175","type":"special"}
+        {"name":"專科教室3","code":"A507","ext":"255","type":"special"}
       ]
     },
     "B": {
@@ -1031,6 +1029,47 @@ window.APP = {
         {"name":"六年09班","code":"F404","ext":"844","type":"class"},
         {"name":"學前特教巡迴班","code":"","ext":"147","type":"special"}
       ]
+    },
+    "C": {
+      "1F": [
+        {"name":"一年01班","code":"A207","ext":"213","type":"class"},
+        {"name":"一年02班","code":"A206","ext":"214","type":"class"},
+        {"name":"靜思閱讀書軒","code":"A108","ext":"215","type":"special"},
+        {"name":"專科教室1","code":"A208","ext":"212","type":"special"},
+        {"name":"人事會計","code":"A104","ext":"151\n152\n161","type":"office"}
+      ],
+      "2F": [
+        {"name":"三年01班","code":"A209","ext":"226","type":"class"},
+        {"name":"一年03班","code":"A204","ext":"221","type":"class"},
+        {"name":"一年04班","code":"A205","ext":"222","type":"class"},
+        {"name":"專科教室2","code":"A208","ext":"225","type":"special"},
+        {"name":"資優班","code":"A208","ext":"233\n252","type":"special"}
+      ],
+      "3F": [
+        {"name":"資源班1","code":"A305","ext":"231","type":"special"},
+        {"name":"資源班2","code":"A306","ext":"232","type":"special"},
+        {"name":"三年02班","code":"A307","ext":"233","type":"class"},
+        {"name":"三年03班","code":"A308","ext":"234","type":"class"},
+        {"name":"三年04班","code":"A309","ext":"235","type":"class"},
+        {"name":"三年05班","code":"A310","ext":"236","type":"class"},
+        {"name":"資優班2","code":"A306","ext":"232","type":"special"}
+      ],
+      "4F": [
+        {"name":"三年06班","code":"A408","ext":"243","type":"class"},
+        {"name":"三年07班","code":"A409","ext":"244","type":"class"},
+        {"name":"三年08班","code":"A410","ext":"245","type":"class"},
+        {"name":"三年09班","code":"A411","ext":"246","type":"class"},
+        {"name":"e化教室5","code":"A406","ext":"241","type":"special"},
+        {"name":"資優班","code":"A407","ext":"242","type":"special"}
+      ],
+      "5F": [
+        {"name":"音樂教室1","code":"B506","ext":"356","type":"special"},
+        {"name":"準備室","code":"B505","ext":"355","type":"special"},
+        {"name":"音樂教室2","code":"B504","ext":"354","type":"special"},
+        {"name":"自然教室2","code":"B503","ext":"353","type":"special"},
+        {"name":"準備室","code":"B502","ext":"352","type":"special"},
+        {"name":"自然教室1","code":"B501","ext":"351","type":"special"}
+      ]
     }
   }
 };
@@ -1038,7 +1077,7 @@ window.APP = {
 // ─── Category mapping ─────────────────────────────────────
 const CAT_ORDER = [
   { key: 'admin', label: '行政人員', match: t => ['校　　長','教務主任','學務主任','總務主任','輔導主任','會計主任','人事主任'].includes(t) },
-  { key: 'group', label: '各組組長', match: t => t.startsWith('組長') },
+  { key: 'group', label: '各組組長', match: t => t.includes('處-') },
   { key: 'g1', label: '一年級', match: t => /^1\d\d$/.test(t) },
   { key: 'g2', label: '二年級', match: t => /^2\d\d$/.test(t) },
   { key: 'g3', label: '三年級', match: t => /^3\d\d$/.test(t) },
@@ -1082,14 +1121,15 @@ window.renderPhone = function(filter = '') {
     groups[cat.key].rows.forEach(r => flat.push({ isCat: false, ...r }));
   });
 
-  // Distribute evenly across 4 columns
+  // Distribute evenly across 5 columns
   const total = flat.length;
-  const colSize = Math.ceil(total / 4);
+  const colSize = Math.ceil(total / 5);
   const cols = [
     flat.slice(0, colSize),
     flat.slice(colSize, colSize * 2),
     flat.slice(colSize * 2, colSize * 3),
-    flat.slice(colSize * 3)
+    flat.slice(colSize * 3, colSize * 4),
+    flat.slice(colSize * 4)
   ];
 
   function rowHtml(item) {
@@ -1104,9 +1144,10 @@ window.renderPhone = function(filter = '') {
     const isStar = item.name.startsWith('★');
     const displayName = isStar ?
       `<span class="star">★</span>${item.name.slice(1)}` : item.name;
-    const idCellStyle = isStar ? 'style="cursor:pointer;color:var(--accent);font-weight:700" title="點擊取消學年主任"' : 'style="cursor:pointer" title="點擊標記為學年主任"';
+    const idDisplay = isStar ? '★' : item.id;
+    const idStyle = isStar ? 'color:var(--accent);font-weight:700' : 'color:var(--text-light)';
     return `<tr data-id="${item.id}">
-      <td class="id-col" onclick="toggleStar('${item.id}')" ${idCellStyle}>${isStar ? '★' : item.id}</td>
+      <td class="id-col id-star-cell" onclick="toggleStar('${item.id}')" style="${idStyle}" title="編輯模式下可標記學年主任">${idDisplay}</td>
       <td class="editable" onclick="editCell(this,'title')">${item.title}</td>
       <td class="name-col editable" onclick="editCell(this,'name')">${displayName}</td>
       <td class="ext-col editable" onclick="editCell(this,'ext')">${item.ext}</td>
@@ -1128,6 +1169,7 @@ window.filterPhone = function() {
 };
 
 window.toggleStar = function(id) {
+  if (!APP.editMode) return;
   const record = APP.phoneData.find(r => String(r.id) === String(id));
   if (!record) return;
   if (record.name.startsWith('★')) {
@@ -1261,8 +1303,8 @@ function buildPhonePrint() {
 
   // Split into 4 columns as evenly as possible
   const total = allRows.length;
-  const colSize = Math.ceil(total / 4);
-  const cols = [allRows.slice(0, colSize), allRows.slice(colSize, colSize * 2), allRows.slice(colSize * 2, colSize * 3), allRows.slice(colSize * 3)];
+  const colSize = Math.ceil(total / 5);
+  const cols = [allRows.slice(0, colSize), allRows.slice(colSize, colSize * 2), allRows.slice(colSize * 2, colSize * 3), allRows.slice(colSize * 3, colSize * 4), allRows.slice(colSize * 4)];
 
   function colHtml(rows) {
     if (!rows.length) return '';
@@ -1290,6 +1332,7 @@ function buildPhonePrint() {
       <div>${colHtml(cols[1])}</div>
       <div>${colHtml(cols[2])}</div>
       <div>${colHtml(cols[3])}</div>
+      <div>${colHtml(cols[4])}</div>
     </div>`;
 }
 
