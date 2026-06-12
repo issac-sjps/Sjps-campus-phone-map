@@ -99,42 +99,49 @@
 
   .header-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 
-  /* Tabs inside header */
-  .header-tabs {
-    display: flex;
-    align-items: flex-end;
-    gap: 0;
-    padding: 0 0;
-    border-top: 1px solid rgba(255,255,255,0.15);
-  }
+  /* Tabs — inline pill buttons in header */
   .tab {
-    padding: 8px 18px;
-    font-size: 13px;
-    font-weight: 500;
+    padding: 5px 12px;
+    font-size: 13px; font-weight: 500;
     color: rgba(255,255,255,0.65);
     cursor: pointer;
-    border-bottom: 2.5px solid transparent;
+    border: 1.5px solid rgba(255,255,255,0.25);
+    border-radius: 16px;
     transition: all 0.15s;
-    display: flex; align-items: center; gap: 6px;
-    user-select: none;
+    display: flex; align-items: center; gap: 5px;
+    user-select: none; white-space: nowrap;
   }
-  .tab:hover { color: #fff; }
-  .tab.active { color: #fff; border-bottom-color: #fff; }
+  .tab:hover { color: #fff; border-color: rgba(255,255,255,0.6); }
+  .tab.active { color: #fff; background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.7); }
 
-  /* Legend text in tab row */
   .tab-legend {
-    margin-left: 12px;
-    font-size: 11px;
-    color: rgba(255,255,255,0.55);
-    display: flex; align-items: center; gap: 10px;
-    padding-bottom: 10px;
-    flex: 1;
+    font-size: 11px; color: rgba(255,255,255,0.55);
+    display: flex; align-items: center; gap: 8px;
   }
   .tab-legend span { display: flex; align-items: center; gap: 4px; }
   .tab-legend .dot { width: 8px; height: 8px; border-radius: 2px; display: inline-block; flex-shrink: 0; }
 
-  /* Old .tabs class fallback (unused now) */
-  .tabs-unused { display: none; }
+  /* ── Map tab ── */
+  /* Left sidebar + content layout */
+  .map-layout { display: flex; gap: 10px; align-items: flex-start; }
+  .map-sidebar {
+    display: flex; flex-direction: column; gap: 4px;
+    flex-shrink: 0; padding-top: 0;
+  }
+  .btab {
+    padding: 8px 14px; border-radius: var(--radius);
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    border: 1.5px solid var(--border); background: var(--surface);
+    color: var(--text-muted); transition: all 0.15s;
+    text-align: left; white-space: nowrap; min-width: 100px;
+    display: block;
+  }
+  .btab.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .btab:hover:not(.active):not(.disabled) { border-color: var(--primary-mid); color: var(--primary); }
+  .btab.disabled { color: var(--text-light); cursor: default; font-size: 11px; }
+  .map-content { flex: 1; min-width: 0; }
+
+  .building-map { background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow); padding: 14px; }
   #edit-btn {
     display: flex; align-items: center; gap: 6px;
     padding: 6px 14px;
@@ -308,19 +315,28 @@
     padding: 0 4px;
   }
 
-  /* ── Map tab ── */
-  .map-controls { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
-  .building-tabs { display: flex; gap: 4px; }
-  .btab {
-    padding: 7px 16px; border-radius: 20px;
-    font-size: 13px; font-weight: 500; cursor: pointer;
-    border: 1.5px solid var(--border); background: var(--surface);
-    color: var(--text-muted); transition: all 0.15s;
+  /* ── Map tab continued ── */
+  /* Rotated layout for 新莊樓 */
+  .rotated-map {
+    display: flex;
+    gap: 6px;
+    align-items: flex-start;
+    overflow-x: auto;
+    padding-bottom: 4px;
   }
-  .btab.active { background: var(--primary); color: #fff; border-color: var(--primary); }
-  .btab:hover:not(.active) { border-color: var(--primary-mid); color: var(--primary); }
-
-  .building-map { background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow); padding: 16px; }
+  .rotated-col {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 96px;
+  }
+  .rotated-floor-label {
+    font-size: 11px; font-weight: 700; color: #fff;
+    background: var(--primary);
+    border-radius: 5px; padding: 4px 8px;
+    text-align: center; letter-spacing: 0.06em;
+    margin-bottom: 2px;
+  }
   .building-title { font-size: 15px; font-weight: 600; color: var(--primary); margin-bottom: 12px; }
   .floor-section { margin-bottom: 12px; }
   .floor-label {
@@ -472,7 +488,8 @@
     #phone-print-root { display: block !important; }
 
     /* ── Map print ── */
-    #panel-map .map-controls { display: none !important; }
+    #panel-map .map-sidebar,
+    #panel-map .map-layout > .map-sidebar { display: none !important; }
     #map-print-root { display: block !important; }
     #building-map { display: none !important; }
 
@@ -514,10 +531,26 @@
 <header>
   <div class="header-top">
     <div class="header-left">
-      <div class="school-name">新莊國小 Campus Phone &amp; Map</div>
+      <div class="school-name">新莊國小電話與地圖</div>
       <div class="year-badge" id="year-toggle" onclick="toggleYearPicker()">
         <span id="current-year-label">114學年度</span>
         <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </div>
+      <div class="tab active" onclick="switchTab('phone', this)" id="tab-phone">
+        <svg width="13" height="13" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 2h3l1.5 3-2 1.5a9 9 0 003 3L10 8l3 1.5V13a1 1 0 01-1 1C5 14 1 10 1 4a1 1 0 011-1z"/></svg>
+        分機一覽
+      </div>
+      <div class="tab" onclick="switchTab('map', this)" id="tab-map">
+        <svg width="13" height="13" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="1" y="1" width="13" height="13" rx="1.5"/><path d="M1 5h13M5 5v9"/></svg>
+        場地配置
+      </div>
+      <div class="tab-legend" id="tab-legend-phone">
+        <span>編輯模式下點擊 # 欄位可標記／取消 ★ 學年主任</span>
+      </div>
+      <div class="tab-legend" id="tab-legend-map" style="display:none">
+        <span><span class="dot" style="background:#1a5c8a"></span>班級</span>
+        <span><span class="dot" style="background:#e07b39"></span>辦公室</span>
+        <span><span class="dot" style="background:#2e7d52"></span>特殊</span>
       </div>
     </div>
     <div class="header-search" id="header-search-area">
@@ -541,25 +574,6 @@
         </svg>
         <span id="edit-label">編輯</span>
       </button>
-    </div>
-  </div>
-  <div class="header-tabs">
-    <div class="tab active" onclick="switchTab('phone', this)" id="tab-phone">
-      <svg width="13" height="13" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 2h3l1.5 3-2 1.5a9 9 0 003 3L10 8l3 1.5V13a1 1 0 01-1 1C5 14 1 10 1 4a1 1 0 011-1z"/></svg>
-      分機一覽
-    </div>
-    <div class="tab" onclick="switchTab('map', this)" id="tab-map">
-      <svg width="13" height="13" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="1" y="1" width="13" height="13" rx="1.5"/><path d="M1 5h13M5 5v9"/></svg>
-      場地配置
-    </div>
-    <div class="tab-legend" id="tab-legend-phone">
-      <span>編輯模式下點擊 # 欄位可標記／取消 ★ 學年主任</span>
-    </div>
-    <div class="tab-legend" id="tab-legend-map" style="display:none">
-      <span><span class="dot" style="background:#1a5c8a"></span>班級教室</span>
-      <span><span class="dot" style="background:#e07b39"></span>行政辦公室</span>
-      <span><span class="dot" style="background:#2e7d52"></span>特殊／專科</span>
-      <span style="color:rgba(255,255,255,0.4)">編輯模式下點擊格子可修改</span>
     </div>
   </div>
 </header>
@@ -613,20 +627,24 @@
 
   <!-- ── Map Panel ── -->
   <div class="tab-panel" id="panel-map">
-    <div class="map-controls">
-      <div class="building-tabs">
+    <div class="map-layout">
+      <div class="map-sidebar">
         <div class="btab active" onclick="switchBuilding('A', this)">新莊樓</div>
         <div class="btab" onclick="switchBuilding('B', this)">至美樓</div>
         <div class="btab" onclick="switchBuilding('F', this)">至誠樓</div>
         <div class="btab" onclick="switchBuilding('C', this)">至善樓</div>
-        <div class="btab" onclick="switchBuilding('Z', this)" style="color:var(--text-light)">至真樓（暫不開放）</div>
+        <div class="btab disabled">至真樓<br><span style="font-size:10px;opacity:0.7">暫不開放</span></div>
+        <div style="margin-top:8px;border-top:1px solid var(--border);padding-top:8px;">
+          <button class="toolbar-btn" style="width:100%;justify-content:center" onclick="window.print()">
+            <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="5" width="12" height="8" rx="1"/><path d="M5 5V2h6v3M5 12h6"/></svg>
+            列印
+          </button>
+        </div>
       </div>
-      <button class="toolbar-btn" style="margin-left:auto" onclick="window.print()">
-        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="5" width="12" height="8" rx="1"/><path d="M5 5V2h6v3M5 12h6"/></svg>
-        列印
-      </button>
+      <div class="map-content">
+        <div class="building-map" id="building-map"></div>
+      </div>
     </div>
-    <div class="building-map" id="building-map"></div>
     <div class="meta-bar">
       <span></span>
       <span id="last-edit-map"></span>
@@ -1271,33 +1289,48 @@ window.addRowInCat = function(catKey) {
 window.renderMap = function() {
   const bdata = APP.mapData[APP.currentBuilding] || {};
   const bnames = { A: '新莊樓', B: '至美樓', F: '至誠樓', C: '至善樓', Z: '至真樓（暫不開放）' };
-  let html = `<div class="building-title">${bnames[APP.currentBuilding]}</div>`;
+  const bname = bnames[APP.currentBuilding];
+  const isRotated = APP.currentBuilding === 'A'; // 新莊樓 rotated: floors as columns
 
-  const floorOrder = ['5F','4F','3F','2F','1F'];
-  floorOrder.forEach(floor => {
-    const rooms = bdata[floor];
-    if (!rooms || !rooms.length) return;
-    html += `<div class="floor-section">
-      <div class="floor-label">${floor}</div>
-      <div class="rooms-grid">`;
-    rooms.forEach((room, idx) => {
-      const typeClass = room.type === 'class' ? 'has-class' : room.type === 'office' ? 'has-office' : 'has-special';
-      html += `<div class="room-card ${typeClass}" onclick="openRoomEdit('${APP.currentBuilding}','${floor}',${idx})">
-        <div class="room-name">${room.name}</div>
-        ${room.code ? `<div class="room-code">${room.code}</div>` : ''}
-        ${room.ext ? `<div class="room-ext">☎ ${room.ext}</div>` : ''}
-      </div>`;
+  function roomCardHtml(room, floor, idx) {
+    const typeClass = room.type === 'class' ? 'has-class' : room.type === 'office' ? 'has-office' : 'has-special';
+    return `<div class="room-card ${typeClass}" onclick="openRoomEdit('${APP.currentBuilding}','${floor}',${idx})">
+      <div class="room-name">${room.name}</div>
+      ${room.code ? `<div class="room-code">${room.code}</div>` : ''}
+      ${room.ext ? `<div class="room-ext">☎ ${room.ext}</div>` : ''}
+    </div>`;
+  }
+
+  let html = `<div class="building-title">${bname}</div>`;
+
+  if (isRotated) {
+    // Rotated: each floor = a column, floors go left (B1) to right (5F)
+    const floorOrder = ['B1','1F','2F','3F','4F','5F'];
+    const activeFloors = floorOrder.filter(f => bdata[f] && bdata[f].length);
+    html += `<div class="rotated-map">`;
+    activeFloors.forEach(floor => {
+      const rooms = bdata[floor];
+      html += `<div class="rotated-col">
+        <div class="rotated-floor-label">${floor}</div>`;
+      rooms.forEach((room, idx) => { html += roomCardHtml(room, floor, idx); });
+      html += `<button class="add-room-btn" onclick="addRoom('${APP.currentBuilding}','${floor}')">＋</button>`;
+      html += `</div>`;
     });
-    html += `<button class="add-room-btn" onclick="addRoom('${APP.currentBuilding}','${floor}')">＋</button>`;
-    html += `</div></div>`;
-  });
-
-  // Legend
-  html += `<div style="margin-top:20px;display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--text-muted)">
-    <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:var(--primary);display:inline-block"></span>班級教室</span>
-    <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:var(--accent);display:inline-block"></span>行政辦公室</span>
-    <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:var(--success);display:inline-block"></span>特殊/專科</span>
-  </div>`;
+    html += `</div>`;
+  } else {
+    // Normal: each floor = a row (5F top, 1F bottom)
+    const floorOrder = ['5F','4F','3F','2F','1F','B1'];
+    floorOrder.forEach(floor => {
+      const rooms = bdata[floor];
+      if (!rooms || !rooms.length) return;
+      html += `<div class="floor-section">
+        <div class="floor-label">${floor}</div>
+        <div class="rooms-grid">`;
+      rooms.forEach((room, idx) => { html += roomCardHtml(room, floor, idx); });
+      html += `<button class="add-room-btn" onclick="addRoom('${APP.currentBuilding}','${floor}')">＋</button>`;
+      html += `</div></div>`;
+    });
+  }
 
   document.getElementById('building-map').innerHTML = html;
   if (APP.mapLastEdit) document.getElementById('last-edit-map').textContent = '最後編輯：' + APP.mapLastEdit;
