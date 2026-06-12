@@ -317,14 +317,92 @@
 
   /* Print styles */
   @media print {
-    header, .tabs, .toolbar, .edit-bar, .meta-bar, .modal-overlay { display: none !important; }
-    body { background: #fff; }
+    @page { size: A4 landscape; margin: 10mm 8mm; }
+
+    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    header, .tabs, .toolbar, .edit-bar, .meta-bar, .modal-overlay,
+    #pw-modal, #room-modal, .add-row-btn { display: none !important; }
+    body { background: #fff; font-size: 11px; }
     main { padding: 0; max-width: 100%; }
-    .phone-table-wrap { box-shadow: none; border: 1px solid #ccc; }
-    thead th { background: #1a5c8a !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    .tab-panel { display: block !important; }
-    .tab-panel#panel-map { display: none !important; }
+
+    /* Show only the active panel */
+    .tab-panel { display: none !important; }
+    .tab-panel.active { display: block !important; }
+
+    /* ── Phone print: 3-column layout like original ── */
+    #panel-phone .phone-table-wrap { box-shadow: none; border: none; }
+    #panel-phone { }
+
+    .print-header {
+      text-align: center; margin-bottom: 6mm;
+    }
+    .print-header h1 { font-size: 16px; font-weight: 700; margin-bottom: 2px; }
+    .print-header p { font-size: 11px; color: #555; }
+
+    /* Split phone data into 3 columns */
+    #phone-print-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 0 4mm;
+      width: 100%;
+    }
+    #phone-print-grid table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 10px;
+      break-inside: avoid-column;
+    }
+    #phone-print-grid table thead th {
+      background: #1a5c8a !important;
+      color: #fff !important;
+      padding: 3px 5px;
+      font-size: 10px;
+      font-weight: 600;
+      border: 1px solid #1a5c8a;
+    }
+    #phone-print-grid table tbody tr { border-bottom: 1px solid #e0e0e0; }
+    #phone-print-grid table tbody td { padding: 2.5px 5px; vertical-align: middle; }
+    #phone-print-grid .p-cat td {
+      background: #dde8f0 !important;
+      font-size: 9px; font-weight: 700;
+      padding: 2px 5px; color: #1a5c8a;
+    }
+    #phone-print-grid .p-ext { font-weight: 700; color: #1a5c8a; font-family: monospace; }
+    #phone-print-grid .p-star { color: #c0560a; font-weight: 700; }
+
+    /* Hide screen phone table in print */
+    #panel-phone .phone-table-wrap,
+    #panel-phone .toolbar { display: none !important; }
+    #phone-print-root { display: block !important; }
+
+    /* ── Map print ── */
+    #panel-map .map-controls { display: none !important; }
+    #map-print-root { display: block !important; }
+    #building-map { display: none !important; }
+
+    .map-print-page { page-break-after: always; }
+    .map-print-page:last-child { page-break-after: avoid; }
+    .map-print-title { font-size: 14px; font-weight: 700; text-align: center; margin-bottom: 4mm; color: #1a5c8a; }
+    .map-print-floor { margin-bottom: 4mm; }
+    .map-print-floor-label {
+      font-size: 10px; font-weight: 700; color: #1a5c8a;
+      border-bottom: 1.5px solid #1a5c8a; margin-bottom: 2mm; padding-bottom: 1mm;
+    }
+    .map-print-rooms { display: flex; flex-wrap: wrap; gap: 2mm; }
+    .map-print-room {
+      border: 1px solid #bbb; border-radius: 3px; padding: 2mm 3mm;
+      min-width: 28mm; font-size: 9px; line-height: 1.4;
+    }
+    .map-print-room.has-class { border-left: 3px solid #1a5c8a; }
+    .map-print-room.has-office { border-left: 3px solid #e07b39; }
+    .map-print-room.has-special { border-left: 3px solid #2e7d52; }
+    .map-print-room .r-name { font-weight: 600; }
+    .map-print-room .r-code { color: #888; font-size: 8px; }
+    .map-print-room .r-ext { color: #1a5c8a; font-weight: 700; font-size: 9px; }
   }
+  /* Hidden on screen, shown on print */
+  #phone-print-root { display: none; }
+  #map-print-root { display: none; }
 
   /* Responsive */
   @media (max-width: 640px) {
@@ -417,6 +495,8 @@
       <span id="phone-count"></span>
       <span id="last-edit-phone"></span>
     </div>
+    <!-- Print-only phone layout -->
+    <div id="phone-print-root"></div>
   </div>
 
   <!-- ── Map Panel ── -->
@@ -437,6 +517,8 @@
       <span></span>
       <span id="last-edit-map"></span>
     </div>
+    <!-- Print-only map layout -->
+    <div id="map-print-root"></div>
   </div>
 </main>
 
@@ -974,6 +1056,104 @@ window.switchBuilding = function(b, el) {
   el.classList.add('active');
   renderMap();
 };
+
+// ─── Print renderers ──────────────────────────────────────
+function buildPhonePrint() {
+  const data = APP.phoneData;
+  const year = APP.currentYear;
+  const lastEdit = APP.phoneLastEdit || '';
+
+  // Group into categories
+  const groups = [];
+  const seen = {};
+  data.forEach(r => {
+    const cat = getCategory(r.title);
+    if (!seen[cat.key]) { seen[cat.key] = true; groups.push({ label: cat.label, key: cat.key, rows: [] }); }
+    groups.find(g => g.key === cat.key).rows.push(r);
+  });
+
+  // Flatten into rows with category headers
+  const allRows = [];
+  groups.forEach(g => {
+    if (!g.rows.length) return;
+    allRows.push({ isCat: true, label: g.label });
+    g.rows.forEach(r => allRows.push({ isCat: false, ...r }));
+  });
+
+  // Split into 3 columns as evenly as possible
+  const total = allRows.length;
+  const colSize = Math.ceil(total / 3);
+  const cols = [allRows.slice(0, colSize), allRows.slice(colSize, colSize * 2), allRows.slice(colSize * 2)];
+
+  function colHtml(rows) {
+    if (!rows.length) return '';
+    let h = `<table><thead><tr><th>#</th><th>職稱</th><th>姓名</th><th>分機</th></tr></thead><tbody>`;
+    rows.forEach(r => {
+      if (r.isCat) {
+        h += `<tr class="p-cat"><td colspan="4">${r.label}</td></tr>`;
+      } else {
+        const isStar = r.name.startsWith('★');
+        const nameHtml = isStar ? `<span class="p-star">★</span>${r.name.slice(1)}` : r.name;
+        h += `<tr><td>${r.id}</td><td>${r.title}</td><td>${nameHtml}</td><td class="p-ext">${r.ext}</td></tr>`;
+      }
+    });
+    h += `</tbody></table>`;
+    return h;
+  }
+
+  return `
+    <div class="print-header">
+      <h1>新莊國小 ${year}學年度 教職員工分機一覽表</h1>
+      <p>★ 學年主任　　最後更新：${lastEdit || '—'}</p>
+    </div>
+    <div id="phone-print-grid">
+      <div>${colHtml(cols[0])}</div>
+      <div>${colHtml(cols[1])}</div>
+      <div>${colHtml(cols[2])}</div>
+    </div>`;
+}
+
+function buildMapPrint() {
+  const year = APP.currentYear;
+  const lastEdit = APP.mapLastEdit || '';
+  const bnames = { A: 'A棟', B: 'B棟（至美樓）', F: 'F棟（至誠樓）' };
+  const floorOrder = ['5F','4F','3F','2F','1F'];
+  let html = '';
+
+  ['A','B','F'].forEach((bkey, bi) => {
+    const bdata = APP.mapData[bkey] || {};
+    html += `<div class="map-print-page">
+      <div class="map-print-title">新莊國小 ${year}學年度 場地配置圖 — ${bnames[bkey]}</div>`;
+    floorOrder.forEach(floor => {
+      const rooms = bdata[floor];
+      if (!rooms || !rooms.length) return;
+      html += `<div class="map-print-floor">
+        <div class="map-print-floor-label">${floor}</div>
+        <div class="map-print-rooms">`;
+      rooms.forEach(room => {
+        const tc = room.type === 'class' ? 'has-class' : room.type === 'office' ? 'has-office' : 'has-special';
+        html += `<div class="map-print-room ${tc}">
+          <div class="r-name">${room.name}</div>
+          ${room.code ? `<div class="r-code">${room.code}</div>` : ''}
+          ${room.ext ? `<div class="r-ext">☎ ${room.ext}</div>` : ''}
+        </div>`;
+      });
+      html += `</div></div>`;
+    });
+    html += `<div style="font-size:9px;color:#999;margin-top:4mm;text-align:right">最後更新：${lastEdit || '—'}</div></div>`;
+  });
+  return html;
+}
+
+// Hook into browser print event to inject print layout
+window.addEventListener('beforeprint', () => {
+  document.getElementById('phone-print-root').innerHTML = buildPhonePrint();
+  document.getElementById('map-print-root').innerHTML = buildMapPrint();
+});
+window.addEventListener('afterprint', () => {
+  document.getElementById('phone-print-root').innerHTML = '';
+  document.getElementById('map-print-root').innerHTML = '';
+});
 
 // ─── Room modal ───────────────────────────────────────────
 window.openRoomEdit = function(building, floor, idx) {
