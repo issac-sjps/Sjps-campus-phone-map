@@ -615,9 +615,11 @@
   <div class="tab-panel" id="panel-map">
     <div class="map-controls">
       <div class="building-tabs">
-        <div class="btab active" onclick="switchBuilding('A', this)">A棟</div>
-        <div class="btab" onclick="switchBuilding('B', this)">B棟（至美樓）</div>
-        <div class="btab" onclick="switchBuilding('F', this)">F棟（至誠樓）</div>
+        <div class="btab active" onclick="switchBuilding('A', this)">新莊樓</div>
+        <div class="btab" onclick="switchBuilding('B', this)">至美樓</div>
+        <div class="btab" onclick="switchBuilding('F', this)">至誠樓</div>
+        <div class="btab" onclick="switchBuilding('C', this)">至善樓</div>
+        <div class="btab" onclick="switchBuilding('Z', this)" style="color:var(--text-light)">至真樓（暫不開放）</div>
       </div>
       <button class="toolbar-btn" style="margin-left:auto" onclick="window.print()">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="5" width="12" height="8" rx="1"/><path d="M5 5V2h6v3M5 12h6"/></svg>
@@ -913,18 +915,22 @@ window.APP = {
   // ── Default map data ──
   defaultMap: {
     "A": {
+      "B1": [
+        {"name":"桌球教室","code":"","ext":"501","type":"special"}
+      ],
       "1F": [
-        {"name":"健康中心","code":"A101","ext":"123\n126","type":"office"},
-        {"name":"學務處","code":"A102","ext":"121\n122\n125","type":"office"},
-        {"name":"總務處","code":"A103","ext":"131\n132\n133\n134\n135\n136\n137","type":"office"},
-        {"name":"教務處","code":"A203","ext":"111\n112\n113\n120\n114","type":"office"},
+        {"name":"健康中心","code":"A101","ext":"123 126","type":"office"},
+        {"name":"學務處","code":"A102","ext":"121 122 125","type":"office"},
+        {"name":"總務處","code":"A103","ext":"131 132 133 134 135 136 137","type":"office"},
+        {"name":"教務處","code":"A203","ext":"111 112 113 120 114","type":"office"},
+        {"name":"人事 會計","code":"A104","ext":"151 152 161","type":"office"},
         {"name":"靜思閱讀書軒","code":"A108","ext":"215","type":"special"},
         {"name":"一年01班","code":"A106","ext":"213","type":"class"},
         {"name":"一年02班","code":"A107","ext":"214","type":"class"},
         {"name":"小川堂","code":"","ext":"","type":"special"}
       ],
       "2F": [
-        {"name":"校長室","code":"A201","ext":"110\n171","type":"office"},
+        {"name":"校長室","code":"A201","ext":"110 171","type":"office"},
         {"name":"會議室","code":"A202","ext":"172","type":"office"},
         {"name":"一年03班","code":"A204","ext":"221","type":"class"},
         {"name":"一年04班","code":"A205","ext":"222","type":"class"},
@@ -934,18 +940,18 @@ window.APP = {
         {"name":"一年07班","code":"A209","ext":"226","type":"class"}
       ],
       "3F": [
-        {"name":"輔導處","code":"A304","ext":"141\n142\n143\n144\n145","type":"office"},
-        {"name":"視聽教室","code":"A303","ext":"174","type":"special"},
         {"name":"校史室","code":"A301","ext":"173","type":"office"},
         {"name":"e化教室1(教務處)","code":"A302","ext":"115","type":"special"},
+        {"name":"視聽教室","code":"A303","ext":"174","type":"special"},
+        {"name":"輔導處","code":"A304","ext":"141 142 143 144 145","type":"office"},
         {"name":"電腦教室2","code":"A402","ext":"116","type":"special"}
       ],
       "4F": [
-        {"name":"家長會","code":"A401","ext":"139\n345\n165\n5","type":"office"},
-        {"name":"圖書室","code":"A403","ext":"117","type":"special"},
+        {"name":"家長會","code":"A401","ext":"139 345 165 5","type":"office"},
         {"name":"電腦教室1","code":"A404","ext":"118","type":"special"},
-        {"name":"主機室","code":"A405","ext":"119","type":"office"},
-        {"name":"準備室","code":"A502","ext":"176","type":"special"}
+        {"name":"e化教室1","code":"A405","ext":"119","type":"special"},
+        {"name":"圖書室","code":"A403","ext":"117","type":"special"},
+        {"name":"主機室","code":"A405","ext":"119","type":"office"}
       ],
       "5F": [
         {"name":"儲藏室","code":"A501","ext":"","type":"special"},
@@ -954,7 +960,8 @@ window.APP = {
         {"name":"點子實驗室","code":"A504","ext":"252","type":"special"},
         {"name":"e化教室3","code":"A505","ext":"253","type":"special"},
         {"name":"e化教室4","code":"A506","ext":"254","type":"special"},
-        {"name":"專科教室3","code":"A507","ext":"255","type":"special"}
+        {"name":"專科教室3","code":"A507","ext":"255","type":"special"},
+        {"name":"準備室","code":"A502","ext":"176","type":"special"}
       ]
     },
     "B": {
@@ -965,6 +972,7 @@ window.APP = {
         {"name":"五年02班","code":"B104","ext":"314","type":"class"},
         {"name":"專科教室4","code":"B105","ext":"315","type":"special"},
         {"name":"體育器材室","code":"B106","ext":"316","type":"special"},
+        {"name":"廚房","code":"B107","ext":"128","type":"office"},
         {"name":"警衛室","code":"","ext":"130","type":"office"}
       ],
       "2F": [
@@ -982,7 +990,6 @@ window.APP = {
         {"name":"六年04班","code":"B304","ext":"334","type":"class"},
         {"name":"六年05班","code":"B305","ext":"335","type":"class"},
         {"name":"六年06班","code":"B306","ext":"336","type":"class"},
-        {"name":"廚房","code":"B107","ext":"128","type":"office"},
         {"name":"幼兒園備餐室","code":"","ext":"129","type":"office"}
       ],
       "4F": [
@@ -1036,14 +1043,14 @@ window.APP = {
         {"name":"一年02班","code":"A206","ext":"214","type":"class"},
         {"name":"靜思閱讀書軒","code":"A108","ext":"215","type":"special"},
         {"name":"專科教室1","code":"A208","ext":"212","type":"special"},
-        {"name":"人事會計","code":"A104","ext":"151\n152\n161","type":"office"}
+        {"name":"人事 會計","code":"A104","ext":"151 152 161","type":"office"}
       ],
       "2F": [
         {"name":"三年01班","code":"A209","ext":"226","type":"class"},
         {"name":"一年03班","code":"A204","ext":"221","type":"class"},
         {"name":"一年04班","code":"A205","ext":"222","type":"class"},
         {"name":"專科教室2","code":"A208","ext":"225","type":"special"},
-        {"name":"資優班","code":"A208","ext":"233\n252","type":"special"}
+        {"name":"資優班","code":"A208","ext":"233 252","type":"special"}
       ],
       "3F": [
         {"name":"資源班1","code":"A305","ext":"231","type":"special"},
@@ -1051,8 +1058,7 @@ window.APP = {
         {"name":"三年02班","code":"A307","ext":"233","type":"class"},
         {"name":"三年03班","code":"A308","ext":"234","type":"class"},
         {"name":"三年04班","code":"A309","ext":"235","type":"class"},
-        {"name":"三年05班","code":"A310","ext":"236","type":"class"},
-        {"name":"資優班2","code":"A306","ext":"232","type":"special"}
+        {"name":"三年05班","code":"A310","ext":"236","type":"class"}
       ],
       "4F": [
         {"name":"三年06班","code":"A408","ext":"243","type":"class"},
@@ -1063,12 +1069,38 @@ window.APP = {
         {"name":"資優班","code":"A407","ext":"242","type":"special"}
       ],
       "5F": [
-        {"name":"音樂教室1","code":"B506","ext":"356","type":"special"},
-        {"name":"準備室","code":"B505","ext":"355","type":"special"},
-        {"name":"音樂教室2","code":"B504","ext":"354","type":"special"},
-        {"name":"自然教室2","code":"B503","ext":"353","type":"special"},
-        {"name":"準備室","code":"B502","ext":"352","type":"special"},
-        {"name":"自然教室1","code":"B501","ext":"351","type":"special"}
+        {"name":"音樂教室2(B506)","code":"B506","ext":"356","type":"special"},
+        {"name":"準備室(B505)","code":"B505","ext":"355","type":"special"},
+        {"name":"音樂教室1(B504)","code":"B504","ext":"354","type":"special"},
+        {"name":"自然教室2(B503)","code":"B503","ext":"353","type":"special"},
+        {"name":"準備室(B502)","code":"B502","ext":"352","type":"special"},
+        {"name":"自然教室1(B501)","code":"B501","ext":"351","type":"special"}
+      ]
+    },
+    "Z": {
+      "1F": [
+        {"name":"新莊非營利幼兒園","code":"","ext":"07-3500104","type":"special"}
+      ],
+      "2F": [
+        {"name":"志工園教室","code":"C205","ext":"524","type":"special"},
+        {"name":"教室","code":"C204","ext":"523","type":"class"},
+        {"name":"教室","code":"C203","ext":"522","type":"class"},
+        {"name":"教室","code":"C202","ext":"521","type":"class"},
+        {"name":"資優班","code":"C201","ext":"525","type":"special"}
+      ],
+      "3F": [
+        {"name":"教室","code":"C305","ext":"534","type":"class"},
+        {"name":"教室","code":"C304","ext":"533","type":"class"},
+        {"name":"教室","code":"C303","ext":"532","type":"class"},
+        {"name":"教室","code":"C302","ext":"531","type":"class"},
+        {"name":"資優班","code":"C301","ext":"535","type":"special"}
+      ],
+      "4F": [
+        {"name":"教室","code":"C405","ext":"544","type":"class"},
+        {"name":"教室","code":"C404","ext":"543","type":"class"},
+        {"name":"教室","code":"C403","ext":"542","type":"class"},
+        {"name":"教室","code":"C402","ext":"541","type":"class"},
+        {"name":"資優班","code":"C401","ext":"545","type":"special"}
       ]
     }
   }
@@ -1238,7 +1270,7 @@ window.addRowInCat = function(catKey) {
 // ─── Map render ───────────────────────────────────────────
 window.renderMap = function() {
   const bdata = APP.mapData[APP.currentBuilding] || {};
-  const bnames = { A: 'A棟', B: 'B棟（至美樓）', F: 'F棟（至誠樓）' };
+  const bnames = { A: '新莊樓', B: '至美樓', F: '至誠樓', C: '至善樓', Z: '至真樓（暫不開放）' };
   let html = `<div class="building-title">${bnames[APP.currentBuilding]}</div>`;
 
   const floorOrder = ['5F','4F','3F','2F','1F'];
@@ -1339,11 +1371,11 @@ function buildPhonePrint() {
 function buildMapPrint() {
   const year = APP.currentYear;
   const lastEdit = APP.mapLastEdit || '';
-  const bnames = { A: 'A棟', B: 'B棟（至美樓）', F: 'F棟（至誠樓）' };
+  const bnames = { A: '新莊樓', B: '至美樓', F: '至誠樓', C: '至善樓', Z: '至真樓（暫不開放）' };
   const floorOrder = ['5F','4F','3F','2F','1F'];
   let html = '';
 
-  ['A','B','F'].forEach((bkey, bi) => {
+  ['A','B','F','C'].forEach((bkey, bi) => {
     const bdata = APP.mapData[bkey] || {};
     html += `<div class="map-print-page">
       <div class="map-print-title">新莊國小 ${year}學年度 場地配置圖 — ${bnames[bkey]}</div>`;
