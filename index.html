@@ -232,26 +232,27 @@
   /* 5-column grid layout for phone table */
   .phone-grid {
     display: grid;
-    grid-template-columns: repeat(6, 1fr);
+    grid-template-columns: repeat(6, minmax(0, 1fr));
     gap: 0 1px;
     background: var(--border);
   }
   .phone-col {
     background: var(--surface);
-    overflow: hidden;
+    overflow: visible;
+    min-width: 0;
   }
   .phone-col:first-child { border-radius: var(--radius-lg) 0 0 var(--radius-lg); }
   .phone-col:last-child  { border-radius: 0 var(--radius-lg) var(--radius-lg) 0; }
-  table { width: 100%; border-collapse: collapse; }
+  table { width: 100%; border-collapse: collapse; table-layout: auto; }
   thead th {
     background: var(--primary); color: #fff;
-    padding: 7px 8px; text-align: left;
-    font-size: 11px; font-weight: 600;
+    padding: 7px 6px; text-align: left;
+    font-size: 11px; font-weight: 600; white-space: nowrap;
   }
   tbody tr { border-bottom: 1px solid #edf0f4; }
   tbody tr:last-child { border-bottom: none; }
   tbody tr:hover { background: var(--primary-light); }
-  td { padding: 4px 8px; font-size: 12px; }
+  td { padding: 4px 6px; font-size: 12px; white-space: nowrap; overflow: hidden; }
   td.id-col { color: var(--text-light); font-size: 10px; width: 28px; }
   td.id-star-cell { cursor: default; }
   body.edit-mode td.id-star-cell { cursor: pointer; }
