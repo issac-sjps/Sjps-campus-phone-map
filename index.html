@@ -232,7 +232,7 @@
   /* 5-column grid layout for phone table */
   .phone-grid {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(6, 1fr);
     gap: 0 1px;
     background: var(--border);
   }
@@ -497,8 +497,8 @@
     /* Split phone data into 3 columns */
     #phone-print-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
-      gap: 0 3mm;
+      grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr;
+      gap: 0 2mm;
       width: 100%;
     }
     #phone-print-grid table {
@@ -656,6 +656,9 @@
         </div>
         <div class="phone-col" id="phone-col-4">
           <table><thead><tr><th title="點擊切換★學年主任">#</th><th>職稱</th><th>姓名</th><th>分機</th></tr></thead><tbody id="phone-tbody-4"></tbody></table>
+        </div>
+        <div class="phone-col" id="phone-col-5">
+          <table><thead><tr><th title="點擊切換★學年主任">#</th><th>職稱</th><th>姓名</th><th>分機</th></tr></thead><tbody id="phone-tbody-5"></tbody></table>
         </div>
       </div>
       <button class="add-row-btn" onclick="addRow()">＋ 新增一筆（其他）</button>
@@ -1028,151 +1031,22 @@ window.APP = {
       ]
     },
     "B": {
-      "1F": [
-        {"name":"二年01班","code":"B101","ext":"311","type":"class"},
-        {"name":"二年02班","code":"B102","ext":"312","type":"class"},
-        {"name":"五年01班","code":"B103","ext":"313","type":"class"},
-        {"name":"五年02班","code":"B104","ext":"314","type":"class"},
-        {"name":"專科教室4","code":"B105","ext":"315","type":"special"},
-        {"name":"體育器材室","code":"B106","ext":"316","type":"special"},
-        {"name":"廚房","code":"B107","ext":"128","type":"office"},
-        {"name":"警衛室","code":"","ext":"130","type":"office"}
-      ],
-      "2F": [
-        {"name":"資源班3","code":"B201","ext":"321","type":"special"},
-        {"name":"二年03班","code":"B202","ext":"322","type":"class"},
-        {"name":"二年04班","code":"B203","ext":"323","type":"class"},
-        {"name":"二年05班","code":"B204","ext":"324","type":"class"},
-        {"name":"二年06班","code":"B205","ext":"325","type":"class"},
-        {"name":"二年07班","code":"B206","ext":"326","type":"class"}
-      ],
-      "3F": [
-        {"name":"六年01班","code":"B301","ext":"331","type":"class"},
-        {"name":"六年02班","code":"B302","ext":"332","type":"class"},
-        {"name":"六年03班","code":"B303","ext":"333","type":"class"},
-        {"name":"六年04班","code":"B304","ext":"334","type":"class"},
-        {"name":"六年05班","code":"B305","ext":"335","type":"class"},
-        {"name":"六年06班","code":"B306","ext":"336","type":"class"},
-        {"name":"幼兒園備餐室","code":"","ext":"129","type":"office"}
-      ],
-      "4F": [
-        {"name":"五年03班","code":"B401","ext":"341","type":"class"},
-        {"name":"五年04班","code":"B402","ext":"342","type":"class"},
-        {"name":"五年05班","code":"B403","ext":"343","type":"class"},
-        {"name":"五年06班","code":"B404","ext":"344","type":"class"},
-        {"name":"五年07班","code":"B405","ext":"345","type":"class"},
-        {"name":"五年08班","code":"B406","ext":"346","type":"class"}
-      ],
-      "5F": [
-        {"name":"自然教室1","code":"B501","ext":"351","type":"special"},
-        {"name":"準備室","code":"B502","ext":"352","type":"special"},
-        {"name":"自然教室2","code":"B503","ext":"353","type":"special"},
-        {"name":"音樂教室1","code":"B504","ext":"354","type":"special"},
-        {"name":"準備室","code":"B505","ext":"355","type":"special"},
-        {"name":"音樂教室2","code":"B506","ext":"356","type":"special"}
-      ]
-    },
-    "F": {
-      "1F": [
-        {"name":"教師備課室","code":"F101","ext":"811","type":"office"},
-        {"name":"附幼辦公室","code":"F102","ext":"812","type":"office"},
-        {"name":"幼稚班","code":"F103","ext":"813","type":"class"},
-        {"name":"幼稚班","code":"F104","ext":"814","type":"class"}
-      ],
-      "2F": [
-        {"name":"四年01班","code":"F201","ext":"821","type":"class"},
-        {"name":"四年02班","code":"F202","ext":"822","type":"class"},
-        {"name":"四年03班","code":"F203","ext":"823","type":"class"},
-        {"name":"四年04班","code":"F204","ext":"824","type":"class"}
-      ],
-      "3F": [
-        {"name":"四年05班","code":"F301","ext":"831","type":"class"},
-        {"name":"四年06班","code":"F302","ext":"832","type":"class"},
-        {"name":"四年07班","code":"F303","ext":"833","type":"class"},
-        {"name":"四年08班","code":"F304","ext":"834","type":"class"},
-        {"name":"學前特教巡迴班","code":"","ext":"147","type":"special"}
-      ],
-      "4F": [
-        {"name":"樂活教室","code":"F401","ext":"841","type":"special"},
-        {"name":"六年07班","code":"F402","ext":"842","type":"class"},
-        {"name":"六年08班","code":"F403","ext":"843","type":"class"},
-        {"name":"六年09班","code":"F404","ext":"844","type":"class"},
-        {"name":"學前特教巡迴班","code":"","ext":"147","type":"special"}
-      ]
+      "1F": [{"name":"二年01班","code":"B101","ext":"311","type":"class"},{"name":"二年02班","code":"B102","ext":"312","type":"class"},{"name":"五年01班","code":"B103","ext":"313","type":"class"},{"name":"五年02班","code":"B104","ext":"314","type":"class"},{"name":"專科教室4","code":"B105","ext":"315","type":"special"},{"name":"體育器材室","code":"B106","ext":"316","type":"special"}],
+      "2F": [{"name":"資源班3","code":"B201","ext":"321","type":"special"},{"name":"二年03班","code":"B202","ext":"322","type":"class"},{"name":"二年04班","code":"B203","ext":"323","type":"class"},{"name":"二年05班","code":"B204","ext":"324","type":"class"},{"name":"二年06班","code":"B205","ext":"325","type":"class"},{"name":"二年07班","code":"B206","ext":"326","type":"class"}],
+      "3F": [{"name":"六年01班","code":"B301","ext":"331","type":"class"},{"name":"六年02班","code":"B302","ext":"332","type":"class"},{"name":"六年03班","code":"B303","ext":"333","type":"class"},{"name":"六年04班","code":"B304","ext":"334","type":"class"},{"name":"六年05班","code":"B305","ext":"335","type":"class"},{"name":"六年06班","code":"B306","ext":"336","type":"class"}],
+      "4F": [{"name":"五年03班","code":"B401","ext":"341","type":"class"},{"name":"五年04班","code":"B402","ext":"342","type":"class"},{"name":"五年05班","code":"B403","ext":"343","type":"class"},{"name":"五年06班","code":"B404","ext":"344","type":"class"},{"name":"五年07班","code":"B405","ext":"345","type":"class"},{"name":"五年08班","code":"B406","ext":"346","type":"class"}],
+      "5F": [{"name":"自然教室1","code":"B501","ext":"351","type":"special"},{"name":"準備室","code":"B502","ext":"352","type":"special"},{"name":"自然教室2","code":"B503","ext":"353","type":"special"},{"name":"音樂教室1","code":"B504","ext":"354","type":"special"},{"name":"準備室","code":"B505","ext":"355","type":"special"},{"name":"音樂教室2","code":"B506","ext":"356","type":"special"}]
     },
     "C": {
-      "1F": [
-        {"name":"一年01班","code":"A207","ext":"213","type":"class"},
-        {"name":"一年02班","code":"A206","ext":"214","type":"class"},
-        {"name":"靜思閱讀書軒","code":"A108","ext":"215","type":"special"},
-        {"name":"專科教室1","code":"A208","ext":"212","type":"special"},
-        {"name":"人事 會計","code":"A104","ext":"151 152 161","type":"office"}
-      ],
-      "2F": [
-        {"name":"三年01班","code":"A209","ext":"226","type":"class"},
-        {"name":"一年03班","code":"A204","ext":"221","type":"class"},
-        {"name":"一年04班","code":"A205","ext":"222","type":"class"},
-        {"name":"專科教室2","code":"A208","ext":"225","type":"special"},
-        {"name":"資優班","code":"A208","ext":"233 252","type":"special"}
-      ],
-      "3F": [
-        {"name":"資源班1","code":"A305","ext":"231","type":"special"},
-        {"name":"資源班2","code":"A306","ext":"232","type":"special"},
-        {"name":"三年02班","code":"A307","ext":"233","type":"class"},
-        {"name":"三年03班","code":"A308","ext":"234","type":"class"},
-        {"name":"三年04班","code":"A309","ext":"235","type":"class"},
-        {"name":"三年05班","code":"A310","ext":"236","type":"class"}
-      ],
-      "4F": [
-        {"name":"三年06班","code":"A408","ext":"243","type":"class"},
-        {"name":"三年07班","code":"A409","ext":"244","type":"class"},
-        {"name":"三年08班","code":"A410","ext":"245","type":"class"},
-        {"name":"三年09班","code":"A411","ext":"246","type":"class"},
-        {"name":"e化教室5","code":"A406","ext":"241","type":"special"},
-        {"name":"資優班","code":"A407","ext":"242","type":"special"}
-      ],
-      "5F": [
-        {"name":"音樂教室2(B506)","code":"B506","ext":"356","type":"special"},
-        {"name":"準備室(B505)","code":"B505","ext":"355","type":"special"},
-        {"name":"音樂教室1(B504)","code":"B504","ext":"354","type":"special"},
-        {"name":"自然教室2(B503)","code":"B503","ext":"353","type":"special"},
-        {"name":"準備室(B502)","code":"B502","ext":"352","type":"special"},
-        {"name":"自然教室1(B501)","code":"B501","ext":"351","type":"special"}
-      ]
+      "1F": [{"name":"人事 會計","code":"A104","ext":"151 152 161","type":"office"},{"name":"專科教室1","code":"A105","ext":"212","type":"special"},{"name":"小川堂","code":"","ext":"","type":"special"},{"name":"一年01班","code":"A106","ext":"213","type":"class"},{"name":"一年02班","code":"A107","ext":"214","type":"class"},{"name":"靜思閱讀書軒","code":"A108","ext":"215","type":"special"}],
+      "2F": [{"name":"專科教室2","code":"A208","ext":"225","type":"special"},{"name":"一年03班","code":"A204","ext":"221","type":"class"},{"name":"一年04班","code":"A205","ext":"222","type":"class"},{"name":"一年05班","code":"A206","ext":"223","type":"class"},{"name":"一年06班","code":"A207","ext":"224","type":"class"},{"name":"三年01班","code":"A209","ext":"226","type":"class"}],
+      "3F": [{"name":"資源班1","code":"A305","ext":"231","type":"special"},{"name":"資源班2","code":"A306","ext":"232","type":"special"},{"name":"三年02班","code":"A307","ext":"233","type":"class"},{"name":"三年03班","code":"A308","ext":"234","type":"class"},{"name":"三年04班","code":"A309","ext":"235","type":"class"},{"name":"三年05班","code":"A310","ext":"236","type":"class"}],
+      "4F": [{"name":"e化教室5","code":"A406","ext":"241","type":"special"},{"name":"資優班","code":"A407","ext":"242","type":"special"},{"name":"三年06班","code":"A408","ext":"243","type":"class"},{"name":"三年07班","code":"A409","ext":"244","type":"class"},{"name":"三年08班","code":"A410","ext":"245","type":"class"},{"name":"三年09班","code":"A411","ext":"246","type":"class"}],
+      "5F": [{"name":"e化教室2","code":"A503","ext":"251","type":"special"},{"name":"黏土實驗室","code":"A504","ext":"252","type":"special"},{"name":"e化教室3","code":"A505","ext":"253","type":"special"},{"name":"e化教室4","code":"A506","ext":"254","type":"special"},{"name":"專科教室3","code":"A507","ext":"255","type":"special"}]
     },
-    "Z": {
-      "1F": [
-        {"name":"新莊非營利幼兒園","code":"","ext":"07-3500104","type":"special"}
-      ],
-      "2F": [
-        {"name":"志工園教室","code":"C205","ext":"524","type":"special"},
-        {"name":"教室","code":"C204","ext":"523","type":"class"},
-        {"name":"教室","code":"C203","ext":"522","type":"class"},
-        {"name":"教室","code":"C202","ext":"521","type":"class"},
-        {"name":"資優班","code":"C201","ext":"525","type":"special"}
-      ],
-      "3F": [
-        {"name":"教室","code":"C305","ext":"534","type":"class"},
-        {"name":"教室","code":"C304","ext":"533","type":"class"},
-        {"name":"教室","code":"C303","ext":"532","type":"class"},
-        {"name":"教室","code":"C302","ext":"531","type":"class"},
-        {"name":"資優班","code":"C301","ext":"535","type":"special"}
-      ],
-      "4F": [
-        {"name":"教室","code":"C405","ext":"544","type":"class"},
-        {"name":"教室","code":"C404","ext":"543","type":"class"},
-        {"name":"教室","code":"C403","ext":"542","type":"class"},
-        {"name":"教室","code":"C402","ext":"541","type":"class"},
-        {"name":"資優班","code":"C401","ext":"545","type":"special"}
-      ]
-    },
+
     "X": {
-      "其他": [
-        {"name":"廚房","code":"B107","ext":"128","type":"office"},
-        {"name":"幼兒園備餐室","code":"","ext":"129","type":"office"},
-        {"name":"警衛室","code":"","ext":"130","type":"office"},
-        {"name":"川　堂","code":"","ext":"","type":"special"}
-      ]
+      "其他": [{"name":"廚房","code":"B107","ext":"128","type":"office"},{"name":"幼兒園備餐室","code":"","ext":"129","type":"office"},{"name":"警衛室","code":"","ext":"130","type":"office"},{"name":"川　堂","code":"","ext":"","type":"special"}]
     }
   }
 };
@@ -1226,13 +1100,14 @@ window.renderPhone = function(filter = '') {
 
   // Distribute evenly across 5 columns
   const total = flat.length;
-  const colSize = Math.ceil(total / 5);
+  const colSize = Math.ceil(total / 6);
   const cols = [
     flat.slice(0, colSize),
     flat.slice(colSize, colSize * 2),
     flat.slice(colSize * 2, colSize * 3),
     flat.slice(colSize * 3, colSize * 4),
-    flat.slice(colSize * 4)
+    flat.slice(colSize * 4, colSize * 5),
+    flat.slice(colSize * 5)
   ];
 
   function rowHtml(item) {
@@ -1515,8 +1390,8 @@ function buildPhonePrint() {
 
   // Split into 4 columns as evenly as possible
   const total = allRows.length;
-  const colSize = Math.ceil(total / 5);
-  const cols = [allRows.slice(0, colSize), allRows.slice(colSize, colSize * 2), allRows.slice(colSize * 2, colSize * 3), allRows.slice(colSize * 3, colSize * 4), allRows.slice(colSize * 4)];
+  const colSize = Math.ceil(total / 6);
+  const cols = [allRows.slice(0, colSize), allRows.slice(colSize, colSize * 2), allRows.slice(colSize * 2, colSize * 3), allRows.slice(colSize * 3, colSize * 4), allRows.slice(colSize * 4, colSize * 5), allRows.slice(colSize * 5)];
 
   function colHtml(rows) {
     if (!rows.length) return '';
@@ -1545,6 +1420,7 @@ function buildPhonePrint() {
       <div>${colHtml(cols[2])}</div>
       <div>${colHtml(cols[3])}</div>
       <div>${colHtml(cols[4])}</div>
+      <div>${colHtml(cols[5])}</div>
     </div>`;
 }
 
