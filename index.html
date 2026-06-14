@@ -1142,7 +1142,7 @@ window.renderPhone = function(filter = '') {
     return `<tr data-id="${item.id}">
       <td class="id-col id-star-cell" onclick="toggleStar('${item.id}')" style="${idStyle}" title="編輯模式下可標記學年主任">${idDisplay}</td>
       <td class="editable" onclick="editCell(this,'title')">${item.title}</td>
-      <td class="name-col editable copy-name" onclick="handleNameClick(event, this, '${item.id}', '${rawName.replace(/'/g,"\\'")}'">${displayName}</td>
+      <td class="name-col editable copy-name" data-raw-name="${rawName.replace(/"/g,'&quot;')}" data-record-id="${item.id}" onclick="handleNameClick(event,this)">${displayName}</td>
       <td class="ext-col editable" onclick="editCell(this,'ext')">${item.ext}</td>
     </tr>`;
   }
@@ -1162,14 +1162,14 @@ window.filterPhone = function() {
 };
 
 // Click name: edit-mode → edit cell; view-mode → copy name
-window.handleNameClick = function(e, td, id, name) {
+window.handleNameClick = function(e, td) {
   if (APP.editMode) {
     editCell(td, 'name');
   } else {
+    const name = td.dataset.rawName || td.textContent.replace('★','').trim();
     navigator.clipboard.writeText(name).then(() => {
       showToast(`✅ 已複製「${name}」`);
     }).catch(() => {
-      // fallback
       const ta = document.createElement('textarea');
       ta.value = name; ta.style.position = 'fixed'; ta.style.opacity = '0';
       document.body.appendChild(ta); ta.select();
