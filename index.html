@@ -418,8 +418,8 @@
 
   .room-card {
     border: 2px solid var(--border); border-radius: 7px;
-    padding: 5px 8px;
-    width: 100px; height: 68px;
+    padding: 5px 7px;
+    width: 112px;
     background: var(--surface); cursor: default;
     transition: all 0.15s; position: relative;
     flex-shrink: 0; box-sizing: border-box;
@@ -432,14 +432,22 @@
 
   .room-name { font-size: 11px; font-weight: 600; color: var(--text); line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .room-code { font-size: 10px; color: var(--text-light); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .room-ext {
-    font-size: 10px; font-weight: 600; color: var(--primary);
-    margin-top: 2px; font-family: monospace;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    line-height: 1.4;
+
+  /* Ext grid: up to 3 per row, fixed 2 rows = 6 slots max shown */
+  .room-ext-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px 2px;
+    margin-top: 3px;
   }
-  .room-card.has-office .room-ext { color: #a04010; }
-  .room-card.has-special .room-ext { color: var(--success); }
+  .room-ext-item {
+    font-size: 10px; font-weight: 600; font-family: monospace;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    line-height: 1.5;
+  }
+  .room-card.has-class   .room-ext-item { color: var(--primary); }
+  .room-card.has-office  .room-ext-item { color: #a04010; }
+  .room-card.has-special .room-ext-item { color: var(--success); }
 
   body.edit-mode .room-card { cursor: pointer; }
   body.edit-mode .room-card:hover { opacity: 0.82; box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
@@ -448,12 +456,13 @@
   .add-room-btn {
     display: none;
     border: 2px dashed var(--border); border-radius: 7px;
-    padding: 5px 8px; width: 100px; height: 68px;
+    padding: 5px 7px; width: 112px;
     background: none; color: var(--text-light);
     font-size: 11px; cursor: pointer; transition: all 0.15s;
     flex-shrink: 0; box-sizing: border-box;
+    min-height: 68px; align-items: center; justify-content: center;
   }
-  body.edit-mode .add-room-btn { display: flex; align-items: center; justify-content: center; gap: 3px; }
+  body.edit-mode .add-room-btn { display: flex; }
   body.edit-mode .add-room-btn:hover { border-color: var(--accent); color: var(--accent); background: #fffdf8; }
 
   /* Room edit modal */
@@ -1295,12 +1304,20 @@ window.renderMap = function() {
   function roomCardHtml(room, floor, idx) {
     const typeClass = room.type === 'class' ? 'has-class' : room.type === 'office' ? 'has-office' : 'has-special';
     const dragAttrs = `draggable="true" ondragstart="dragStart(event,'${b}','${floor}',${idx})" ondragover="dragOver(event)" ondrop="dropRoom(event,'${b}','${floor}',${idx})" ondragend="dragEnd(event)"`;
-    // Format ext: split by any delimiter, join with comma on one line
-    const extDisplay = room.ext ? room.ext.split(/[\s,、\n]+/).filter(Boolean).join('、') : '';
+    // Format ext: split into individual numbers
+    const extNums = room.ext ? room.ext.split(/[\s,、\n]+/).filter(Boolean) : [];
+    // Pad to multiple of 3 (max 6 shown), fill blanks for alignment
+    const slots = [];
+    for (let i = 0; i < Math.min(extNums.length, 6); i++) slots.push(extNums[i]);
+    // Fill remaining slots to next multiple of 3 for grid alignment
+    while (slots.length % 3 !== 0) slots.push('');
+    const extHtml = slots.length > 0
+      ? `<div class="room-ext-grid">${slots.map(n => `<span class="room-ext-item">${n ? '☎'+n : ''}</span>`).join('')}</div>`
+      : '';
     return `<div class="room-card ${typeClass}" ${dragAttrs} onclick="openRoomEdit('${b}','${floor}',${idx})">
       <div class="room-name">${room.name || '（未命名）'}</div>
       ${room.code ? `<div class="room-code">${room.code}</div>` : ''}
-      ${extDisplay ? `<div class="room-ext">☎ ${extDisplay}</div>` : ''}
+      ${extHtml}
       <button class="room-del-btn" onclick="deleteRoom(event,'${b}','${floor}',${idx})" title="刪除">✕</button>
     </div>`;
   }
