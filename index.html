@@ -658,6 +658,15 @@
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M9 2H4a1 1 0 00-1 1v10a1 1 0 001 1h8a1 1 0 001-1V6L9 2z"/><path d="M9 2v4h4M6 9l4 4M10 9l-4 4"/></svg>
         下載 Excel
       </button>
+      <button class="header-search-btn" onclick="exportJSON()" title="匯出資料為 JSON">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M9 2H4a1 1 0 00-1 1v10a1 1 0 001 1h8a1 1 0 001-1V6L9 2z"/><path d="M9 2v4h4"/><path d="M5 10h6M5 12.5h4"/></svg>
+        匯出 JSON
+      </button>
+      <label class="header-search-btn" style="cursor:pointer" title="匯入 JSON 覆蓋資料">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M9 2H4a1 1 0 00-1 1v10a1 1 0 001 1h8a1 1 0 001-1V6L9 2z"/><path d="M9 2v4h4"/><path d="M8 14V8m-2.5 3.5L8 14l2.5-2.5"/></svg>
+        匯入 JSON
+        <input type="file" accept=".json" onchange="importJSON(event)" style="display:none">
+      </label>
     </div>
     <div class="header-right">
       <button id="edit-btn" onclick="toggleEdit()">
@@ -1746,6 +1755,59 @@ window.exportExcel = function() {
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, `${APP.currentYear}學年度分機`);
   XLSX.writeFile(wb, `新莊國小${APP.currentYear}學年度分機一覽表.xlsx`);
+};
+
+// ─── Export / Import JSON ─────────────────────────────────
+window.exportJSON = function() {
+  const payload = {
+    year: APP.currentYear,
+    exportedAt: new Date().toLocaleString('zh-TW', {timeZone:'Asia/Taipei'}),
+    phone: APP.phoneData,
+    map: APP.mapData
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type: 'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `sjps_${APP.currentYear}_data.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast(`✅ 已匯出 sjps_${APP.currentYear}_data.json`);
+};
+
+window.importJSON = function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    try {
+      const data = JSON.parse(ev.target.result);
+      // Validate structure
+      if (!data.phone || !data.map) {
+        alert('JSON 格式錯誤：缺少 phone 或 map 欄位');
+        return;
+      }
+      const importYear = data.year || APP.currentYear;
+      if (!confirm(`確定要用此 JSON 覆蓋 ${importYear}學年度的所有資料？\n（分機：${data.phone.length} 筆，場地：${Object.keys(data.map).length} 棟）`)) {
+        e.target.value = ''; return;
+      }
+      APP.phoneData = data.phone;
+      APP.mapData = data.map;
+      if (data.year && !APP.years.includes(data.year)) {
+        APP.years.push(data.year);
+      }
+      APP.currentYear = importYear;
+      document.getElementById('current-year-label').textContent = importYear + '學年度';
+      APP.pendingChanges = true;
+      renderPhone();
+      renderMap();
+      showToast(`✅ 匯入完成（${importYear}學年度），請記得儲存到 Firebase`);
+    } catch(err) {
+      alert('JSON 解析失敗：' + err.message);
+    }
+    e.target.value = ''; // reset file input
+  };
+  reader.readAsText(file);
 };
 
 // ─── Init ─────────────────────────────────────────────────
