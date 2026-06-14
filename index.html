@@ -257,6 +257,15 @@
   td.id-star-cell { cursor: default; }
   body.edit-mode td.id-star-cell { cursor: pointer; }
   body.edit-mode td.id-star-cell:hover { background: #fff8e1; }
+  /* Copy name on click (view mode) */
+  td.copy-name { cursor: copy; }
+  body.edit-mode td.copy-name { cursor: pointer; }
+  td.copy-name:hover { background: var(--primary-light); }
+  td.copy-name:hover::after {
+    content: '⎘';
+    font-size: 10px; color: var(--primary-mid);
+    margin-left: 3px; opacity: 0.7;
+  }
   td.ext-col { font-weight: 700; color: var(--primary); font-family: monospace; font-size: 12px; white-space: nowrap; }
   td.name-col .star { color: var(--accent); font-size: 10px; margin-right: 1px; }
 
@@ -392,16 +401,19 @@
   .rooms-grid { display: flex; flex-wrap: wrap; gap: 4px; }
   .room-card {
     border: 1.5px solid var(--border); border-radius: 6px;
-    padding: 5px 8px; min-width: 88px; max-width: 130px;
+    padding: 5px 8px;
+    width: 100px; height: 62px;
     background: var(--surface); cursor: default;
     transition: all 0.15s; position: relative;
+    overflow: hidden; flex-shrink: 0;
+    box-sizing: border-box;
   }
   .room-card.has-class { border-left: 3px solid var(--primary); }
   .room-card.has-office { border-left: 3px solid var(--accent); }
   .room-card.has-special { border-left: 3px solid var(--success); }
-  .room-name { font-size: 11px; font-weight: 500; color: var(--text); line-height: 1.3; }
-  .room-code { font-size: 10px; color: var(--text-light); margin-top: 1px; }
-  .room-ext { font-size: 11px; font-weight: 600; color: var(--primary); margin-top: 2px; font-family: monospace; }
+  .room-name { font-size: 11px; font-weight: 500; color: var(--text); line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .room-code { font-size: 10px; color: var(--text-light); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .room-ext { font-size: 11px; font-weight: 600; color: var(--primary); margin-top: 2px; font-family: monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
   body.edit-mode .room-card { cursor: pointer; }
   body.edit-mode .room-card:hover { border-color: var(--accent); background: #fffdf8; box-shadow: 0 2px 8px rgba(224,123,57,0.15); }
@@ -410,9 +422,10 @@
   .add-room-btn {
     display: none;
     border: 1.5px dashed var(--border); border-radius: 6px;
-    padding: 5px 8px; min-width: 72px;
+    padding: 5px 8px; width: 100px; height: 62px;
     background: none; color: var(--text-light);
     font-size: 11px; cursor: pointer; transition: all 0.15s;
+    flex-shrink: 0; box-sizing: border-box;
   }
   body.edit-mode .add-room-btn { display: flex; align-items: center; justify-content: center; gap: 3px; }
   body.edit-mode .add-room-btn:hover { border-color: var(--accent); color: var(--accent); background: #fffdf8; }
@@ -1123,12 +1136,13 @@ window.renderPhone = function(filter = '') {
     const isStar = item.name.startsWith('★');
     const displayName = isStar ?
       `<span class="star">★</span>${item.name.slice(1)}` : item.name;
+    const rawName = isStar ? item.name.slice(1) : item.name;
     const idDisplay = isStar ? '★' : item.id;
     const idStyle = isStar ? 'color:var(--accent);font-weight:700' : 'color:var(--text-light)';
     return `<tr data-id="${item.id}">
       <td class="id-col id-star-cell" onclick="toggleStar('${item.id}')" style="${idStyle}" title="編輯模式下可標記學年主任">${idDisplay}</td>
       <td class="editable" onclick="editCell(this,'title')">${item.title}</td>
-      <td class="name-col editable" onclick="editCell(this,'name')">${displayName}</td>
+      <td class="name-col editable copy-name" onclick="handleNameClick(event, this, '${item.id}', '${rawName.replace(/'/g,"\\'")}'">${displayName}</td>
       <td class="ext-col editable" onclick="editCell(this,'ext')">${item.ext}</td>
     </tr>`;
   }
@@ -1145,6 +1159,25 @@ window.renderPhone = function(filter = '') {
 
 window.filterPhone = function() {
   renderPhone(document.getElementById('phone-search').value);
+};
+
+// Click name: edit-mode → edit cell; view-mode → copy name
+window.handleNameClick = function(e, td, id, name) {
+  if (APP.editMode) {
+    editCell(td, 'name');
+  } else {
+    navigator.clipboard.writeText(name).then(() => {
+      showToast(`✅ 已複製「${name}」`);
+    }).catch(() => {
+      // fallback
+      const ta = document.createElement('textarea');
+      ta.value = name; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      showToast(`✅ 已複製「${name}」`);
+    });
+  }
 };
 
 window.toggleStar = function(id) {
@@ -1223,7 +1256,7 @@ window.renderMap = function() {
   const b = APP.currentBuilding;
   const bdata = APP.mapData[b] || {};
   if (!APP.mapData[b]) APP.mapData[b] = {};
-  const isRotated = b === 'A';
+  const isRotated = false;
 
   // Get all floors that exist, sorted by display order (or alphabetically for custom ones)
   const knownOrder = ['5F','4F','3F','2F','1F','B1','其他'];
