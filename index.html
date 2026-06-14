@@ -1237,20 +1237,21 @@ window.dropRoom = function(e, targetB, targetFloor, targetIdx) {
   APP._drag = null;
   if (srcB === targetB && srcFloor === targetFloor && srcIdx === targetIdx) return;
 
-  // Remove from source
-  const room = APP.mapData[srcB][srcFloor].splice(srcIdx, 1)[0];
+  // 一對一互換
   if (!APP.mapData[targetB][targetFloor]) APP.mapData[targetB][targetFloor] = [];
 
-  // Insert at target position
-  let insertAt = targetIdx;
-  // If same floor, adjust for removal
-  if (srcB === targetB && srcFloor === targetFloor && srcIdx < targetIdx) insertAt--;
-  if (insertAt < 0) insertAt = 0;
-  if (insertAt >= APP.mapData[targetB][targetFloor].length) {
+  if (targetIdx >= APP.mapData[targetB][targetFloor].length) {
+    // 拖到空白區域（＋按鈕上）→ 移到最後
+    const room = APP.mapData[srcB][srcFloor].splice(srcIdx, 1)[0];
     APP.mapData[targetB][targetFloor].push(room);
   } else {
-    APP.mapData[targetB][targetFloor].splice(insertAt, 0, room);
+    // 互換兩個位置
+    const srcRoom = APP.mapData[srcB][srcFloor][srcIdx];
+    const tgtRoom = APP.mapData[targetB][targetFloor][targetIdx];
+    APP.mapData[targetB][targetFloor][targetIdx] = srcRoom;
+    APP.mapData[srcB][srcFloor][srcIdx] = tgtRoom;
   }
+
   APP.pendingChanges = true;
   renderMap();
 };
