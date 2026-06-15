@@ -121,6 +121,27 @@
   .tab-legend span { display: flex; align-items: center; gap: 4px; }
   .tab-legend .dot { width: 8px; height: 8px; border-radius: 2px; display: inline-block; flex-shrink: 0; }
 
+  /* ── Map search ── */
+  .map-search-bar {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 10px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 20px; padding: 6px 14px;
+    box-shadow: var(--shadow);
+  }
+  .map-search-bar svg { width: 14px; height: 14px; color: var(--text-light); flex-shrink: 0; }
+  .map-search-bar input {
+    border: none; outline: none; flex: 1;
+    font-size: 13px; background: transparent; color: var(--text);
+  }
+  .map-search-bar input::placeholder { color: var(--text-light); }
+  #map-search-count { font-size: 11px; color: var(--text-muted); white-space: nowrap; }
+  .room-card.map-match {
+    box-shadow: 0 0 0 3px var(--accent), 0 4px 12px rgba(224,123,57,0.3) !important;
+    transform: scale(1.05); z-index: 1; position: relative;
+  }
+  .room-card.map-dim { opacity: 0.22; }
+
   /* ── Map tab ── */
   /* Left sidebar + content layout */
   .map-layout { display: flex; gap: 10px; align-items: flex-start; }
@@ -748,6 +769,11 @@
         </div>
       </div>
       <div class="map-content">
+        <div class="map-search-bar">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M10 10l3 3"/></svg>
+          <input type="text" id="map-search-input" placeholder="搜尋教室名稱、房號或分機…" oninput="searchMap(this.value)">
+          <span id="map-search-count"></span>
+        </div>
         <div class="building-map" id="building-map"></div>
       </div>
     </div>
@@ -1176,7 +1202,61 @@ window.switchBuilding = function(b, el) {
   if (!APP.mapData[b]) APP.mapData[b] = {};
   document.querySelectorAll('.btab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
+  // Clear search when switching building
+  const si = document.getElementById('map-search-input');
+  if (si) si.value = '';
+  document.getElementById('map-search-count') && (document.getElementById('map-search-count').textContent = '');
   renderMap();
+};
+
+// ─── Map search ───────────────────────────────────────────
+window.searchMap = function(q) {
+  q = q.trim().toLowerCase();
+  const cards = document.querySelectorAll('#building-map .room-card');
+  const countEl = document.getElementById('map-search-count');
+
+  if (!q) {
+    cards.forEach(c => { c.classList.remove('map-match','map-dim'); });
+    if (countEl) countEl.textContent = '';
+    return;
+  }
+
+  let matchCount = 0;
+  cards.forEach(c => {
+    const text = c.textContent.toLowerCase();
+    const isMatch = text.includes(q);
+    c.classList.toggle('map-match', isMatch);
+    c.classList.toggle('map-dim', !isMatch);
+    if (isMatch) matchCount++;
+  });
+
+  if (countEl) countEl.textContent = matchCount > 0 ? `找到 ${matchCount} 間` : '找不到';
+
+  // Auto-switch building if no match here but found elsewhere
+  if (matchCount === 0) {
+    const allBuildings = ['F','B','C','Z','A','X'];
+    for (const bkey of allBuildings) {
+      if (bkey === APP.currentBuilding) continue;
+      const bdata = APP.mapData[bkey] || {};
+      for (const floor of Object.keys(bdata)) {
+        for (const room of (bdata[floor] || [])) {
+          const text = [room.name, room.code, room.ext].join(' ').toLowerCase();
+          if (text.includes(q)) {
+            // Found in another building — switch to it
+            const btab = [...document.querySelectorAll('.btab')].find(t => t.onclick?.toString().includes(`'${bkey}'`));
+            if (btab) { btab.click(); }
+            else {
+              APP.currentBuilding = bkey;
+              renderMap();
+            }
+            // Re-run highlight after render
+            setTimeout(() => searchMap(q), 50);
+            return;
+          }
+        }
+      }
+    }
+  }
 };
 
 // ─── Add floor ────────────────────────────────────────────
@@ -1404,8 +1484,8 @@ window.addRoom = function(building, floor) {
   setTimeout(() => document.getElementById('modal-name').focus(), 100);
 };
 
-// Close modal on overlay click
-document.getElementById('room-modal').addEventListener('click', function(e) {
+// Close modal only when clicking directly on overlay background (not bubbled)
+document.getElementById('room-modal').addEventListener('mousedown', function(e) {
   if (e.target === this) closeModal();
 });
 
