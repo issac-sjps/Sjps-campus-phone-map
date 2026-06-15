@@ -391,6 +391,15 @@
   body.edit-mode .del-floor-btn { display: inline-block; }
   .del-floor-btn:hover { opacity: 1; background: #fde8e8; }
 
+  .rename-floor-btn {
+    display: none;
+    background: none; border: none;
+    color: var(--primary); font-size: 12px; cursor: pointer;
+    padding: 1px 5px; border-radius: 3px; opacity: 0.7;
+  }
+  body.edit-mode .rename-floor-btn { display: inline-block; }
+  .rename-floor-btn:hover { opacity: 1; background: var(--primary-light); }
+
   /* Add floor button */
   .add-floor-btn {
     display: none;
@@ -1165,16 +1174,17 @@ window.renderMap = function() {
   function floorSectionHtml(floor, rooms) {
     const addBtn = `<button class="add-room-btn" onclick="addRoom('${b}','${floor}')">＋ 新增</button>`;
     const delFloorBtn = `<button class="del-floor-btn" onclick="deleteFloor('${b}','${floor}')" title="刪除此樓層">🗑</button>`;
+    const renameBtn = `<button class="rename-floor-btn" onclick="renameFloor('${b}','${floor}')" title="重新命名樓層">✎</button>`;
     if (isRotated) {
       return `<div class="rotated-col" ondragover="dragOver(event)" ondrop="dropRoom(event,'${b}','${floor}',999)">
-        <div class="rotated-floor-label">${floor} ${delFloorBtn}</div>
+        <div class="rotated-floor-label">${floor} ${renameBtn} ${delFloorBtn}</div>
         ${rooms.map((r,i) => roomCardHtml(r, floor, i)).join('')}
         ${addBtn}
       </div>`;
     }
     return `<div class="floor-section" ondragover="dragOver(event)" ondrop="dropRoom(event,'${b}','${floor}',999)">
       <div class="floor-label">${floor}
-        <span class="floor-actions">${addBtn} ${delFloorBtn}</span>
+        <span class="floor-actions">${renameBtn} ${addBtn} ${delFloorBtn}</span>
       </div>
       <div class="rooms-grid">${rooms.map((r,i) => roomCardHtml(r,floor,i)).join('')}</div>
     </div>`;
@@ -1270,6 +1280,20 @@ window.addFloor = function(b) {
   const key = name.trim();
   if (APP.mapData[b][key]) { alert('此樓層已存在'); return; }
   APP.mapData[b][key] = [];
+  APP.pendingChanges = true;
+  renderMap();
+};
+
+// ─── Rename floor ─────────────────────────────────────────
+window.renameFloor = function(b, floor) {
+  if (!APP.editMode) return;
+  const newName = prompt(`將「${floor}」重新命名為：`, floor);
+  if (!newName || !newName.trim() || newName.trim() === floor) return;
+  const key = newName.trim();
+  if (APP.mapData[b][key]) { alert(`「${key}」已存在，請用其他名稱`); return; }
+  // Move data to new key, delete old key
+  APP.mapData[b][key] = APP.mapData[b][floor];
+  delete APP.mapData[b][floor];
   APP.pendingChanges = true;
   renderMap();
 };
