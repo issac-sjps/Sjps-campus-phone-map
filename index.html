@@ -636,15 +636,20 @@
     }
     .map-print-rooms { display: flex; flex-wrap: wrap; gap: 2mm; }
     .map-print-room {
-      border: 1px solid #bbb; border-radius: 3px; padding: 2mm 3mm;
-      min-width: 28mm; font-size: 9px; line-height: 1.4;
+      border: 1.5px solid #bbb; border-radius: 3px; padding: 2mm 3mm;
+      min-width: 22mm; font-size: 9px; line-height: 1.4;
     }
-    .map-print-room.has-class { border-left: 3px solid #1a5c8a; }
-    .map-print-room.has-office { border-left: 3px solid #e07b39; }
-    .map-print-room.has-special { border-left: 3px solid #2e7d52; }
+    .map-print-room.has-class  { border-color: #1a5c8a; background: #f0f5fa !important; }
+    .map-print-room.has-office { border-color: #e07b39; background: #fdf3ec !important; }
+    .map-print-room.has-special{ border-color: #2e7d52; background: #eef7f2 !important; }
+    .map-print-room.has-other  { border-color: #7c5cbf; background: #f3f0fa !important; }
     .map-print-room .r-name { font-weight: 600; }
     .map-print-room .r-code { color: #888; font-size: 8px; }
-    .map-print-room .r-ext { color: #1a5c8a; font-weight: 700; font-size: 9px; }
+    .map-print-room .r-ext  { font-weight: 700; font-size: 9px; }
+    .map-print-room.has-class   .r-ext { color: #1a5c8a; }
+    .map-print-room.has-office  .r-ext { color: #a04010; }
+    .map-print-room.has-special .r-ext { color: #2e7d52; }
+    .map-print-room.has-other   .r-ext { color: #7c5cbf; }
   }
   /* Hidden on screen, shown on print */
   #phone-print-root { display: none; }
@@ -1454,30 +1459,43 @@ function buildMapPrint() {
   const year = APP.currentYear;
   const lastEdit = APP.mapLastEdit || '';
   const bnames = { A: '新莊樓', B: '至美樓', F: '至誠樓', C: '至善樓', Z: '至真樓', X: '其他' };
-  const floorOrder = ['5F','4F','3F','2F','1F','B1','其他'];
   let html = '';
 
-  ['F','B','C','Z','A','X'].forEach((bkey, bi) => {
+  ['F','B','C','Z','A','X'].forEach(bkey => {
     const bdata = APP.mapData[bkey] || {};
+    if (!Object.keys(bdata).length) return; // skip empty buildings
+
+    // Use stored floor order
+    const floors = (APP.floorOrder && APP.floorOrder[bkey])
+      ? APP.floorOrder[bkey].filter(f => bdata[f] && bdata[f].length)
+      : Object.keys(bdata).filter(f => bdata[f] && bdata[f].length);
+    if (!floors.length) return;
+
     html += `<div class="map-print-page">
       <div class="map-print-title">新莊國小 ${year}學年度 場地配置圖 — ${bnames[bkey]}</div>`;
-    floorOrder.forEach(floor => {
+
+    floors.forEach(floor => {
       const rooms = bdata[floor];
-      if (!rooms || !rooms.length) return;
       html += `<div class="map-print-floor">
         <div class="map-print-floor-label">${floor}</div>
         <div class="map-print-rooms">`;
       rooms.forEach(room => {
-        const tc = room.type === 'class' ? 'has-class' : room.type === 'office' ? 'has-office' : 'has-special';
+        const tc = room.type === 'class' ? 'has-class'
+          : room.type === 'office' ? 'has-office'
+          : room.type === 'other' ? 'has-other'
+          : 'has-special';
+        const extDisplay = room.ext ? room.ext.split(/[\s,、\n]+/).filter(Boolean).join('、') : '';
         html += `<div class="map-print-room ${tc}">
           <div class="r-name">${room.name}</div>
           ${room.code ? `<div class="r-code">${room.code}</div>` : ''}
-          ${room.ext ? `<div class="r-ext">☎ ${room.ext}</div>` : ''}
+          ${extDisplay ? `<div class="r-ext">☎ ${extDisplay}</div>` : ''}
         </div>`;
       });
       html += `</div></div>`;
     });
-    html += `<div style="font-size:9px;color:#999;margin-top:4mm;text-align:right">最後更新：${lastEdit || '—'}</div></div>`;
+
+    html += `<div style="font-size:9px;color:#999;margin-top:4mm;text-align:right">最後更新：${lastEdit || '—'}</div>
+    </div>`;
   });
   return html;
 }
