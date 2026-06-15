@@ -400,6 +400,15 @@
   body.edit-mode .rename-floor-btn { display: inline-block; }
   .rename-floor-btn:hover { opacity: 1; background: var(--primary-light); }
 
+  .move-floor-btn {
+    display: none;
+    background: none; border: 1px solid var(--border);
+    color: var(--text-muted); font-size: 11px; cursor: pointer;
+    padding: 1px 5px; border-radius: 3px; line-height: 1.4;
+  }
+  body.edit-mode .move-floor-btn { display: inline-block; }
+  body.edit-mode .move-floor-btn:hover { background: var(--primary-light); color: var(--primary); border-color: var(--primary-mid); }
+
   /* Add floor button */
   .add-floor-btn {
     display: none;
@@ -886,8 +895,11 @@ async function loadYear(year) {
     if (mapSnap.exists()) {
       window.APP.mapData = mapSnap.data().buildings || window.APP.defaultMap;
       window.APP.mapLastEdit = mapSnap.data().last_edited || '';
+      // floorOrder from Firebase is the source of truth; reset cache first
+      window.APP.floorOrder = mapSnap.data().floorOrder || {};
     } else {
       window.APP.mapData = JSON.parse(JSON.stringify(window.APP.defaultMap));
+      window.APP.floorOrder = {};
     }
   } catch(e) {
     console.warn('Firebase load failed, using local data:', e);
@@ -901,12 +913,15 @@ async function loadYear(year) {
 async function saveToFirebase(year) {
   try {
     const now = new Date().toLocaleString('zh-TW', {timeZone:'Asia/Taipei'});
+    // Ensure floorOrder is populated for all buildings before saving
+    Object.keys(window.APP.mapData).forEach(b => getFloorOrder(b));
     await window._setDoc(window._doc(window._db, 'extensions', String(year)), {
       staff: window.APP.phoneData,
       last_edited: now
     });
     await window._setDoc(window._doc(window._db, 'rooms', String(year)), {
       buildings: window.APP.mapData,
+      floorOrder: window.APP.floorOrder || {},
       last_edited: now
     });
     window.APP.phoneLastEdit = now;
@@ -1134,32 +1149,35 @@ window.addRowInCat = function(catKey) {
 
 // ─── Map render ───────────────────────────────────────────
 const BNAMES = { A: '新莊樓', B: '至美樓', F: '至誠樓', C: '至善樓', Z: '至真樓', X: '其他' };
-// Default floor order per building (bottom to top display = reversed)
-const FLOOR_ORDER_DISPLAY = ['5F','4F','3F','2F','1F','B1','其他'];
+
+// Floor order storage: APP.floorOrder[b] = ['5F','4F','3F','2F','1F',...]
+function getFloorOrder(b) {
+  if (!APP.floorOrder) APP.floorOrder = {};
+  if (!APP.floorOrder[b]) {
+    // First time: just use the keys as-is from mapData (no auto-sort)
+    APP.floorOrder[b] = Object.keys(APP.mapData[b] || {});
+  }
+  // Always ensure all existing floors are included (in case new ones were added)
+  const existing = Object.keys(APP.mapData[b] || {});
+  existing.forEach(f => {
+    if (!APP.floorOrder[b].includes(f)) APP.floorOrder[b].push(f);
+  });
+  return APP.floorOrder[b];
+}
 
 window.renderMap = function() {
   const b = APP.currentBuilding;
-  const bdata = APP.mapData[b] || {};
   if (!APP.mapData[b]) APP.mapData[b] = {};
   const isRotated = false;
-
-  // Get all floors that exist, sorted by display order (or alphabetically for custom ones)
-  const knownOrder = ['5F','4F','3F','2F','1F','B1','其他'];
-  const existingFloors = Object.keys(bdata);
-  const sortedFloors = [
-    ...knownOrder.filter(f => existingFloors.includes(f)),
-    ...existingFloors.filter(f => !knownOrder.includes(f)).sort().reverse()
-  ];
+  const sortedFloors = getFloorOrder(b)
+    .filter(f => APP.mapData[b][f] !== undefined);
 
   function roomCardHtml(room, floor, idx) {
     const typeClass = room.type === 'class' ? 'has-class' : room.type === 'office' ? 'has-office' : room.type === 'other' ? 'has-other' : 'has-special';
     const dragAttrs = `draggable="true" ondragstart="dragStart(event,'${b}','${floor}',${idx})" ondragover="dragOver(event)" ondrop="dropRoom(event,'${b}','${floor}',${idx})" ondragend="dragEnd(event)"`;
-    // Format ext: split into individual numbers
     const extNums = room.ext ? room.ext.split(/[\s,、\n]+/).filter(Boolean) : [];
-    // Pad to multiple of 3 (max 6 shown), fill blanks for alignment
     const slots = [];
     for (let i = 0; i < Math.min(extNums.length, 6); i++) slots.push(extNums[i]);
-    // Fill remaining slots to next multiple of 3 for grid alignment
     while (slots.length % 3 !== 0) slots.push('');
     const extHtml = slots.length > 0
       ? `<div class="room-ext-grid">${slots.map(n => `<span class="room-ext-item">${n ? '☎'+n : ''}</span>`).join('')}</div>`
@@ -1172,20 +1190,17 @@ window.renderMap = function() {
     </div>`;
   }
 
-  function floorSectionHtml(floor, rooms) {
+  function floorSectionHtml(floor, rooms, floorIdx) {
     const addBtn = `<button class="add-room-btn" onclick="addRoom('${b}','${floor}')">＋ 新增</button>`;
     const delFloorBtn = `<button class="del-floor-btn" onclick="deleteFloor('${b}','${floor}')" title="刪除此樓層">🗑</button>`;
     const renameBtn = `<button class="rename-floor-btn" onclick="renameFloor('${b}','${floor}')" title="重新命名樓層">✎</button>`;
-    if (isRotated) {
-      return `<div class="rotated-col" ondragover="dragOver(event)" ondrop="dropRoom(event,'${b}','${floor}',999)">
-        <div class="rotated-floor-label">${floor} ${renameBtn} ${delFloorBtn}</div>
-        ${rooms.map((r,i) => roomCardHtml(r, floor, i)).join('')}
-        ${addBtn}
-      </div>`;
-    }
+    const upBtn = floorIdx > 0
+      ? `<button class="move-floor-btn" onclick="moveFloor('${b}','${floor}',-1)" title="往上移">↑</button>` : '';
+    const downBtn = floorIdx < sortedFloors.length - 1
+      ? `<button class="move-floor-btn" onclick="moveFloor('${b}','${floor}',1)" title="往下移">↓</button>` : '';
     return `<div class="floor-section" ondragover="dragOver(event)" ondrop="dropRoom(event,'${b}','${floor}',999)">
-      <div class="floor-label">${floor}
-        <span class="floor-actions">${renameBtn} ${addBtn} ${delFloorBtn}</span>
+      <div class="floor-label"><span class="floor-drag-handle">${floor}</span>
+        <span class="floor-actions">${upBtn}${downBtn} ${renameBtn} ${addBtn} ${delFloorBtn}</span>
       </div>
       <div class="rooms-grid">${rooms.map((r,i) => roomCardHtml(r,floor,i)).join('')}</div>
     </div>`;
@@ -1195,17 +1210,9 @@ window.renderMap = function() {
     <button class="add-floor-btn" onclick="addFloor('${b}')">＋ 新增樓層</button>
   </div>`;
 
-  if (isRotated) {
-    html += `<div class="rotated-map">`;
-    sortedFloors.slice().reverse().forEach(floor => {
-      html += floorSectionHtml(floor, bdata[floor] || []);
-    });
-    html += `</div>`;
-  } else {
-    sortedFloors.forEach(floor => {
-      html += floorSectionHtml(floor, bdata[floor] || []);
-    });
-  }
+  sortedFloors.forEach((floor, floorIdx) => {
+    html += floorSectionHtml(floor, APP.mapData[b][floor] || [], floorIdx);
+  });
 
   document.getElementById('building-map').innerHTML = html;
   if (APP.mapLastEdit) document.getElementById('last-edit-map').textContent = '最後編輯：' + APP.mapLastEdit;
@@ -1281,6 +1288,21 @@ window.addFloor = function(b) {
   const key = name.trim();
   if (APP.mapData[b][key]) { alert('此樓層已存在'); return; }
   APP.mapData[b][key] = [];
+  getFloorOrder(b).push(key);
+  APP.pendingChanges = true;
+  renderMap();
+};
+
+// ─── Move floor up/down ───────────────────────────────────
+window.moveFloor = function(b, floor, dir) {
+  if (!APP.editMode) return;
+  const order = getFloorOrder(b);
+  const idx = order.indexOf(floor);
+  if (idx < 0) return;
+  const newIdx = idx + dir;
+  if (newIdx < 0 || newIdx >= order.length) return;
+  order.splice(idx, 1);
+  order.splice(newIdx, 0, floor);
   APP.pendingChanges = true;
   renderMap();
 };
@@ -1292,9 +1314,11 @@ window.renameFloor = function(b, floor) {
   if (!newName || !newName.trim() || newName.trim() === floor) return;
   const key = newName.trim();
   if (APP.mapData[b][key]) { alert(`「${key}」已存在，請用其他名稱`); return; }
-  // Move data to new key, delete old key
   APP.mapData[b][key] = APP.mapData[b][floor];
   delete APP.mapData[b][floor];
+  const order = getFloorOrder(b);
+  const idx = order.indexOf(floor);
+  if (idx >= 0) order[idx] = key;
   APP.pendingChanges = true;
   renderMap();
 };
@@ -1305,6 +1329,9 @@ window.deleteFloor = function(b, floor) {
   const rooms = APP.mapData[b][floor] || [];
   if (rooms.length > 0 && !confirm(`確定刪除「${floor}」及其 ${rooms.length} 間教室？`)) return;
   delete APP.mapData[b][floor];
+  const order = getFloorOrder(b);
+  const idx = order.indexOf(floor);
+  if (idx >= 0) order.splice(idx, 1);
   APP.pendingChanges = true;
   renderMap();
 };
@@ -1674,7 +1701,8 @@ window.exportJSON = function() {
     year: APP.currentYear,
     exportedAt: new Date().toLocaleString('zh-TW', {timeZone:'Asia/Taipei'}),
     phone: APP.phoneData,
-    map: APP.mapData
+    map: APP.mapData,
+    floorOrder: APP.floorOrder || {}
   };
   const blob = new Blob([JSON.stringify(payload, null, 2)], {type: 'application/json'});
   const url = URL.createObjectURL(blob);
@@ -1704,6 +1732,7 @@ window.importJSON = function(e) {
       }
       APP.phoneData = data.phone;
       APP.mapData = data.map;
+      APP.floorOrder = data.floorOrder || {};
       if (data.year && !APP.years.includes(data.year)) {
         APP.years.push(data.year);
       }
