@@ -351,8 +351,10 @@
   .cat-header.cat-sp1     td { background: #fbdde2; color: #a5324c; }
   .cat-header.cat-sp2     td { background: #f8cdd6; color: #922a44; }
   .cat-header.cat-sp3     td { background: #f5bcc8; color: #7e1f39; }
+  .cat-header.cat-sp4     td { background: #f2acba; color: #6a152e; }
   .cat-header.cat-kinder  td { background: #d7eef4; color: #146a80; }
   .cat-header.cat-support td { background: #e6e6e9; color: #4d4d55; }
+  .cat-header.cat-foreign td { background: #d9e7de; color: #2b6b4a; }
   .cat-header.cat-adminsupport td { background: #f5e3da; color: #96431e; }
   .cat-add-btn {
     display: none;
@@ -665,8 +667,10 @@
     #phone-print-grid .p-cat.cat-sp1     td { background: #fbdde2 !important; color: #a5324c; }
     #phone-print-grid .p-cat.cat-sp2     td { background: #f8cdd6 !important; color: #922a44; }
     #phone-print-grid .p-cat.cat-sp3     td { background: #f5bcc8 !important; color: #7e1f39; }
+    #phone-print-grid .p-cat.cat-sp4     td { background: #f2acba !important; color: #6a152e; }
     #phone-print-grid .p-cat.cat-kinder  td { background: #d7eef4 !important; color: #146a80; }
     #phone-print-grid .p-cat.cat-support td { background: #e6e6e9 !important; color: #4d4d55; }
+    #phone-print-grid .p-cat.cat-foreign td { background: #d9e7de !important; color: #2b6b4a; }
     #phone-print-grid .p-cat.cat-adminsupport td { background: #f5e3da !important; color: #96431e; }
     #phone-print-grid .p-ext { font-weight: 700; color: #1a5c8a; font-family: monospace; }
     #phone-print-grid .p-star { color: #c0560a; font-weight: 700; }
@@ -1141,10 +1145,12 @@ const CAT_ORDER = [
   // 專任輔導教師要在下面的「教學支援人員」規則（t.startsWith('專任')）之前比對，
   // 否則會被那條更寬的規則搶走。
   { key: 'sp3', label: '特教-專任輔導教師', cssClass: 'cat-sp3', match: t => t.startsWith('專任輔導') },
+  { key: 'sp4', label: '特教-專任助理員', cssClass: 'cat-sp4', match: t => t.startsWith('專任特教助理') },
   { key: 'kinder', label: '幼兒園', cssClass: 'cat-kinder', match: t => t.startsWith('幼兒') || t.startsWith('學前') },
-  // 「教學支援人員」現在改成明確規則，只抓教學/語言/特教相關的支援人員
-  // （教支人員＊語、專任特教助理員、外籍教師），不再是保底分類。
-  { key: 'support', label: '教學支援人員', cssClass: 'cat-support', match: t => t.startsWith('教支人員') || t.startsWith('專任') || t.startsWith('外籍教師') },
+  // 「教學支援人員」現在改成明確規則，只抓教學/語言相關的支援人員（教支人員＊語），
+  // 不再是保底分類。外籍教師、特教專任助理員已各自獨立成類，排除在這條規則外。
+  { key: 'support', label: '教學支援人員', cssClass: 'cat-support', match: t => t.startsWith('教支人員') || t.startsWith('專任') },
+  { key: 'foreign', label: '外籍教師', cssClass: 'cat-foreign', match: t => t.startsWith('外籍教師') },
   // 保底分類：護理師、營養師、幹事、技工、委外、人事助理…等不屬於教學支援的人，
   // 全部落在這裡。這個規則一定要留在比對順序的最後一個（符合任何職稱）。
   { key: 'adminSupport', label: '行政支援人員', cssClass: 'cat-adminsupport', match: t => true }
@@ -1155,7 +1161,7 @@ const CAT_ORDER = [
 // 否則它會搶走後面規則更明確的類別。
 // 這裡的 DISPLAY_ORDER 只決定畫面上標題列的排列順序，可以自由調整不影響比對邏輯。
 const DISPLAY_ORDER_KEYS = [
-  'admin','group','g1','g2','g3','g4','g5','g6','sub','subst','sp1','sp2','sp3','kinder','support','adminSupport'
+  'admin','group','g1','g2','g3','g4','g5','g6','sub','subst','sp1','sp2','sp3','sp4','kinder','support','foreign','adminSupport'
 ];
 const DISPLAY_ORDER = DISPLAY_ORDER_KEYS.map(k => CAT_ORDER.find(c => c.key === k)).filter(Boolean);
 
