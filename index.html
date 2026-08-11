@@ -268,7 +268,7 @@
   table { width: 100%; border-collapse: collapse; table-layout: fixed; }
   thead th {
     background: var(--primary); color: #fff;
-    padding: 7px 6px; text-align: left;
+    padding: 5px 5px; text-align: left;
     font-size: 11px; font-weight: 600; white-space: nowrap;
     overflow: hidden; text-overflow: ellipsis;
   }
@@ -1070,6 +1070,16 @@ window.renderPhone = function(filter = '') {
     flat.slice(colSize * 5)
   ];
 
+  // If a column's last row is a category header with no rows following it in
+  // that column (its rows got pushed into the next column), move that header
+  // down to the top of the next column instead of leaving it dangling alone.
+  for (let i = 0; i < cols.length - 1; i++) {
+    while (cols[i].length && cols[i][cols[i].length - 1].isCat) {
+      const header = cols[i].pop();
+      cols[i + 1].unshift(header);
+    }
+  }
+
   function rowHtml(item) {
     if (item.isCat) {
       return `<tr class="cat-header">
@@ -1081,8 +1091,8 @@ window.renderPhone = function(filter = '') {
     }
     const isStar = item.name.startsWith('★');
     const rawName = isStar ? item.name.slice(1) : item.name;
-    // 姓名欄最多顯示 5 個字（含★星星本身算 1 個字）
-    const maxChars = 5;
+    // 姓名欄最多顯示 4 個字（含★星星本身算 1 個字）
+    const maxChars = 4;
     const coreBudget = isStar ? maxChars - 1 : maxChars;
     const coreDisplay = rawName.length > coreBudget ? rawName.slice(0, coreBudget) : rawName;
     const isTruncated = rawName.length > coreBudget;
