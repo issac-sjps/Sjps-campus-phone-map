@@ -1019,47 +1019,14 @@ window._loadYear = loadYear;
 window._saveToFirebase = saveToFirebase;
 window._saveYearsList = saveYearsList;
 
-// Init — remember the last-viewed school year (per browser) so a refresh doesn't
-// silently snap back to 114 and make a newly-created year look like it "disappeared".
-// The year itself is always safely stored in Firebase the moment it's created;
-// this only affects which year the page opens to on load.
-const LAST_YEAR_KEY = 'sjps_last_year';
-let savedYear = null;
-try {
-  const raw = localStorage.getItem(LAST_YEAR_KEY);
-  if (raw) savedYear = parseInt(raw, 10);
-} catch (e) { /* localStorage unavailable, fall back to default */ }
-
-window.APP.currentYear = savedYear || 114;
+// Init — always default to the most recent school year, so a refresh (or a newly
+// created year) never appears to "disappear": the years list itself is always
+// safely stored in Firebase the moment a year is created.
 loadYearsList().then(() => {
-  // If the remembered year no longer exists in the years list, fall back to the most recent one
-  if (!window.APP.years.includes(window.APP.currentYear)) {
-    window.APP.currentYear = Math.max(...window.APP.years);
-  }
+  window.APP.currentYear = Math.max(...window.APP.years);
   document.getElementById('current-year-label').textContent = window.APP.currentYear + '學年度';
   loadYear(window.APP.currentYear);
 });
-</script>
-
-<script>
-// Persist the currently-viewed year to localStorage whenever it changes,
-// by wrapping the existing selectYear/newYear/discardEdit flows.
-(function() {
-  const LAST_YEAR_KEY = 'sjps_last_year';
-  function rememberYear(y) {
-    try { localStorage.setItem(LAST_YEAR_KEY, String(y)); } catch (e) {}
-  }
-  const origSelectYear = window.selectYear;
-  window.selectYear = function(y) {
-    origSelectYear(y);
-    rememberYear(y);
-  };
-  const origNewYear = window.newYear;
-  window.newYear = async function() {
-    await origNewYear();
-    rememberYear(window.APP.currentYear);
-  };
-})();
 </script>
 
 <script>
