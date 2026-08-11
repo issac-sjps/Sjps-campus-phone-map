@@ -327,6 +327,17 @@
     letter-spacing: 0.04em;
     white-space: nowrap;
   }
+  /* Distinct color per category group so they're easy to scan.
+     All six grade levels (1~6年級) share one color since they're all
+     homeroom teachers — the same kind of role. */
+  .cat-header.cat-admin   td { background: #dbe8f2; color: #12496e; }
+  .cat-header.cat-group   td { background: #fbe2cc; color: #a2531b; }
+  .cat-header.cat-grade   td { background: #d8ecdf; color: #1f6b45; }
+  .cat-header.cat-sub     td { background: #e5ddf5; color: #5b3a9e; }
+  .cat-header.cat-subst   td { background: #faf0cf; color: #92700a; }
+  .cat-header.cat-sp      td { background: #fbdde2; color: #a5324c; }
+  .cat-header.cat-kinder  td { background: #d7eef4; color: #146a80; }
+  .cat-header.cat-support td { background: #e6e6e9; color: #4d4d55; }
   .cat-add-btn {
     display: none;
     background: var(--primary);
@@ -630,6 +641,14 @@
       font-size: 9px; font-weight: 700;
       padding: 2px 5px; color: #1a5c8a;
     }
+    #phone-print-grid .p-cat.cat-admin   td { background: #dbe8f2 !important; color: #12496e; }
+    #phone-print-grid .p-cat.cat-group   td { background: #fbe2cc !important; color: #a2531b; }
+    #phone-print-grid .p-cat.cat-grade   td { background: #d8ecdf !important; color: #1f6b45; }
+    #phone-print-grid .p-cat.cat-sub     td { background: #e5ddf5 !important; color: #5b3a9e; }
+    #phone-print-grid .p-cat.cat-subst   td { background: #faf0cf !important; color: #92700a; }
+    #phone-print-grid .p-cat.cat-sp      td { background: #fbdde2 !important; color: #a5324c; }
+    #phone-print-grid .p-cat.cat-kinder  td { background: #d7eef4 !important; color: #146a80; }
+    #phone-print-grid .p-cat.cat-support td { background: #e6e6e9 !important; color: #4d4d55; }
     #phone-print-grid .p-ext { font-weight: 700; color: #1a5c8a; font-family: monospace; }
     #phone-print-grid .p-star { color: #c0560a; font-weight: 700; }
 
@@ -1017,18 +1036,19 @@ window.APP = {
 
 // ─── Category mapping ─────────────────────────────────────
 const CAT_ORDER = [
-  { key: 'admin', label: '行政人員', match: t => ['校　　長','教務主任','學務主任','總務主任','輔導主任','會計主任','人事主任'].includes(t) },
-  { key: 'group', label: '各組組長', match: t => t.includes('處-') },
-  { key: 'g1', label: '一年級', match: t => /^1\d\d$/.test(t) },
-  { key: 'g2', label: '二年級', match: t => /^2\d\d$/.test(t) },
-  { key: 'g3', label: '三年級', match: t => /^3\d\d$/.test(t) },
-  { key: 'g4', label: '四年級', match: t => /^4\d\d$/.test(t) },
-  { key: 'g5', label: '五年級', match: t => /^5\d\d$/.test(t) },
-  { key: 'g6', label: '六年級', match: t => /^6\d\d$/.test(t) },
-  { key: 'sub', label: '科任／代課教師', match: t => t.startsWith('科任') || t.startsWith('代課') },
-  { key: 'sp', label: '特殊班級', match: t => t.startsWith('資優') || t.startsWith('資源') },
-  { key: 'kinder', label: '幼兒園', match: t => t.startsWith('幼兒') || t.startsWith('學前') },
-  { key: 'support', label: '支援人員', match: t => true }
+  { key: 'admin', label: '行政人員', cssClass: 'cat-admin', match: t => ['校　　長','教務主任','學務主任','總務主任','輔導主任','會計主任','人事主任'].includes(t) },
+  { key: 'group', label: '各組組長', cssClass: 'cat-group', match: t => t.includes('處-') },
+  { key: 'g1', label: '一年級', cssClass: 'cat-grade', match: t => /^1\d\d$/.test(t) },
+  { key: 'g2', label: '二年級', cssClass: 'cat-grade', match: t => /^2\d\d$/.test(t) },
+  { key: 'g3', label: '三年級', cssClass: 'cat-grade', match: t => /^3\d\d$/.test(t) },
+  { key: 'g4', label: '四年級', cssClass: 'cat-grade', match: t => /^4\d\d$/.test(t) },
+  { key: 'g5', label: '五年級', cssClass: 'cat-grade', match: t => /^5\d\d$/.test(t) },
+  { key: 'g6', label: '六年級', cssClass: 'cat-grade', match: t => /^6\d\d$/.test(t) },
+  { key: 'sub', label: '科任教師', cssClass: 'cat-sub', match: t => t.startsWith('科任') },
+  { key: 'subst', label: '代課教師', cssClass: 'cat-subst', match: t => t.startsWith('代課') },
+  { key: 'sp', label: '特殊班級', cssClass: 'cat-sp', match: t => t.startsWith('資優') || t.startsWith('資源') },
+  { key: 'kinder', label: '幼兒園', cssClass: 'cat-kinder', match: t => t.startsWith('幼兒') || t.startsWith('學前') },
+  { key: 'support', label: '支援人員', cssClass: 'cat-support', match: t => true }
 ];
 
 function getCategory(title) {
@@ -1077,11 +1097,11 @@ window.renderPhone = function(filter = '') {
     groups[cat.key].rows.push(r);
   });
 
-  // Flatten: [{isCat, label, key} | {row data}]
+  // Flatten: [{isCat, label, key, cssClass} | {row data}]
   const flat = [];
   CAT_ORDER.forEach(cat => {
     if (!groups[cat.key] || !groups[cat.key].rows.length) return;
-    flat.push({ isCat: true, label: cat.label, key: cat.key });
+    flat.push({ isCat: true, label: cat.label, key: cat.key, cssClass: cat.cssClass });
     groups[cat.key].rows.forEach(r => flat.push({ isCat: false, ...r }));
   });
 
@@ -1091,7 +1111,7 @@ window.renderPhone = function(filter = '') {
 
   function rowHtml(item) {
     if (item.isCat) {
-      return `<tr class="cat-header">
+      return `<tr class="cat-header ${item.cssClass || ''}">
         <td colspan="3">${item.label}</td>
         <td style="text-align:right;padding-right:6px">
           <button class="cat-add-btn" onclick="addRowInCat('${item.key}')">＋</button>
@@ -1499,7 +1519,7 @@ function buildPhonePrint() {
   const seen = {};
   data.forEach(r => {
     const cat = getCategory(r.title);
-    if (!seen[cat.key]) { seen[cat.key] = true; groups.push({ label: cat.label, key: cat.key, rows: [] }); }
+    if (!seen[cat.key]) { seen[cat.key] = true; groups.push({ label: cat.label, key: cat.key, cssClass: cat.cssClass, rows: [] }); }
     groups.find(g => g.key === cat.key).rows.push(r);
   });
 
@@ -1507,7 +1527,7 @@ function buildPhonePrint() {
   const allRows = [];
   groups.forEach(g => {
     if (!g.rows.length) return;
-    allRows.push({ isCat: true, label: g.label });
+    allRows.push({ isCat: true, label: g.label, cssClass: g.cssClass });
     g.rows.forEach(r => allRows.push({ isCat: false, ...r }));
   });
 
@@ -1519,7 +1539,7 @@ function buildPhonePrint() {
     let h = `<table><thead><tr><th>#</th><th>職稱</th><th>姓名</th><th>分機</th></tr></thead><tbody>`;
     rows.forEach(r => {
       if (r.isCat) {
-        h += `<tr class="p-cat"><td colspan="4">${r.label}</td></tr>`;
+        h += `<tr class="p-cat ${r.cssClass || ''}"><td colspan="4">${r.label}</td></tr>`;
       } else {
         const isStar = r.name.startsWith('★');
         const nameHtml = isStar ? `<span class="p-star">★</span>${r.name.slice(1)}` : r.name;
