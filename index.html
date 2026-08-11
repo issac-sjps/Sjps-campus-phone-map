@@ -711,6 +711,9 @@
     .school-name { font-size: 13px; }
     td { padding: 8px 10px; }
   }
+
+  /* 全站改用直角，不要圓角（含行內樣式，用 !important 覆蓋） */
+  *, *::before, *::after { border-radius: 0 !important; }
 </style>
 </head>
 <body>
@@ -1117,9 +1120,12 @@ window.renderPhone = function(filter = '') {
   const flat = [];
   let _seq = 0;
   CAT_ORDER.forEach(cat => {
-    if (!groups[cat.key] || !groups[cat.key].rows.length) return;
+    const hasRows = groups[cat.key] && groups[cat.key].rows.length;
+    // 編輯模式下，即使類別目前沒有人也顯示標題列，這樣才有地方可以拖曳放入；
+    // 一般瀏覽模式仍然隱藏空類別，避免畫面出現空空的標題造成混亂。
+    if (!hasRows && !APP.editMode) return;
     flat.push({ isCat: true, label: cat.label, key: cat.key, cssClass: cat.cssClass });
-    groups[cat.key].rows.forEach(r => flat.push({ isCat: false, ...r, _seq: ++_seq }));
+    if (hasRows) groups[cat.key].rows.forEach(r => flat.push({ isCat: false, ...r, _seq: ++_seq }));
   });
 
   // Distribute evenly across 6 columns, without letting a lone category
@@ -1759,6 +1765,7 @@ function _enterEditMode() {
   document.getElementById('edit-btn').classList.add('active');
   document.getElementById('edit-label').textContent = '編輯中';
   document.getElementById('edit-bar').classList.add('visible');
+  renderPhone(document.getElementById('phone-search').value);
 }
 
 function _exitEditMode() {
@@ -1767,6 +1774,7 @@ function _exitEditMode() {
   document.getElementById('edit-btn').classList.remove('active');
   document.getElementById('edit-label').textContent = '編輯';
   document.getElementById('edit-bar').classList.remove('visible');
+  renderPhone(document.getElementById('phone-search').value);
 }
 
 window.checkPassword = function() {
