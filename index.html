@@ -307,22 +307,14 @@
   body.edit-mode tr[draggable="true"] { cursor: grab; }
   body.edit-mode tr[draggable="true"]:active { cursor: grabbing; }
   body.edit-mode .cat-header td { cursor: default; }
-  /* 刪除按鈕貼在最左邊 # 欄位的外側，跟分機/職稱等可編輯欄位完全分開，
-     滑鼠移到列上才出現，避免跟旁邊的編輯區域重疊誤觸。 */
-  td.id-star-cell { position: relative; }
   .person-del-btn {
     display: none;
-    position: absolute;
-    left: -16px; top: 50%; transform: translateY(-50%);
-    background: #fff; border: 1px solid #f0b8b8;
-    color: #c0392b; font-size: 9px; cursor: pointer;
-    width: 14px; height: 14px; line-height: 1;
-    padding: 0; border-radius: 3px;
-    align-items: center; justify-content: center;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.12);
-    z-index: 2;
+    background: none; border: none;
+    color: #c0392b; font-size: 10px; cursor: pointer;
+    padding: 0 3px; margin-left: 3px; border-radius: 3px; line-height: 1;
+    vertical-align: middle;
   }
-  body.edit-mode tr:hover .person-del-btn { display: flex; }
+  body.edit-mode tr:hover .person-del-btn { display: inline-block; }
   .person-del-btn:hover { background: #fde8e8; }
   body.edit-mode td.editable { cursor: pointer; position: relative; }
   body.edit-mode td.editable:hover { background: #fff8e1; }
@@ -1172,10 +1164,10 @@ window.renderPhone = function(filter = '') {
     const extTitleAttr = ` title="${String(item.ext).replace(/"/g,'&quot;')}"`;
     const draggableAttr = APP.editMode ? ' draggable="true" ondragstart="dragStartPerson(event,\'' + item.id + '\')"' : '';
     return `<tr data-id="${item.id}"${draggableAttr}>
-      <td class="id-col id-star-cell" onclick="toggleStar('${item.id}')" style="${idStyle}"${isStar ? titleAttr : ' title="編輯模式下可標記學年主任"'}>${idDisplay}<button class="person-del-btn" onclick="deletePerson(event,'${item.id}')" title="刪除此人">✕</button></td>
+      <td class="id-col id-star-cell" onclick="toggleStar('${item.id}')" style="${idStyle}"${isStar ? titleAttr : ' title="編輯模式下可標記學年主任"'}>${idDisplay}</td>
       <td class="editable" onclick="editCell(this,'title')"${titleAttr}>${item.title}</td>
       <td class="name-col editable copy-name" data-raw-name="${rawName.replace(/"/g,'&quot;')}" data-record-id="${item.id}" onclick="handleNameClick(event,this)">${displayName}</td>
-      <td class="ext-col editable" onclick="editCell(this,'ext')"${extTitleAttr}>${item.ext}</td>
+      <td class="ext-col editable" onclick="editCell(this,'ext')"${extTitleAttr}>${item.ext}<button class="person-del-btn" onclick="deletePerson(event,'${item.id}')" title="刪除此人">✕</button></td>
     </tr>`;
   }
 
