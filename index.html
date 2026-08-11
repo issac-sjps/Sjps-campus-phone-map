@@ -268,7 +268,7 @@
   table { width: 100%; border-collapse: collapse; table-layout: fixed; }
   thead th {
     background: var(--primary); color: #fff;
-    padding: 5px 5px; text-align: left;
+    padding: 3px 3px; text-align: left;
     font-size: 11px; font-weight: 600; white-space: nowrap;
     overflow: hidden; text-overflow: ellipsis;
   }
@@ -278,13 +278,15 @@
   .phone-col th:nth-child(2), .phone-col td:nth-child(2) { width: 42%; }
   .phone-col th:nth-child(3), .phone-col td:nth-child(3) { width: 32%; text-align: right; }
   .phone-col th:nth-child(4), .phone-col td:nth-child(4) { width: 26%; text-align: right; }
-  /* Cells now wrap and show full text instead of being clipped with an
-     ellipsis. The extension column stays single-line since ext numbers
-     are always short. */
+  /* Cells stay on a single line (no wrapping). Padding is halved so more
+     of the column width goes to the text itself instead of to whitespace —
+     matching the thin 1px gap between the phone-col divisions. Text that's
+     still too long for its column overflows visibly rather than wrapping
+     or being clipped with an ellipsis. */
   tbody tr { border-bottom: 1px solid #edf0f4; }
   tbody tr:last-child { border-bottom: none; }
   tbody tr:hover { background: var(--primary-light); }
-  td { padding: 4px 6px; font-size: 12px; overflow: hidden; word-break: break-word; white-space: normal; vertical-align: top; }
+  td { padding: 2px 3px; font-size: 12px; overflow: visible; white-space: nowrap; vertical-align: middle; }
   td.id-col { color: var(--text-light); font-size: 10px; width: 28px; }
   td.id-star-cell { cursor: default; }
   body.edit-mode td.id-star-cell { cursor: pointer; }
@@ -321,8 +323,9 @@
     color: var(--primary);
     font-size: 10px;
     font-weight: 700;
-    padding: 4px 8px;
+    padding: 2px 4px;
     letter-spacing: 0.04em;
+    white-space: nowrap;
   }
   .cat-add-btn {
     display: none;
