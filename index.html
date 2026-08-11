@@ -304,6 +304,9 @@
   td.name-col .star { color: var(--accent); font-size: 10px; margin-right: 1px; }
 
   /* Editable cells */
+  body.edit-mode tr[draggable="true"] { cursor: grab; }
+  body.edit-mode tr[draggable="true"]:active { cursor: grabbing; }
+  body.edit-mode .cat-header td { cursor: default; }
   body.edit-mode td.editable { cursor: pointer; position: relative; }
   body.edit-mode td.editable:hover { background: #fff8e1; }
   body.edit-mode td.editable:hover::after {
@@ -1036,7 +1039,7 @@ window.APP = {
 
 // ─── Category mapping ─────────────────────────────────────
 const CAT_ORDER = [
-  { key: 'admin', label: '行政人員', cssClass: 'cat-admin', match: t => ['校　　長','教務主任','學務主任','總務主任','輔導主任','會計主任','人事主任'].includes(t) },
+  { key: 'admin', label: '教育行政人員', cssClass: 'cat-admin', match: t => ['校　　長','教務主任','學務主任','總務主任','輔導主任','會計主任','人事主任'].includes(t) },
   { key: 'group', label: '各組組長', cssClass: 'cat-group', match: t => t.includes('處-') },
   { key: 'g1', label: '一年級', cssClass: 'cat-grade', match: t => /^1\d\d$/.test(t) },
   { key: 'g2', label: '二年級', cssClass: 'cat-grade', match: t => /^2\d\d$/.test(t) },
@@ -1046,9 +1049,9 @@ const CAT_ORDER = [
   { key: 'g6', label: '六年級', cssClass: 'cat-grade', match: t => /^6\d\d$/.test(t) },
   { key: 'sub', label: '科任教師', cssClass: 'cat-sub', match: t => t.startsWith('科任') },
   { key: 'subst', label: '代課教師', cssClass: 'cat-subst', match: t => t.startsWith('代課') },
-  { key: 'sp', label: '特殊班級', cssClass: 'cat-sp', match: t => t.startsWith('資優') || t.startsWith('資源') },
+  { key: 'sp', label: '特教教師', cssClass: 'cat-sp', match: t => t.startsWith('資優') || t.startsWith('資源') },
   { key: 'kinder', label: '幼兒園', cssClass: 'cat-kinder', match: t => t.startsWith('幼兒') || t.startsWith('學前') },
-  { key: 'support', label: '支援人員', cssClass: 'cat-support', match: t => true }
+  { key: 'support', label: '教學支援人員', cssClass: 'cat-support', match: t => true }
 ];
 
 function getCategory(title) {
@@ -1098,11 +1101,15 @@ window.renderPhone = function(filter = '') {
   });
 
   // Flatten: [{isCat, label, key, cssClass} | {row data}]
+  // The displayed "#" is a live, always-contiguous sequence number computed here
+  // (not the stored record id), so it always matches "how many people so far"
+  // and never has gaps no matter how records were added/deleted over time.
   const flat = [];
+  let _seq = 0;
   CAT_ORDER.forEach(cat => {
     if (!groups[cat.key] || !groups[cat.key].rows.length) return;
     flat.push({ isCat: true, label: cat.label, key: cat.key, cssClass: cat.cssClass });
-    groups[cat.key].rows.forEach(r => flat.push({ isCat: false, ...r }));
+    groups[cat.key].rows.forEach(r => flat.push({ isCat: false, ...r, _seq: ++_seq }));
   });
 
   // Distribute evenly across 6 columns, without letting a lone category
@@ -1111,7 +1118,7 @@ window.renderPhone = function(filter = '') {
 
   function rowHtml(item) {
     if (item.isCat) {
-      return `<tr class="cat-header ${item.cssClass || ''}">
+      return `<tr class="cat-header ${item.cssClass || ''}" ondragover="event.preventDefault()" ondrop="dropPersonOnCategory(event,'${item.key}')">
         <td colspan="3">${item.label}</td>
         <td style="text-align:right;padding-right:6px">
           <button class="cat-add-btn" onclick="addRowInCat('${item.key}')">＋</button>
@@ -1123,11 +1130,14 @@ window.renderPhone = function(filter = '') {
     // 姓名欄完整顯示，不再截斷字數（欄寬已加大並允許換行）
     const displayName = isStar ?
       `<span class="star">★</span>${rawName}` : rawName;
-    const idDisplay = isStar ? '★' : item.id;
+    // # 欄改為即時計算的流水號（依畫面順序重新編號），不再顯示寫死的 id，
+    // 這樣就不會因為資料新增/刪除而跳號，且永遠等於「目前算到第幾位」。
+    const idDisplay = isStar ? '★' : item._seq;
     const idStyle = isStar ? 'color:var(--accent);font-weight:700' : 'color:var(--text-light)';
     const titleAttr = ` title="${String(item.title).replace(/"/g,'&quot;')}"`;
     const extTitleAttr = ` title="${String(item.ext).replace(/"/g,'&quot;')}"`;
-    return `<tr data-id="${item.id}">
+    const draggableAttr = APP.editMode ? ' draggable="true" ondragstart="dragStartPerson(event,\'' + item.id + '\')"' : '';
+    return `<tr data-id="${item.id}"${draggableAttr}>
       <td class="id-col id-star-cell" onclick="toggleStar('${item.id}')" style="${idStyle}"${isStar ? titleAttr : ' title="編輯模式下可標記學年主任"'}>${idDisplay}</td>
       <td class="editable" onclick="editCell(this,'title')"${titleAttr}>${item.title}</td>
       <td class="name-col editable copy-name" data-raw-name="${rawName.replace(/"/g,'&quot;')}" data-record-id="${item.id}" onclick="handleNameClick(event,this)">${displayName}</td>
@@ -1214,6 +1224,35 @@ window.addRow = function() {
   APP.phoneData.push({ id: newId, title: '新職稱', name: '姓名', ext: '000' });
   APP.pendingChanges = true;
   renderPhone();
+};
+
+// ─── Drag a person row onto a category header to move them ────
+// 類別是由 title 欄位判斷的（例如 "科任教師"、"301"），所以搬移的做法
+// 是把該筆記錄的 title 改成目標類別的代表值。因為同一類別底下的 title
+// 常常不完全相同（例如各年級班級的房號不同），改之前會先跳出確認視窗，
+// 讓你可以調整成正確的職稱／班級代碼，而不是被亂猜的值蓋掉。
+window.dragStartPerson = function(e, id) {
+  if (!APP.editMode) { e.preventDefault(); return; }
+  e.dataTransfer.setData('text/plain', String(id));
+  e.dataTransfer.effectAllowed = 'move';
+};
+
+window.dropPersonOnCategory = function(e, catKey) {
+  e.preventDefault();
+  if (!APP.editMode) return;
+  const id = e.dataTransfer.getData('text/plain');
+  if (!id) return;
+  const record = APP.phoneData.find(r => String(r.id) === String(id));
+  const cat = CAT_ORDER.find(c => c.key === catKey);
+  if (!record || !cat) return;
+  if (cat.match(record.title)) return; // 已經在這個類別了
+
+  const suggestion = APP.phoneData.find(r => cat.match(r.title))?.title || cat.label;
+  const newTitle = prompt(`將「${record.name.replace('★','')}」搬移到「${cat.label}」\n請確認／調整職稱或班級代碼：`, suggestion);
+  if (newTitle === null || !newTitle.trim()) return;
+  record.title = newTitle.trim();
+  APP.pendingChanges = true;
+  renderPhone(document.getElementById('phone-search').value);
 };
 
 window.addRowInCat = function(catKey) {
