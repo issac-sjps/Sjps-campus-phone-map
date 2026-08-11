@@ -1162,7 +1162,7 @@ window.renderPhone = function(filter = '') {
     const idStyle = isStar ? 'color:var(--accent);font-weight:700' : 'color:var(--text-light)';
     const titleAttr = ` title="${String(item.title).replace(/"/g,'&quot;')}"`;
     const extTitleAttr = ` title="${String(item.ext).replace(/"/g,'&quot;')}"`;
-    const draggableAttr = APP.editMode ? ' draggable="true" ondragstart="dragStartPerson(event,\'' + item.id + '\')"' : '';
+    const draggableAttr = APP.editMode ? ' draggable="true" ondragstart="dragStartPerson(event,\'' + item.id + '\')" ondragover="event.preventDefault()" ondrop="dropPersonOnRow(event,\'' + item.id + '\')"' : '';
     return `<tr data-id="${item.id}"${draggableAttr}>
       <td class="id-col id-star-cell" onclick="toggleStar('${item.id}')" style="${idStyle}"${isStar ? titleAttr : ' title="編輯模式下可標記學年主任"'}>${idDisplay}</td>
       <td class="editable" onclick="editCell(this,'title')"${titleAttr}>${item.title}</td>
@@ -1277,6 +1277,41 @@ window.dropPersonOnCategory = function(e, catKey) {
   const newTitle = prompt(`將「${record.name.replace('★','')}」搬移到「${cat.label}」\n請確認／調整職稱或班級代碼：`, suggestion);
   if (newTitle === null || !newTitle.trim()) return;
   record.title = newTitle.trim();
+  APP.pendingChanges = true;
+  renderPhone(document.getElementById('phone-search').value);
+};
+
+// ─── Drag a person row onto another person row：插入到該筆的位置排序 ────
+// 拖曳的這筆資料會被移到目標那筆的前面，原本卡在那個位置往後的人（含目標本人）
+// 全部自動往後遞補一位——這樣就能像你想的「把72移到65的位置，其他往後」。
+// 如果拖過去的目標剛好在不同類別，會先跳出確認視窗調整職稱／班級代碼，
+// 一次同時處理「搬類別」跟「排序位置」。
+window.dropPersonOnRow = function(e, targetId) {
+  e.preventDefault();
+  e.stopPropagation();
+  if (!APP.editMode) return;
+  const id = e.dataTransfer.getData('text/plain');
+  if (!id || String(id) === String(targetId)) return;
+  const fromIdx = APP.phoneData.findIndex(r => String(r.id) === String(id));
+  const toIdx = APP.phoneData.findIndex(r => String(r.id) === String(targetId));
+  if (fromIdx < 0 || toIdx < 0) return;
+  const dragged = APP.phoneData[fromIdx];
+  const target = APP.phoneData[toIdx];
+
+  const draggedCat = getCategory(dragged.title);
+  const targetCat = getCategory(target.title);
+  if (draggedCat.key !== targetCat.key) {
+    const newTitle = prompt(`將「${dragged.name.replace('★','')}」搬移到「${targetCat.label}」\n請確認／調整職稱或班級代碼：`, target.title);
+    if (newTitle === null || !newTitle.trim()) return;
+    dragged.title = newTitle.trim();
+  }
+
+  // 先移除拖曳的那筆，再插入到目標（重新找一次目標目前的位置，因為移除動作可能讓索引位移）前面
+  APP.phoneData.splice(fromIdx, 1);
+  let insertIdx = APP.phoneData.findIndex(r => String(r.id) === String(targetId));
+  if (insertIdx < 0) insertIdx = APP.phoneData.length;
+  APP.phoneData.splice(insertIdx, 0, dragged);
+
   APP.pendingChanges = true;
   renderPhone(document.getElementById('phone-search').value);
 };
