@@ -57,6 +57,7 @@
     transition: background 0.15s;
     display: flex; align-items: center; gap: 4px;
     flex-shrink: 0;
+    position: relative;
   }
   .year-badge:hover { background: rgba(255,255,255,0.28); }
 
@@ -492,6 +493,7 @@
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     line-height: 1.5;
   }
+  .room-ext-item[title] { cursor: help; }
   .room-ext-item .ext-num { font-family: monospace; }
   .room-ext-item .ext-name { font-weight: 500; margin-left: 3px; opacity: 0.9; }
   .room-card.has-class   .room-ext-item { color: var(--primary); }
@@ -549,10 +551,11 @@
   /* Year picker dropdown */
   .year-dropdown {
     display: none; position: absolute;
-    top: 52px; right: 24px;
+    top: calc(100% + 6px); left: 0;
     background: var(--surface); border: 1px solid var(--border);
     border-radius: var(--radius-lg); padding: 8px;
     box-shadow: var(--shadow-md); z-index: 150; min-width: 140px;
+    color: var(--text); cursor: default;
   }
   .year-dropdown.visible { display: block; }
   .year-option {
@@ -682,6 +685,13 @@
       <div class="year-badge" id="year-toggle" onclick="toggleYearPicker()">
         <span id="current-year-label">114學年度</span>
         <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        <!-- Year picker dropdown (anchored to this badge) -->
+        <div class="year-dropdown" id="year-dropdown" onclick="event.stopPropagation()">
+          <div id="year-list"></div>
+          <div class="year-new">
+            <div class="year-option" onclick="newYear()">＋ 建立新學年</div>
+          </div>
+        </div>
       </div>
       <div class="tab active" onclick="switchTab('phone', this)" id="tab-phone">
         <svg width="13" height="13" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 2h3l1.5 3-2 1.5a9 9 0 003 3L10 8l3 1.5V13a1 1 0 01-1 1C5 14 1 10 1 4a1 1 0 011-1z"/></svg>
@@ -734,14 +744,6 @@
     </div>
   </div>
 </header>
-
-<!-- Year picker dropdown -->
-<div class="year-dropdown" id="year-dropdown">
-  <div id="year-list"></div>
-  <div class="year-new">
-    <div class="year-option" onclick="newYear()">＋ 建立新學年</div>
-  </div>
-</div>
 
 <!-- Edit mode bar -->
 <div id="edit-bar">
@@ -949,12 +951,40 @@ async function saveToFirebase(year) {
   }
 }
 
+// Load/save the list of school years that exist, so "新增年度" survives a refresh.
+async function loadYearsList() {
+  try {
+    const metaRef = doc(db, 'meta', 'years');
+    const snap = await getDoc(metaRef);
+    if (snap.exists() && Array.isArray(snap.data().years) && snap.data().years.length) {
+      window.APP.years = snap.data().years.slice().sort((a, b) => a - b);
+    }
+  } catch (e) {
+    console.warn('Firebase years list load failed, using default:', e);
+  }
+}
+
+async function saveYearsList() {
+  try {
+    await window._setDoc(window._doc(window._db, 'meta', 'years'), {
+      years: window.APP.years
+    });
+    return true;
+  } catch (e) {
+    alert('新增年度失敗，請確認網路連線。\n' + e.message);
+    return false;
+  }
+}
+
 window._loadYear = loadYear;
 window._saveToFirebase = saveToFirebase;
+window._saveYearsList = saveYearsList;
 
 // Init
 window.APP.currentYear = 114;
-loadYear(114);
+loadYearsList().then(() => {
+  loadYear(window.APP.currentYear);
+});
 </script>
 
 <script>
@@ -1219,8 +1249,10 @@ window.renderMap = function() {
     const extHtml = extNums.length > 0
       ? `<div class="room-ext-grid">${extNums.map(n => {
           const names = extNameMap[n];
-          const nameHtml = names && names.length ? `<span class="ext-name">${names.join('／')}</span>` : '';
-          return `<span class="room-ext-item"><span class="ext-num">☎${n}</span>${nameHtml}</span>`;
+          const joined = names && names.length ? names.join('／') : '';
+          const titleAttr = joined ? ` title="${joined.replace(/"/g,'&quot;')}"` : '';
+          const nameHtml = joined ? `<span class="ext-name">${joined}</span>` : '';
+          return `<span class="room-ext-item"${titleAttr}><span class="ext-num">☎${n}</span>${nameHtml}</span>`;
         }).join('')}</div>`
       : '';
     return `<div class="room-card ${typeClass}" ${dragAttrs} onclick="openRoomEdit('${b}','${floor}',${idx})">
@@ -1732,16 +1764,33 @@ window.selectYear = function(y) {
   if (window._loadYear) window._loadYear(y);
 };
 
-window.newYear = function() {
+window.newYear = async function() {
   const next = Math.max(...APP.years) + 1;
-  const confirm_ = confirm(`建立 ${next}學年度？\n將複製 ${APP.currentYear}學年度的資料做為起點。`);
-  if (!confirm_) return;
+  const confirmed = confirm(`建立 ${next}學年度？\n將複製 ${APP.currentYear}學年度的資料做為起點。`);
+  if (!confirmed) return;
+
+  const prevYears = APP.years.slice();
   APP.years.push(next);
+  const fromYear = APP.currentYear;
   APP.currentYear = next;
   document.getElementById('current-year-label').textContent = next + '學年度';
   document.getElementById('year-dropdown').classList.remove('visible');
-  // Data already loaded in memory from current year — just save
-  if (window._saveToFirebase) window._saveToFirebase(next).then(() => showToast(`✅ ${next}學年度已建立`));
+
+  // Data already loaded in memory from the year we're branching off — save it under
+  // the new year's docs, AND persist the years list itself so it survives a refresh.
+  const [dataOk, listOk] = await Promise.all([
+    window._saveToFirebase(next),
+    window._saveYearsList()
+  ]);
+
+  if (dataOk && listOk) {
+    showToast(`✅ ${next}學年度已建立（複製自 ${fromYear}學年度）`);
+  } else {
+    // Roll back so the UI doesn't show a year that didn't actually save
+    APP.years = prevYears;
+    APP.currentYear = fromYear;
+    document.getElementById('current-year-label').textContent = fromYear + '學年度';
+  }
 };
 
 // ─── Export Excel ─────────────────────────────────────────
