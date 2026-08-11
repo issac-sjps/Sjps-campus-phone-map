@@ -286,7 +286,7 @@
   tbody tr { border-bottom: 1px solid #edf0f4; }
   tbody tr:last-child { border-bottom: none; }
   tbody tr:hover { background: var(--primary-light); }
-  td { padding: 4px 3px; font-size: 12px; overflow: visible; white-space: nowrap; vertical-align: middle; }
+  td { padding: 4px 3px; font-size: 12px; overflow: visible; white-space: nowrap; vertical-align: middle; height: 23px; }
   td.id-col { color: var(--text-light); font-size: 10px; width: 28px; }
   td.id-star-cell { cursor: default; }
   body.edit-mode td.id-star-cell { cursor: pointer; }
@@ -333,6 +333,7 @@
     padding: 2px 4px;
     letter-spacing: 0.04em;
     white-space: nowrap;
+    height: 23px;
   }
   .cat-count {
     font-weight: 500;
@@ -1130,7 +1131,7 @@ window.APP = {
 
 // ─── Category mapping ─────────────────────────────────────
 const CAT_ORDER = [
-  { key: 'admin', label: '教育行政人員', cssClass: 'cat-admin', match: t => ['校　　長','教務主任','學務主任','總務主任','輔導主任','會計主任','人事主任'].includes(t) },
+  { key: 'admin', label: '行政主管', cssClass: 'cat-admin', match: t => ['校　　長','教務主任','學務主任','總務主任','輔導主任','會計主任','人事主任'].includes(t) },
   { key: 'group', label: '各組組長', cssClass: 'cat-group', match: t => t.includes('處-') },
   { key: 'g1', label: '一年級', cssClass: 'cat-grade', match: t => /^1\d\d$/.test(t) },
   { key: 'g2', label: '二年級', cssClass: 'cat-grade', match: t => /^2\d\d$/.test(t) },
