@@ -707,12 +707,80 @@
   #phone-print-root { display: none; }
   #map-print-root { display: none; }
 
-  /* Responsive */
-  @media (max-width: 640px) {
-    main { padding: 12px; }
-    header { padding: 0 12px; }
+  /* ══════════════════════ Responsive (tablet / mobile) ══════════════════════ */
+  @media (max-width: 900px) {
+    header { padding: 8px 10px; }
+    .header-top {
+      height: auto;
+      flex-wrap: wrap;
+      row-gap: 8px;
+      padding: 2px 0;
+    }
+    .header-left { flex-wrap: wrap; row-gap: 6px; width: 100%; }
     .school-name { font-size: 13px; }
-    td { padding: 8px 10px; }
+    .tab-legend { display: none !important; }
+    .header-search {
+      order: 5; width: 100%; max-width: none;
+      flex-wrap: wrap; row-gap: 6px;
+    }
+    .header-search-wrap { flex-basis: 100%; width: 100%; }
+    .header-right { width: 100%; justify-content: flex-end; order: 4; }
+
+    main { padding: 10px 10px 24px; }
+
+    /* Map layout: sidebar becomes a horizontal scroll strip above content */
+    .map-layout { flex-direction: column; }
+    .map-sidebar {
+      flex-direction: row; flex-wrap: nowrap;
+      overflow-x: auto; -webkit-overflow-scrolling: touch;
+      width: 100%; padding-bottom: 4px; gap: 6px;
+    }
+    .btab { min-width: auto; flex-shrink: 0; }
+
+    /* Phone table: collapse the 6-way column split into one flowing column */
+    .phone-grid { grid-template-columns: 1fr; }
+
+    .room-card, .add-room-btn { width: 118px; }
+  }
+
+  @media (max-width: 640px) {
+    main { padding: 10px; }
+    header { padding: 8px 10px; }
+    .school-name { font-size: 13px; }
+    td { padding: 8px 8px; font-size: 13px; }
+    th { font-size: 12px; }
+
+    .toolbar { gap: 8px; }
+    .toolbar-btn { padding: 8px 12px; font-size: 13px; }
+    .search-wrap { min-width: 100%; }
+
+    /* Larger tap targets for the tab pills */
+    .tab { padding: 6px 12px; font-size: 13px; }
+    .year-badge { padding: 4px 10px; font-size: 12px; }
+
+    /* Icon-only action buttons to save horizontal space */
+    .header-search-btn { padding: 6px 10px; gap: 0; }
+    .header-search-btn svg { width: 15px; height: 15px; }
+    .header-search-btn .btn-label { display: none; }
+
+    #edit-btn { padding: 6px 12px; font-size: 13px; }
+
+    .modal { width: 100%; padding: 18px; }
+    .modal-actions { flex-wrap: wrap; }
+    .modal-actions button { flex: 1; min-width: 90px; }
+
+    .room-card, .add-room-btn { width: 46%; flex: 1 1 46%; }
+    .rooms-grid { gap: 6px; }
+
+    #edit-bar { flex-wrap: wrap; padding: 8px 12px; font-size: 12px; }
+    #edit-bar .save-btn, #edit-bar .discard-btn { padding: 6px 12px; }
+  }
+
+  @media (max-width: 420px) {
+    .school-name { font-size: 12px; }
+    .year-badge span:first-child { font-size: 11px; }
+    .header-search-btn { padding: 6px 8px; }
+    .room-card, .add-room-btn { width: 100%; flex: 1 1 100%; }
   }
 </style>
 </head>
@@ -758,19 +826,19 @@
       </div>
       <button class="header-search-btn" onclick="window.print()">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="5" width="12" height="8" rx="1"/><path d="M5 5V2h6v3M5 12h6"/></svg>
-        列印
+        <span class="btn-label">列印</span>
       </button>
       <button class="header-search-btn" onclick="exportExcel()">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M9 2H4a1 1 0 00-1 1v10a1 1 0 001 1h8a1 1 0 001-1V6L9 2z"/><path d="M9 2v4h4M6 9l4 4M10 9l-4 4"/></svg>
-        下載 Excel
+        <span class="btn-label">下載 Excel</span>
       </button>
       <button class="header-search-btn" onclick="exportJSON()" title="匯出資料為 JSON">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M9 2H4a1 1 0 00-1 1v10a1 1 0 001 1h8a1 1 0 001-1V6L9 2z"/><path d="M9 2v4h4"/><path d="M5 10h6M5 12.5h4"/></svg>
-        匯出 JSON
+        <span class="btn-label">匯出 JSON</span>
       </button>
       <label class="header-search-btn" style="cursor:pointer" title="匯入 JSON 覆蓋資料">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M9 2H4a1 1 0 00-1 1v10a1 1 0 001 1h8a1 1 0 001-1V6L9 2z"/><path d="M9 2v4h4"/><path d="M8 14V8m-2.5 3.5L8 14l2.5-2.5"/></svg>
-        匯入 JSON
+        <span class="btn-label">匯入 JSON</span>
         <input type="file" accept=".json" onchange="importJSON(event)" style="display:none">
       </label>
     </div>
