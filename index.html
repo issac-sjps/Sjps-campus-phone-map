@@ -248,8 +248,8 @@
 
   /* Phone table */
   .phone-table-wrap {
-    background: var(--surface); border-radius: var(--radius-lg);
-    box-shadow: var(--shadow); overflow: hidden;
+    background: var(--surface); border-radius: 0;
+    box-shadow: var(--shadow); overflow: visible;
   }
   /* 5-column grid layout for phone table */
   .phone-grid {
@@ -263,8 +263,8 @@
     overflow: visible;
     min-width: 0;
   }
-  .phone-col:first-child { border-radius: var(--radius-lg) 0 0 var(--radius-lg); }
-  .phone-col:last-child  { border-radius: 0 var(--radius-lg) var(--radius-lg) 0; }
+  .phone-col:first-child { border-radius: 0; }
+  .phone-col:last-child  { border-radius: 0; }
   table { width: 100%; border-collapse: collapse; table-layout: fixed; }
   thead th {
     background: var(--primary); color: #fff;
@@ -286,7 +286,7 @@
   tbody tr { border-bottom: 1px solid #edf0f4; }
   tbody tr:last-child { border-bottom: none; }
   tbody tr:hover { background: var(--primary-light); }
-  td { padding: 4px 3px; font-size: 12px; overflow: visible; white-space: nowrap; vertical-align: middle; }
+  td { padding: 4px 3px; font-size: 12px; overflow: visible; white-space: nowrap; vertical-align: middle; height: 23px; line-height: 1.3; }
   td.id-col { color: var(--text-light); font-size: 12px; width: 28px; line-height: 1; }
   td.id-star-cell { cursor: default; }
   body.edit-mode td.id-star-cell { cursor: pointer; }
@@ -301,16 +301,23 @@
     margin-left: 3px; opacity: 0.7;
   }
   td.ext-col { font-weight: 700; color: var(--primary); font-family: monospace; font-size: 12px; white-space: nowrap; }
-  td.name-col .star { color: var(--accent); font-size: 10px; margin-right: 1px; }
+  td.name-col .star { color: var(--accent); font-size: 10px; margin-right: 1px; line-height: 1; display: inline-block; vertical-align: middle; }
 
   /* Editable cells */
+  body.edit-mode tr[draggable="true"] { cursor: grab; }
+  body.edit-mode tr[draggable="true"]:active { cursor: grabbing; }
+  body.edit-mode .cat-header td { cursor: default; }
+  .person-del-btn {
+    display: none;
+    background: none; border: none;
+    color: #c0392b; font-size: 10px; cursor: pointer;
+    padding: 0 3px; margin-left: 3px; border-radius: 3px; line-height: 1;
+    vertical-align: middle;
+  }
+  body.edit-mode tr:hover .person-del-btn { display: inline-block; }
+  .person-del-btn:hover { background: #fde8e8; }
   body.edit-mode td.editable { cursor: pointer; position: relative; }
   body.edit-mode td.editable:hover { background: #fff8e1; }
-  body.edit-mode td.editable:hover::after {
-    content: '✎';
-    position: absolute; right: 4px; top: 50%; transform: translateY(-50%);
-    font-size: 10px; color: var(--accent); opacity: 0.7;
-  }
   .inline-edit {
     width: 100%; border: 1.5px solid var(--accent); border-radius: 3px;
     padding: 2px 4px; font-size: 12px; background: #fffdf8;
@@ -326,6 +333,14 @@
     padding: 2px 4px;
     letter-spacing: 0.04em;
     white-space: nowrap;
+    height: 23px;
+    line-height: 1.3;
+  }
+  .cat-count {
+    font-weight: 500;
+    opacity: 0.65;
+    margin-left: 1px;
+    letter-spacing: 0;
   }
   /* Distinct color per category group so they're easy to scan.
      All six grade levels (1~6年級) share one color since they're all
@@ -335,9 +350,14 @@
   .cat-header.cat-grade   td { background: #d8ecdf; color: #1f6b45; }
   .cat-header.cat-sub     td { background: #e5ddf5; color: #5b3a9e; }
   .cat-header.cat-subst   td { background: #faf0cf; color: #92700a; }
-  .cat-header.cat-sp      td { background: #fbdde2; color: #a5324c; }
+  .cat-header.cat-sp1     td { background: #fbdde2; color: #a5324c; }
+  .cat-header.cat-sp2     td { background: #f8cdd6; color: #922a44; }
+  .cat-header.cat-sp3     td { background: #f5bcc8; color: #7e1f39; }
+  .cat-header.cat-sp4     td { background: #f2acba; color: #6a152e; }
   .cat-header.cat-kinder  td { background: #d7eef4; color: #146a80; }
   .cat-header.cat-support td { background: #e6e6e9; color: #4d4d55; }
+  .cat-header.cat-foreign td { background: #d9e7de; color: #2b6b4a; }
+  .cat-header.cat-adminsupport td { background: #f5e3da; color: #96431e; }
   .cat-add-btn {
     display: none;
     background: var(--primary);
@@ -646,9 +666,14 @@
     #phone-print-grid .p-cat.cat-grade   td { background: #d8ecdf !important; color: #1f6b45; }
     #phone-print-grid .p-cat.cat-sub     td { background: #e5ddf5 !important; color: #5b3a9e; }
     #phone-print-grid .p-cat.cat-subst   td { background: #faf0cf !important; color: #92700a; }
-    #phone-print-grid .p-cat.cat-sp      td { background: #fbdde2 !important; color: #a5324c; }
+    #phone-print-grid .p-cat.cat-sp1     td { background: #fbdde2 !important; color: #a5324c; }
+    #phone-print-grid .p-cat.cat-sp2     td { background: #f8cdd6 !important; color: #922a44; }
+    #phone-print-grid .p-cat.cat-sp3     td { background: #f5bcc8 !important; color: #7e1f39; }
+    #phone-print-grid .p-cat.cat-sp4     td { background: #f2acba !important; color: #6a152e; }
     #phone-print-grid .p-cat.cat-kinder  td { background: #d7eef4 !important; color: #146a80; }
     #phone-print-grid .p-cat.cat-support td { background: #e6e6e9 !important; color: #4d4d55; }
+    #phone-print-grid .p-cat.cat-foreign td { background: #d9e7de !important; color: #2b6b4a; }
+    #phone-print-grid .p-cat.cat-adminsupport td { background: #f5e3da !important; color: #96431e; }
     #phone-print-grid .p-ext { font-weight: 700; color: #1a5c8a; font-family: monospace; }
     #phone-print-grid .p-star { color: #c0560a; font-weight: 700; }
 
@@ -692,12 +717,80 @@
   #phone-print-root { display: none; }
   #map-print-root { display: none; }
 
-  /* Responsive */
-  @media (max-width: 640px) {
-    main { padding: 12px; }
-    header { padding: 0 12px; }
+  /* ══════════════════════ Responsive (tablet / mobile) ══════════════════════ */
+  @media (max-width: 900px) {
+    header { padding: 8px 10px; }
+    .header-top {
+      height: auto;
+      flex-wrap: wrap;
+      row-gap: 8px;
+      padding: 2px 0;
+    }
+    .header-left { flex-wrap: wrap; row-gap: 6px; width: 100%; }
     .school-name { font-size: 13px; }
-    td { padding: 8px 10px; }
+    .tab-legend { display: none !important; }
+    .header-search {
+      order: 5; width: 100%; max-width: none;
+      flex-wrap: wrap; row-gap: 6px;
+    }
+    .header-search-wrap { flex-basis: 100%; width: 100%; }
+    .header-right { width: 100%; justify-content: flex-end; order: 4; }
+
+    main { padding: 10px 10px 24px; }
+
+    /* Map layout: sidebar becomes a horizontal scroll strip above content */
+    .map-layout { flex-direction: column; }
+    .map-sidebar {
+      flex-direction: row; flex-wrap: nowrap;
+      overflow-x: auto; -webkit-overflow-scrolling: touch;
+      width: 100%; padding-bottom: 4px; gap: 6px;
+    }
+    .btab { min-width: auto; flex-shrink: 0; }
+
+    /* Phone table: collapse the 6-way column split into one flowing column */
+    .phone-grid { grid-template-columns: 1fr; }
+
+    .room-card, .add-room-btn { width: 118px; }
+  }
+
+  @media (max-width: 640px) {
+    main { padding: 10px; }
+    header { padding: 8px 10px; }
+    .school-name { font-size: 13px; }
+    td { padding: 8px 8px; font-size: 13px; }
+    th { font-size: 12px; }
+
+    .toolbar { gap: 8px; }
+    .toolbar-btn { padding: 8px 12px; font-size: 13px; }
+    .search-wrap { min-width: 100%; }
+
+    /* Larger tap targets for the tab pills */
+    .tab { padding: 6px 12px; font-size: 13px; }
+    .year-badge { padding: 4px 10px; font-size: 12px; }
+
+    /* Icon-only action buttons to save horizontal space */
+    .header-search-btn { padding: 6px 10px; gap: 0; }
+    .header-search-btn svg { width: 15px; height: 15px; }
+    .header-search-btn .btn-label { display: none; }
+
+    #edit-btn { padding: 6px 12px; font-size: 13px; }
+
+    .modal { width: 100%; padding: 18px; }
+    .modal-actions { flex-wrap: wrap; }
+    .modal-actions button { flex: 1; min-width: 90px; }
+
+    .room-card, .add-room-btn { width: 46%; flex: 1 1 46%; }
+    .rooms-grid { gap: 6px; }
+
+    #edit-bar { flex-wrap: wrap; padding: 8px 12px; font-size: 12px; }
+    #edit-bar .save-btn, #edit-bar .discard-btn { padding: 6px 12px; }
+  }
+
+  @media (max-width: 420px) {
+    .school-name { font-size: 12px; }
+    .year-badge span:first-child { font-size: 11px; }
+    .header-search-btn { padding: 6px 8px; }
+    .room-card, .add-room-btn { width: 100%; flex: 1 1 100%; }
   }
 </style>
 </head>
@@ -743,19 +836,19 @@
       </div>
       <button class="header-search-btn" onclick="window.print()">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="5" width="12" height="8" rx="1"/><path d="M5 5V2h6v3M5 12h6"/></svg>
-        列印
+        <span class="btn-label">列印</span>
       </button>
       <button class="header-search-btn" onclick="exportExcel()">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M9 2H4a1 1 0 00-1 1v10a1 1 0 001 1h8a1 1 0 001-1V6L9 2z"/><path d="M9 2v4h4M6 9l4 4M10 9l-4 4"/></svg>
-        下載 Excel
+        <span class="btn-label">下載 Excel</span>
       </button>
       <button class="header-search-btn" onclick="exportJSON()" title="匯出資料為 JSON">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M9 2H4a1 1 0 00-1 1v10a1 1 0 001 1h8a1 1 0 001-1V6L9 2z"/><path d="M9 2v4h4"/><path d="M5 10h6M5 12.5h4"/></svg>
-        匯出 JSON
+        <span class="btn-label">匯出 JSON</span>
       </button>
       <label class="header-search-btn" style="cursor:pointer" title="匯入 JSON 覆蓋資料">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M9 2H4a1 1 0 00-1 1v10a1 1 0 001 1h8a1 1 0 001-1V6L9 2z"/><path d="M9 2v4h4"/><path d="M8 14V8m-2.5 3.5L8 14l2.5-2.5"/></svg>
-        匯入 JSON
+        <span class="btn-label">匯入 JSON</span>
         <input type="file" accept=".json" onchange="importJSON(event)" style="display:none">
       </label>
     </div>
@@ -1005,9 +1098,12 @@ window._loadYear = loadYear;
 window._saveToFirebase = saveToFirebase;
 window._saveYearsList = saveYearsList;
 
-// Init
-window.APP.currentYear = 114;
+// Init — always default to the most recent school year, so a refresh (or a newly
+// created year) never appears to "disappear": the years list itself is always
+// safely stored in Firebase the moment a year is created.
 loadYearsList().then(() => {
+  window.APP.currentYear = Math.max(...window.APP.years);
+  document.getElementById('current-year-label').textContent = window.APP.currentYear + '學年度';
   loadYear(window.APP.currentYear);
 });
 </script>
@@ -1036,7 +1132,7 @@ window.APP = {
 
 // ─── Category mapping ─────────────────────────────────────
 const CAT_ORDER = [
-  { key: 'admin', label: '行政人員', cssClass: 'cat-admin', match: t => ['校　　長','教務主任','學務主任','總務主任','輔導主任','會計主任','人事主任'].includes(t) },
+  { key: 'admin', label: '行政主管', cssClass: 'cat-admin', match: t => ['校　　長','教務主任','學務主任','總務主任','輔導主任','會計主任','人事主任'].includes(t) },
   { key: 'group', label: '各組組長', cssClass: 'cat-group', match: t => t.includes('處-') },
   { key: 'g1', label: '一年級', cssClass: 'cat-grade', match: t => /^1\d\d$/.test(t) },
   { key: 'g2', label: '二年級', cssClass: 'cat-grade', match: t => /^2\d\d$/.test(t) },
@@ -1046,10 +1142,30 @@ const CAT_ORDER = [
   { key: 'g6', label: '六年級', cssClass: 'cat-grade', match: t => /^6\d\d$/.test(t) },
   { key: 'sub', label: '科任教師', cssClass: 'cat-sub', match: t => t.startsWith('科任') },
   { key: 'subst', label: '代課教師', cssClass: 'cat-subst', match: t => t.startsWith('代課') },
-  { key: 'sp', label: '特殊班級', cssClass: 'cat-sp', match: t => t.startsWith('資優') || t.startsWith('資源') },
+  { key: 'sp1', label: '特教-資優班教師', cssClass: 'cat-sp1', match: t => t.startsWith('資優') },
+  { key: 'sp2', label: '特教-資源班教師', cssClass: 'cat-sp2', match: t => t.startsWith('資源') },
+  // 專任輔導教師要在下面的「教學支援人員」規則（t.startsWith('專任')）之前比對，
+  // 否則會被那條更寬的規則搶走。
+  { key: 'sp3', label: '特教-專任輔導教師', cssClass: 'cat-sp3', match: t => t.startsWith('專任輔導') },
+  { key: 'sp4', label: '特教-專任助理員', cssClass: 'cat-sp4', match: t => t.startsWith('專任特教助理') },
   { key: 'kinder', label: '幼兒園', cssClass: 'cat-kinder', match: t => t.startsWith('幼兒') || t.startsWith('學前') },
-  { key: 'support', label: '支援人員', cssClass: 'cat-support', match: t => true }
+  // 「教學支援人員」現在改成明確規則，只抓教學/語言相關的支援人員（教支人員＊語），
+  // 不再是保底分類。外籍教師、特教專任助理員已各自獨立成類，排除在這條規則外。
+  { key: 'support', label: '教學支援人員', cssClass: 'cat-support', match: t => t.startsWith('教支人員') || t.startsWith('專任') },
+  { key: 'foreign', label: '外籍教師', cssClass: 'cat-foreign', match: t => t.startsWith('外籍教師') },
+  // 保底分類：護理師、營養師、幹事、技工、委外、人事助理…等不屬於教學支援的人，
+  // 全部落在這裡。這個規則一定要留在比對順序的最後一個（符合任何職稱）。
+  { key: 'adminSupport', label: '行政支援人員', cssClass: 'cat-adminsupport', match: t => true }
 ];
+
+// 顯示順序跟比對順序分開處理：比對順序（CAT_ORDER 本身的排列）決定「這個人歸類到哪個類別」，
+// 其中「行政支援人員」是保底規則（符合任何職稱），一定要留在比對順序的最後一個，
+// 否則它會搶走後面規則更明確的類別。
+// 這裡的 DISPLAY_ORDER 只決定畫面上標題列的排列順序，可以自由調整不影響比對邏輯。
+const DISPLAY_ORDER_KEYS = [
+  'admin','group','g1','g2','g3','g4','g5','g6','sub','subst','sp1','sp2','sp3','sp4','kinder','support','foreign','adminSupport'
+];
+const DISPLAY_ORDER = DISPLAY_ORDER_KEYS.map(k => CAT_ORDER.find(c => c.key === k)).filter(Boolean);
 
 function getCategory(title) {
   for (const cat of CAT_ORDER) if (cat.match(title)) return cat;
@@ -1079,6 +1195,51 @@ function distributeIntoColumns(flat, numCols) {
   return cols;
 }
 
+// ─── 6 欄列高強制對齊 ────────────────────────────────────────
+// phone-tbody-0 ~ phone-tbody-5 是 6 個各自獨立的 <table>，同一「列序」
+// (第 N 列) 分散在不同欄的內容不同，實際渲染高度可能因字型 metrics、
+// 邊框圓角、瀏覽器差異而有零星的 1px 落差，肉眼看起來就是「列高不整齊」。
+// 這裡在每次 renderPhone 之後，逐列比較 6 欄中對應列的實際高度，
+// 取最大值後統一寫回每一欄的那一列，讓格線在視覺上完全對齊。
+function syncPhoneRowHeights() {
+  const tbodies = [];
+  for (let i = 0; i < 6; i++) {
+    const el = document.getElementById(`phone-tbody-${i}`);
+    if (el) tbodies.push(el);
+  }
+  if (!tbodies.length) return;
+
+  // 先清掉先前設定的行內高度，讓每一列先以「自然高度」重新計算，
+  // 否則舊的高度值會一直累積、越同步越高。
+  tbodies.forEach(tb => {
+    Array.from(tb.children).forEach(tr => { tr.style.height = ''; });
+  });
+
+  const maxRows = Math.max(...tbodies.map(tb => tb.children.length));
+  for (let r = 0; r < maxRows; r++) {
+    let max = 0;
+    const rowsAtIndex = [];
+    tbodies.forEach(tb => {
+      const tr = tb.children[r];
+      if (tr) {
+        rowsAtIndex.push(tr);
+        if (tr.offsetHeight > max) max = tr.offsetHeight;
+      }
+    });
+    rowsAtIndex.forEach(tr => { tr.style.height = max + 'px'; });
+  }
+}
+window.syncPhoneRowHeights = syncPhoneRowHeights;
+
+// 視窗縮放或字型延遲載入完成時，重新量測一次（避免初次量測時字型還沒套用）
+window.addEventListener('resize', () => {
+  clearTimeout(window._phoneRowSyncTimer);
+  window._phoneRowSyncTimer = setTimeout(syncPhoneRowHeights, 150);
+});
+if (document.fonts && document.fonts.ready) {
+  document.fonts.ready.then(() => syncPhoneRowHeights());
+}
+
 // ─── Phone render ─────────────────────────────────────────
 window.renderPhone = function(filter = '') {
   const data = APP.phoneData;
@@ -1098,11 +1259,19 @@ window.renderPhone = function(filter = '') {
   });
 
   // Flatten: [{isCat, label, key, cssClass} | {row data}]
+  // The displayed "#" is a live, always-contiguous sequence number computed here
+  // (not the stored record id), so it always matches "how many people so far"
+  // and never has gaps no matter how records were added/deleted over time.
   const flat = [];
-  CAT_ORDER.forEach(cat => {
-    if (!groups[cat.key] || !groups[cat.key].rows.length) return;
-    flat.push({ isCat: true, label: cat.label, key: cat.key, cssClass: cat.cssClass });
-    groups[cat.key].rows.forEach(r => flat.push({ isCat: false, ...r }));
+  let _seq = 0;
+  DISPLAY_ORDER.forEach(cat => {
+    const hasRows = groups[cat.key] && groups[cat.key].rows.length;
+    const count = hasRows ? groups[cat.key].rows.length : 0;
+    // 編輯模式下，即使類別目前沒有人也顯示標題列，這樣才有地方可以拖曳放入；
+    // 一般瀏覽模式仍然隱藏空類別，避免畫面出現空空的標題造成混亂。
+    if (!hasRows && !APP.editMode) return;
+    flat.push({ isCat: true, label: cat.label, key: cat.key, cssClass: cat.cssClass, count });
+    if (hasRows) groups[cat.key].rows.forEach(r => flat.push({ isCat: false, ...r, _seq: ++_seq }));
   });
 
   // Distribute evenly across 6 columns, without letting a lone category
@@ -1111,8 +1280,8 @@ window.renderPhone = function(filter = '') {
 
   function rowHtml(item) {
     if (item.isCat) {
-      return `<tr class="cat-header ${item.cssClass || ''}">
-        <td colspan="3">${item.label}</td>
+      return `<tr class="cat-header ${item.cssClass || ''}" ondragover="event.preventDefault()" ondrop="dropPersonOnCategory(event,'${item.key}')">
+        <td colspan="3">${item.label}<span class="cat-count">(${item.count})</span></td>
         <td style="text-align:right;padding-right:6px">
           <button class="cat-add-btn" onclick="addRowInCat('${item.key}')">＋</button>
         </td>
@@ -1123,15 +1292,18 @@ window.renderPhone = function(filter = '') {
     // 姓名欄完整顯示，不再截斷字數（欄寬已加大並允許換行）
     const displayName = isStar ?
       `<span class="star">★</span>${rawName}` : rawName;
-    const idDisplay = isStar ? '★' : item.id;
+    // # 欄改為即時計算的流水號（依畫面順序重新編號），不再顯示寫死的 id，
+    // 這樣就不會因為資料新增/刪除而跳號，且永遠等於「目前算到第幾位」。
+    const idDisplay = isStar ? '★' : item._seq;
     const idStyle = 'color:var(--text-light);font-size:12px;line-height:1;';
     const titleAttr = ` title="${String(item.title).replace(/"/g,'&quot;')}"`;
     const extTitleAttr = ` title="${String(item.ext).replace(/"/g,'&quot;')}"`;
-    return `<tr data-id="${item.id}">
+    const draggableAttr = APP.editMode ? ' draggable="true" ondragstart="dragStartPerson(event,\'' + item.id + '\')" ondragover="event.preventDefault()" ondrop="dropPersonOnRow(event,\'' + item.id + '\')"' : '';
+    return `<tr data-id="${item.id}"${draggableAttr}>
       <td class="id-col id-star-cell" onclick="toggleStar('${item.id}')" style="${idStyle}"${isStar ? titleAttr : ' title="編輯模式下可標記學年主任"'}>${idDisplay}</td>
       <td class="editable" onclick="editCell(this,'title')"${titleAttr}>${item.title}</td>
       <td class="name-col editable copy-name" data-raw-name="${rawName.replace(/"/g,'&quot;')}" data-record-id="${item.id}" onclick="handleNameClick(event,this)">${displayName}</td>
-      <td class="ext-col editable" onclick="editCell(this,'ext')"${extTitleAttr}>${item.ext}</td>
+      <td class="ext-col editable" onclick="editCell(this,'ext')"${extTitleAttr}>${item.ext}<button class="person-del-btn" onclick="deletePerson(event,'${item.id}')" title="刪除此人">✕</button></td>
     </tr>`;
   }
 
@@ -1139,6 +1311,12 @@ window.renderPhone = function(filter = '') {
     const el = document.getElementById(`phone-tbody-${i}`);
     if (el) el.innerHTML = col.map(rowHtml).join('');
   });
+
+  // 6 個欄位是各自獨立的 <table>，CSS 的 height:23px 只是「理想值」，
+  // 不同瀏覽器 / 字型渲染下實際列高可能有 1px 內的差異，導致視覺上不整齊。
+  // 這裡在渲染完成後，逐一比對「同一列序」在 6 個欄位中的實際高度，
+  // 取最大值統一設定，強制讓每一列在跨欄時都完全對齊。
+  syncPhoneRowHeights();
 
   const total2 = filtered.length;
   document.getElementById('phone-count').textContent = `共 ${total2} 筆${q ? '（篩選中）' : ''}`;
@@ -1214,6 +1392,82 @@ window.addRow = function() {
   APP.phoneData.push({ id: newId, title: '新職稱', name: '姓名', ext: '000' });
   APP.pendingChanges = true;
   renderPhone();
+};
+
+// ─── Drag a person row onto a category header to move them ────
+// 類別是由 title 欄位判斷的（例如 "科任教師"、"301"），所以搬移的做法
+// 是把該筆記錄的 title 改成目標類別的代表值。因為同一類別底下的 title
+// 常常不完全相同（例如各年級班級的房號不同），改之前會先跳出確認視窗，
+// 讓你可以調整成正確的職稱／班級代碼，而不是被亂猜的值蓋掉。
+window.dragStartPerson = function(e, id) {
+  if (!APP.editMode) { e.preventDefault(); return; }
+  e.dataTransfer.setData('text/plain', String(id));
+  e.dataTransfer.effectAllowed = 'move';
+};
+
+window.dropPersonOnCategory = function(e, catKey) {
+  e.preventDefault();
+  if (!APP.editMode) return;
+  const id = e.dataTransfer.getData('text/plain');
+  if (!id) return;
+  const record = APP.phoneData.find(r => String(r.id) === String(id));
+  const cat = CAT_ORDER.find(c => c.key === catKey);
+  if (!record || !cat) return;
+  if (cat.match(record.title)) return; // 已經在這個類別了
+
+  const suggestion = APP.phoneData.find(r => cat.match(r.title))?.title || cat.label;
+  const newTitle = prompt(`將「${record.name.replace('★','')}」搬移到「${cat.label}」\n請確認／調整職稱或班級代碼：`, suggestion);
+  if (newTitle === null || !newTitle.trim()) return;
+  record.title = newTitle.trim();
+  APP.pendingChanges = true;
+  renderPhone(document.getElementById('phone-search').value);
+};
+
+// ─── Drag a person row onto another person row：插入到該筆的位置排序 ────
+// 拖曳的這筆資料會被移到目標那筆的前面，原本卡在那個位置往後的人（含目標本人）
+// 全部自動往後遞補一位——這樣就能像你想的「把72移到65的位置，其他往後」。
+// 如果拖過去的目標剛好在不同類別，會先跳出確認視窗調整職稱／班級代碼，
+// 一次同時處理「搬類別」跟「排序位置」。
+window.dropPersonOnRow = function(e, targetId) {
+  e.preventDefault();
+  e.stopPropagation();
+  if (!APP.editMode) return;
+  const id = e.dataTransfer.getData('text/plain');
+  if (!id || String(id) === String(targetId)) return;
+  const fromIdx = APP.phoneData.findIndex(r => String(r.id) === String(id));
+  const toIdx = APP.phoneData.findIndex(r => String(r.id) === String(targetId));
+  if (fromIdx < 0 || toIdx < 0) return;
+  const dragged = APP.phoneData[fromIdx];
+  const target = APP.phoneData[toIdx];
+
+  const draggedCat = getCategory(dragged.title);
+  const targetCat = getCategory(target.title);
+  if (draggedCat.key !== targetCat.key) {
+    const newTitle = prompt(`將「${dragged.name.replace('★','')}」搬移到「${targetCat.label}」\n請確認／調整職稱或班級代碼：`, target.title);
+    if (newTitle === null || !newTitle.trim()) return;
+    dragged.title = newTitle.trim();
+  }
+
+  // 先移除拖曳的那筆，再插入到目標（重新找一次目標目前的位置，因為移除動作可能讓索引位移）前面
+  APP.phoneData.splice(fromIdx, 1);
+  let insertIdx = APP.phoneData.findIndex(r => String(r.id) === String(targetId));
+  if (insertIdx < 0) insertIdx = APP.phoneData.length;
+  APP.phoneData.splice(insertIdx, 0, dragged);
+
+  APP.pendingChanges = true;
+  renderPhone(document.getElementById('phone-search').value);
+};
+
+window.deletePerson = function(e, id) {
+  e.stopPropagation();
+  if (!APP.editMode) return;
+  const record = APP.phoneData.find(r => String(r.id) === String(id));
+  if (!record) return;
+  const displayName = record.name.startsWith('★') ? record.name.slice(1) : record.name;
+  if (!confirm(`確定刪除「${displayName}（${record.title}）」這筆資料？`)) return;
+  APP.phoneData = APP.phoneData.filter(r => String(r.id) !== String(id));
+  APP.pendingChanges = true;
+  renderPhone(document.getElementById('phone-search').value);
 };
 
 window.addRowInCat = function(catKey) {
@@ -1514,20 +1768,20 @@ function buildPhonePrint() {
   const year = APP.currentYear;
   const lastEdit = APP.phoneLastEdit || '';
 
-  // Group into categories
-  const groups = [];
-  const seen = {};
+  // Group into categories, ordered by DISPLAY_ORDER (same order as the on-screen view)
+  const groupsByKey = {};
   data.forEach(r => {
     const cat = getCategory(r.title);
-    if (!seen[cat.key]) { seen[cat.key] = true; groups.push({ label: cat.label, key: cat.key, cssClass: cat.cssClass, rows: [] }); }
-    groups.find(g => g.key === cat.key).rows.push(r);
+    if (!groupsByKey[cat.key]) groupsByKey[cat.key] = { label: cat.label, key: cat.key, cssClass: cat.cssClass, rows: [] };
+    groupsByKey[cat.key].rows.push(r);
   });
+  const groups = DISPLAY_ORDER.map(cat => groupsByKey[cat.key]).filter(Boolean);
 
   // Flatten into rows with category headers
   const allRows = [];
   groups.forEach(g => {
     if (!g.rows.length) return;
-    allRows.push({ isCat: true, label: g.label, cssClass: g.cssClass });
+    allRows.push({ isCat: true, label: g.label, cssClass: g.cssClass, count: g.rows.length });
     g.rows.forEach(r => allRows.push({ isCat: false, ...r }));
   });
 
@@ -1539,7 +1793,7 @@ function buildPhonePrint() {
     let h = `<table><thead><tr><th>#</th><th>職稱</th><th>姓名</th><th>分機</th></tr></thead><tbody>`;
     rows.forEach(r => {
       if (r.isCat) {
-        h += `<tr class="p-cat ${r.cssClass || ''}"><td colspan="4">${r.label}</td></tr>`;
+        h += `<tr class="p-cat ${r.cssClass || ''}"><td colspan="4">${r.label}(${r.count})</td></tr>`;
       } else {
         const isStar = r.name.startsWith('★');
         const nameHtml = isStar ? `<span class="p-star">★</span>${r.name.slice(1)}` : r.name;
@@ -1698,6 +1952,7 @@ function _enterEditMode() {
   document.getElementById('edit-btn').classList.add('active');
   document.getElementById('edit-label').textContent = '編輯中';
   document.getElementById('edit-bar').classList.add('visible');
+  renderPhone(document.getElementById('phone-search').value);
 }
 
 function _exitEditMode() {
@@ -1706,6 +1961,7 @@ function _exitEditMode() {
   document.getElementById('edit-btn').classList.remove('active');
   document.getElementById('edit-label').textContent = '編輯';
   document.getElementById('edit-bar').classList.remove('visible');
+  renderPhone(document.getElementById('phone-search').value);
 }
 
 window.checkPassword = function() {
