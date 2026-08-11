@@ -248,7 +248,7 @@
 
   /* Phone table */
   .phone-table-wrap {
-    background: var(--surface); border-radius: var(--radius-lg);
+    background: var(--surface); border-radius: 0;
     box-shadow: var(--shadow); overflow: hidden;
   }
   /* 5-column grid layout for phone table */
@@ -263,8 +263,8 @@
     overflow: visible;
     min-width: 0;
   }
-  .phone-col:first-child { border-radius: var(--radius-lg) 0 0 var(--radius-lg); }
-  .phone-col:last-child  { border-radius: 0 var(--radius-lg) var(--radius-lg) 0; }
+  .phone-col:first-child { border-radius: 0; }
+  .phone-col:last-child  { border-radius: 0; }
   table { width: 100%; border-collapse: collapse; table-layout: fixed; }
   thead th {
     background: var(--primary); color: #fff;
@@ -711,9 +711,6 @@
     .school-name { font-size: 13px; }
     td { padding: 8px 10px; }
   }
-
-  /* 全站改用直角，不要圓角（含行內樣式，用 !important 覆蓋） */
-  *, *::before, *::after { border-radius: 0 !important; }
 </style>
 </head>
 <body>
@@ -1063,9 +1060,23 @@ const CAT_ORDER = [
   { key: 'subst', label: '代課教師', cssClass: 'cat-subst', match: t => t.startsWith('代課') },
   { key: 'sp', label: '特教教師', cssClass: 'cat-sp', match: t => t.startsWith('資優') || t.startsWith('資源') },
   { key: 'kinder', label: '幼兒園', cssClass: 'cat-kinder', match: t => t.startsWith('幼兒') || t.startsWith('學前') },
+  // 「教學支援人員」現在改成明確規則，只抓教學/語言/特教相關的支援人員
+  // （教支人員＊語、專任特教助理員／專任輔導、外籍教師），不再是保底分類。
+  { key: 'support', label: '教學支援人員', cssClass: 'cat-support', match: t => t.startsWith('教支人員') || t.startsWith('專任') || t.startsWith('外籍教師') },
   { key: 'admin2', label: '其他行政人員', cssClass: 'cat-admin', match: t => t === '其他行政人員' },
-  { key: 'support', label: '教學支援人員', cssClass: 'cat-support', match: t => true }
+  // 新的保底分類：護理師、營養師、幹事、技工、委外、人事助理…等不屬於教學支援的人，
+  // 全部落在這裡。這個規則一定要留在比對順序的最後一個（符合任何職稱）。
+  { key: 'adminSupport', label: '行政支援人員', cssClass: 'cat-support', match: t => true }
 ];
+
+// 顯示順序跟比對順序分開處理：比對順序（CAT_ORDER 本身的排列）決定「這個人歸類到哪個類別」，
+// 其中「行政支援人員」是保底規則（符合任何職稱），一定要留在比對順序的最後一個，
+// 否則它會搶走後面規則更明確的類別。
+// 這裡的 DISPLAY_ORDER 只決定畫面上標題列的排列順序，可以自由調整不影響比對邏輯。
+const DISPLAY_ORDER_KEYS = [
+  'admin','group','g1','g2','g3','g4','g5','g6','sub','subst','sp','kinder','support','admin2','adminSupport'
+];
+const DISPLAY_ORDER = DISPLAY_ORDER_KEYS.map(k => CAT_ORDER.find(c => c.key === k)).filter(Boolean);
 
 function getCategory(title) {
   for (const cat of CAT_ORDER) if (cat.match(title)) return cat;
@@ -1119,7 +1130,7 @@ window.renderPhone = function(filter = '') {
   // and never has gaps no matter how records were added/deleted over time.
   const flat = [];
   let _seq = 0;
-  CAT_ORDER.forEach(cat => {
+  DISPLAY_ORDER.forEach(cat => {
     const hasRows = groups[cat.key] && groups[cat.key].rows.length;
     // 編輯模式下，即使類別目前沒有人也顯示標題列，這樣才有地方可以拖曳放入；
     // 一般瀏覽模式仍然隱藏空類別，避免畫面出現空空的標題造成混亂。
@@ -1581,14 +1592,14 @@ function buildPhonePrint() {
   const year = APP.currentYear;
   const lastEdit = APP.phoneLastEdit || '';
 
-  // Group into categories
-  const groups = [];
-  const seen = {};
+  // Group into categories, ordered by DISPLAY_ORDER (same order as the on-screen view)
+  const groupsByKey = {};
   data.forEach(r => {
     const cat = getCategory(r.title);
-    if (!seen[cat.key]) { seen[cat.key] = true; groups.push({ label: cat.label, key: cat.key, cssClass: cat.cssClass, rows: [] }); }
-    groups.find(g => g.key === cat.key).rows.push(r);
+    if (!groupsByKey[cat.key]) groupsByKey[cat.key] = { label: cat.label, key: cat.key, cssClass: cat.cssClass, rows: [] };
+    groupsByKey[cat.key].rows.push(r);
   });
+  const groups = DISPLAY_ORDER.map(cat => groupsByKey[cat.key]).filter(Boolean);
 
   // Flatten into rows with category headers
   const allRows = [];
