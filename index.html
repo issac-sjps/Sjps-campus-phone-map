@@ -1295,7 +1295,10 @@ window.renderPhone = function(filter = '') {
     // # 欄改為即時計算的流水號（依畫面順序重新編號），不再顯示寫死的 id，
     // 這樣就不會因為資料新增/刪除而跳號，且永遠等於「目前算到第幾位」。
     const idDisplay = isStar ? '★' : item._seq;
-    const idStyle = 'color:var(--text-light);font-size:12px;line-height:1;';
+    // 星星要跟姓名欄的 ★ 同色（accent 橘黃色），非星星時維持原本淡灰色
+    const idStyle = isStar
+      ? 'color:var(--accent);font-size:12px;line-height:1;'
+      : 'color:var(--text-light);font-size:12px;line-height:1;';
     const titleAttr = ` title="${String(item.title).replace(/"/g,'&quot;')}"`;
     const extTitleAttr = ` title="${String(item.ext).replace(/"/g,'&quot;')}"`;
     const draggableAttr = APP.editMode ? ' draggable="true" ondragstart="dragStartPerson(event,\'' + item.id + '\')" ondragover="event.preventDefault()" ondrop="dropPersonOnRow(event,\'' + item.id + '\')"' : '';
