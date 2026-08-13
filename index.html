@@ -1303,6 +1303,17 @@ window.addEventListener('resize', () => {
 if (document.fonts && document.fonts.ready) {
   document.fonts.ready.then(autoFitHeader);
 }
+if (typeof ResizeObserver !== 'undefined') {
+  document.addEventListener('DOMContentLoaded', () => {
+    const bar = document.querySelector('.header-top');
+    if (!bar) return;
+    const ro = new ResizeObserver(() => {
+      clearTimeout(window._headerROTimer);
+      window._headerROTimer = setTimeout(autoFitHeader, 60);
+    });
+    ro.observe(bar);
+  });
+}
 
 // 視窗縮放或字型延遲載入完成時，重新量測一次（避免初次量測時字型還沒套用）
 window.addEventListener('resize', () => {
@@ -1311,6 +1322,23 @@ window.addEventListener('resize', () => {
 });
 if (document.fonts && document.fonts.ready) {
   document.fonts.ready.then(() => { autoFitPhoneTable(); syncPhoneRowHeights(); });
+}
+
+// ─── ResizeObserver：不管是縮放、捲軸出現、字型延遲套用…任何原因造成
+// 欄寬改變，都會被這裡抓到並重新量測，比只監聽 window resize 更可靠
+// （原本只在初次 renderPhone 當下量測一次，若那個當下版面還沒完全穩定
+// ── 例如稍後才出現垂直捲軸 ── 量到的寬度就會跟最終畫面對不起來）。
+if (typeof ResizeObserver !== 'undefined') {
+  let _phoneGridRO;
+  document.addEventListener('DOMContentLoaded', () => {
+    const grid = document.getElementById('phone-grid');
+    if (!grid) return;
+    _phoneGridRO = new ResizeObserver(() => {
+      clearTimeout(window._phoneGridROTimer);
+      window._phoneGridROTimer = setTimeout(() => { autoFitPhoneTable(); syncPhoneRowHeights(); }, 60);
+    });
+    _phoneGridRO.observe(grid);
+  });
 }
 
 // ─── Phone render ─────────────────────────────────────────
