@@ -277,10 +277,12 @@
   }
   /* Fixed proportional column widths. Widened title/name columns and
      given the id column a touch more room so text isn't clipped. */
-  .phone-col th:nth-child(1), .phone-col td:nth-child(1) { width: 10%; }
-  .phone-col th:nth-child(2), .phone-col td:nth-child(2) { width: 32%; }
-  .phone-col th:nth-child(3), .phone-col td:nth-child(3) { width: 26%; text-align: right; }
+  .phone-col th:nth-child(1), .phone-col td:nth-child(1) { width: 10%; border-right: 1px dashed rgba(0,0,0,0.15); }
+  .phone-col th:nth-child(2), .phone-col td:nth-child(2) { width: 32%; border-right: 1px dashed rgba(0,0,0,0.15); }
+  .phone-col th:nth-child(3), .phone-col td:nth-child(3) { width: 26%; text-align: right; border-right: 1px dashed rgba(0,0,0,0.15); }
   .phone-col th:nth-child(4), .phone-col td:nth-child(4) { width: 32%; text-align: right; }
+  /* 分類標題列（cat-header）是合併儲存格，虛線不適用，蓋掉避免視覺上斷斷續續 */
+  .cat-header td { border-right: none !important; }
   /* Cells stay on a single line (no wrapping). Padding is halved so more
      of the column width goes to the text itself instead of to whitespace —
      matching the thin 1px gap between the phone-col divisions. Text that's
