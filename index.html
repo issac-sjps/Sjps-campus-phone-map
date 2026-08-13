@@ -1231,13 +1231,40 @@ function syncPhoneRowHeights() {
 }
 window.syncPhoneRowHeights = syncPhoneRowHeights;
 
+// ─── 動態字體自適應 ──────────────────────────────────────
+// 不同電腦的瀏覽器縮放比例／字型度量不同，同一段文字實際渲染出來的寬度
+// 可能比欄位還寬。與其讓文字溢出蓋到隔壁欄（會變成重疊的亂碼），這裡改成
+// 「量測實際需要的寬度，太寬就一點一點縮小字體」，縮到 MIN_FONT_SIZE
+// 還是放不下才交給 CSS 的 text-overflow:ellipsis 兜底（絕對不會重疊）。
+const AUTOFIT_MAX = 12;   // px，跟 CSS 預設的 12px 一致
+const AUTOFIT_MIN = 9;    // px，字太小會看不清楚，縮到這裡就停止改用省略號
+const AUTOFIT_STEP = 0.5; // px，每次縮小的幅度
+
+function autoFitCell(el) {
+  if (!el) return;
+  el.style.fontSize = '';
+  // 先確認目前（預設 12px）是否放得下，放得下就不用做任何事
+  if (el.scrollWidth <= el.clientWidth + 0.5) return;
+  let size = AUTOFIT_MAX;
+  while (el.scrollWidth > el.clientWidth + 0.5 && size > AUTOFIT_MIN) {
+    size -= AUTOFIT_STEP;
+    el.style.fontSize = size + 'px';
+  }
+}
+
+function autoFitPhoneTable() {
+  document.querySelectorAll('#phone-grid td.editable, #phone-grid td.name-col, #phone-grid td.ext-col')
+    .forEach(autoFitCell);
+}
+window.autoFitPhoneTable = autoFitPhoneTable;
+
 // 視窗縮放或字型延遲載入完成時，重新量測一次（避免初次量測時字型還沒套用）
 window.addEventListener('resize', () => {
   clearTimeout(window._phoneRowSyncTimer);
-  window._phoneRowSyncTimer = setTimeout(syncPhoneRowHeights, 150);
+  window._phoneRowSyncTimer = setTimeout(() => { autoFitPhoneTable(); syncPhoneRowHeights(); }, 150);
 });
 if (document.fonts && document.fonts.ready) {
-  document.fonts.ready.then(() => syncPhoneRowHeights());
+  document.fonts.ready.then(() => { autoFitPhoneTable(); syncPhoneRowHeights(); });
 }
 
 // ─── Phone render ─────────────────────────────────────────
@@ -1319,6 +1346,7 @@ window.renderPhone = function(filter = '') {
   // 不同瀏覽器 / 字型渲染下實際列高可能有 1px 內的差異，導致視覺上不整齊。
   // 這裡在渲染完成後，逐一比對「同一列序」在 6 個欄位中的實際高度，
   // 取最大值統一設定，強制讓每一列在跨欄時都完全對齊。
+  autoFitPhoneTable();
   syncPhoneRowHeights();
 
   const total2 = filtered.length;
