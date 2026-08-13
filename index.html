@@ -277,10 +277,10 @@
   }
   /* Fixed proportional column widths. Widened title/name columns and
      given the id column a touch more room so text isn't clipped. */
-  .phone-col th:nth-child(1), .phone-col td:nth-child(1) { width: 10%; border-right: 1px dashed rgba(0,0,0,0.15); }
-  .phone-col th:nth-child(2), .phone-col td:nth-child(2) { width: 32%; border-right: 1px dashed rgba(0,0,0,0.15); }
-  .phone-col th:nth-child(3), .phone-col td:nth-child(3) { width: 26%; text-align: right; border-right: 1px dashed rgba(0,0,0,0.15); }
-  .phone-col th:nth-child(4), .phone-col td:nth-child(4) { width: 32%; text-align: right; }
+  .phone-col th:nth-child(1), .phone-col td:nth-child(1) { width: 12%; border-right: 1px dashed rgba(0,0,0,0.15); }
+  .phone-col th:nth-child(2), .phone-col td:nth-child(2) { width: 34%; border-right: 1px dashed rgba(0,0,0,0.15); }
+  .phone-col th:nth-child(3), .phone-col td:nth-child(3) { width: 24%; text-align: right; border-right: 1px dashed rgba(0,0,0,0.15); }
+  .phone-col th:nth-child(4), .phone-col td:nth-child(4) { width: 30%; text-align: right; }
   /* 分類標題列（cat-header）是合併儲存格，虛線不適用，蓋掉避免視覺上斷斷續續 */
   .cat-header td { border-right: none !important; }
   /* Cells stay on a single line (no wrapping). Padding is halved so more
@@ -1281,11 +1281,15 @@ function autoFitPhoneTable() {
   // 同一頁面不同區塊（左邊表格 vs 右邊表格）算出不同的字體大小，看起來忽大忽小。
   // 現在把 6 個 table 的同類型欄位（職稱／姓名／分機）全部合併在一起量測，
   // 取全頁面最長的那筆內容決定縮到多小，讓整個頁面視覺上完全一致。
+  //
+  // 「#」欄現在也併入「職稱」欄同一組一起計算，兩者共用同一個字體大小，
+  // 不再是寫死的 12px —— 這樣序號跟職稱的數字大小就會一致。
   const allTitle = [], allName = [], allExt = [];
   for (let i = 0; i < 6; i++) {
     const tbody = document.getElementById(`phone-tbody-${i}`);
     if (!tbody) continue;
-    allTitle.push(...collectCol(tbody, 2));
+    allTitle.push(...collectCol(tbody, 1)); // # 欄
+    allTitle.push(...collectCol(tbody, 2)); // 職稱欄
     allName.push(...collectCol(tbody, 3));
     allExt.push(...collectCol(tbody, 4));
   }
@@ -1428,8 +1432,8 @@ window.renderPhone = function(filter = '') {
     const idDisplay = isStar ? '★' : item._seq;
     // 星星要跟姓名欄的 ★ 同色（accent 橘黃色），非星星時維持原本淡灰色
     const idStyle = isStar
-      ? 'color:var(--accent);font-size:10px;line-height:1;'
-      : 'color:var(--text-light);font-size:12px;line-height:1;';
+      ? 'color:var(--accent);line-height:1;'
+      : 'color:var(--text-light);line-height:1;';
     const titleAttr = ` title="${String(item.title).replace(/"/g,'&quot;')}"`;
     const extTitleAttr = ` title="${String(item.ext).replace(/"/g,'&quot;')}"`;
     const draggableAttr = APP.editMode ? ' draggable="true" ondragstart="dragStartPerson(event,\'' + item.id + '\')" ondragover="event.preventDefault()" ondrop="dropPersonOnRow(event,\'' + item.id + '\')"' : '';
