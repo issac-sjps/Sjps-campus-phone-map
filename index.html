@@ -301,7 +301,7 @@
     margin-left: 3px; opacity: 0.7;
   }
   td.ext-col { font-weight: 700; color: var(--primary); font-family: monospace; font-size: 12px; white-space: nowrap; }
-  td.name-col .star { color: var(--accent); font-size: 10px; margin-right: 1px; line-height: 1; display: inline-block; vertical-align: middle; }
+  td.name-col .star { color: var(--accent); font-size: 9px; margin-right: 1px; line-height: 1; display: inline-block; vertical-align: middle; }
 
   /* Editable cells */
   body.edit-mode tr[draggable="true"] { cursor: grab; }
@@ -1237,7 +1237,7 @@ window.syncPhoneRowHeights = syncPhoneRowHeights;
 // 「量測實際需要的寬度，太寬就一點一點縮小字體」，縮到 MIN_FONT_SIZE
 // 還是放不下才交給 CSS 的 text-overflow:ellipsis 兜底（絕對不會重疊）。
 const AUTOFIT_MAX = 12;   // px，跟 CSS 預設的 12px 一致
-const AUTOFIT_MIN = 9;    // px，字太小會看不清楚，縮到這裡就停止改用省略號
+const AUTOFIT_MIN = 8;    // px，字太小會看不清楚，縮到這裡就停止改用省略號
 const AUTOFIT_STEP = 0.5; // px，每次縮小的幅度
 
 function autoFitCell(el) {
@@ -1324,7 +1324,7 @@ window.renderPhone = function(filter = '') {
     const idDisplay = isStar ? '★' : item._seq;
     // 星星要跟姓名欄的 ★ 同色（accent 橘黃色），非星星時維持原本淡灰色
     const idStyle = isStar
-      ? 'color:var(--accent);font-size:12px;line-height:1;'
+      ? 'color:var(--accent);font-size:10px;line-height:1;'
       : 'color:var(--text-light);font-size:12px;line-height:1;';
     const titleAttr = ` title="${String(item.title).replace(/"/g,'&quot;')}"`;
     const extTitleAttr = ` title="${String(item.ext).replace(/"/g,'&quot;')}"`;
