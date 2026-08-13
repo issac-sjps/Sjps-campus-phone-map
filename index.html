@@ -1244,24 +1244,37 @@ const AUTOFIT_MIN = 8;    // px，字太小會看不清楚，縮到這裡就停�
 const AUTOFIT_MIN_EXT = 6.5; // px，分機是等寬數字，縮更小還是看得清楚，優先讓「兩個分機」也能完整顯示
 const AUTOFIT_STEP = 0.5; // px，每次縮小的幅度
 
-function autoFitCell(el, minSize) {
-  if (!el) return;
-  const min = minSize || AUTOFIT_MIN;
-  el.style.fontSize = '';
-  // 先確認目前（預設 12px）是否放得下，放得下就不用做任何事
-  if (el.scrollWidth <= el.clientWidth + 0.5) return;
+// 同一欄（同一個 table 裡的「職稱」欄／「姓名」欄／「分機」欄）統一用同一個字體
+// 大小，而不是每一格各自判斷 —— 逐格獨立判斷會出現「內容看起來差不多長，但
+// 縮放結果不一樣」的不一致情況（量測時機、瀏覽器 subpixel 差異都可能造成）。
+// 改成：整欄裡最長的那一格決定這一欄要縮到多小，其餘格子跟著用同一個大小，
+// 確保同一欄內視覺一致，也保證欄內最長的內容一定放得下。
+function autoFitColumnGroup(cells, minSize) {
+  if (!cells.length) return;
+  cells.forEach(c => { c.style.fontSize = ''; });
+  const fits = () => cells.every(c => c.scrollWidth <= c.clientWidth + 0.5);
+  if (fits()) return;
   let size = AUTOFIT_MAX;
-  while (el.scrollWidth > el.clientWidth + 0.5 && size > min) {
+  let guard = 0;
+  while (!fits() && size > minSize && guard < 40) {
     size -= AUTOFIT_STEP;
-    el.style.fontSize = size + 'px';
+    cells.forEach(c => { c.style.fontSize = size + 'px'; });
+    guard++;
   }
 }
 
+function collectCol(tbody, nth) {
+  return Array.from(tbody.querySelectorAll(`tr:not(.cat-header) > td:nth-child(${nth})`));
+}
+
 function autoFitPhoneTable() {
-  document.querySelectorAll('#phone-grid td.editable, #phone-grid td.name-col')
-    .forEach(el => autoFitCell(el));
-  document.querySelectorAll('#phone-grid td.ext-col')
-    .forEach(el => autoFitCell(el, AUTOFIT_MIN_EXT));
+  for (let i = 0; i < 6; i++) {
+    const tbody = document.getElementById(`phone-tbody-${i}`);
+    if (!tbody) continue;
+    autoFitColumnGroup(collectCol(tbody, 2), AUTOFIT_MIN);      // 職稱
+    autoFitColumnGroup(collectCol(tbody, 3), AUTOFIT_MIN);      // 姓名
+    autoFitColumnGroup(collectCol(tbody, 4), AUTOFIT_MIN_EXT);  // 分機
+  }
 }
 window.autoFitPhoneTable = autoFitPhoneTable;
 
