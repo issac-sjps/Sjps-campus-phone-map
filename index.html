@@ -277,10 +277,10 @@
   }
   /* Fixed proportional column widths. Widened title/name columns and
      given the id column a touch more room so text isn't clipped. */
-  .phone-col th:nth-child(1), .phone-col td:nth-child(1) { width: 12%; border-right: 1px dashed rgba(0,0,0,0.15); }
+  .phone-col th:nth-child(1), .phone-col td:nth-child(1) { width: 10%; border-right: 1px dashed rgba(0,0,0,0.15); }
   .phone-col th:nth-child(2), .phone-col td:nth-child(2) { width: 34%; border-right: 1px dashed rgba(0,0,0,0.15); }
-  .phone-col th:nth-child(3), .phone-col td:nth-child(3) { width: 24%; text-align: right; border-right: 1px dashed rgba(0,0,0,0.15); }
-  .phone-col th:nth-child(4), .phone-col td:nth-child(4) { width: 30%; text-align: right; }
+  .phone-col th:nth-child(3), .phone-col td:nth-child(3) { width: 27%; text-align: right; border-right: 1px dashed rgba(0,0,0,0.15); }
+  .phone-col th:nth-child(4), .phone-col td:nth-child(4) { width: 29%; text-align: right; }
   /* 分類標題列（cat-header）是合併儲存格，虛線不適用，蓋掉避免視覺上斷斷續續 */
   .cat-header td { border-right: none !important; }
   /* Cells stay on a single line (no wrapping). Padding is halved so more
@@ -1257,11 +1257,11 @@ const AUTOFIT_STEP = 0.5; // px，每次縮小的幅度
 // 縮放而變小，混進 td 的 scrollWidth 一起量測會讓判斷失準，所以分機欄改成
 // 只量測包住數字的 <span class="ext-text">，不把按鈕算進去。
 function autoFitColumnGroup(cells, minSize, getMeasureEl) {
-  if (!cells.length) return;
+  if (!cells.length) return AUTOFIT_MAX;
   const measure = getMeasureEl || (c => c);
   cells.forEach(c => { c.style.fontSize = ''; });
   const fits = () => cells.every(c => { const m = measure(c); return m.scrollWidth <= c.clientWidth + 0.5; });
-  if (fits()) return;
+  if (fits()) return AUTOFIT_MAX;
   let size = AUTOFIT_MAX;
   let guard = 0;
   while (!fits() && size > minSize && guard < 40) {
@@ -1269,6 +1269,7 @@ function autoFitColumnGroup(cells, minSize, getMeasureEl) {
     cells.forEach(c => { c.style.fontSize = size + 'px'; });
     guard++;
   }
+  return size;
 }
 
 function collectCol(tbody, nth) {
@@ -1276,21 +1277,22 @@ function collectCol(tbody, nth) {
 }
 
 function autoFitPhoneTable() {
-  // 「#」「職稱」「姓名」「分機」全部合併成同一組，整個頁面共用同一個字體
-  // 大小 —— 方便之後只要調一個地方，就能同時控制全部欄位，不用分開處理。
-  // 量測時用 measureEl 幫每個 cell 找出「實際要看的文字寬度」：分機欄有隱藏
-  // 的刪除按鈕（✕），要排除掉只看 .ext-text 這個文字 span，其餘欄位直接看
-  // cell 本身。
-  const all = [];
+  // 「職稱」「姓名」「分機」合併成同一組，共用同一個字體大小。
+  // 「#」序號欄不常需要仔細看，獨立拉出來用「上面那組算出來的一半大小」，
+  // 且有自己的下限（避免縮到完全看不到）。
+  const ID_MIN = 6; // px，# 欄字體下限
+  const allMain = [], allId = [];
   for (let i = 0; i < 6; i++) {
     const tbody = document.getElementById(`phone-tbody-${i}`);
     if (!tbody) continue;
-    all.push(...collectCol(tbody, 1)); // # 欄
-    all.push(...collectCol(tbody, 2)); // 職稱欄
-    all.push(...collectCol(tbody, 3)); // 姓名欄
-    all.push(...collectCol(tbody, 4)); // 分機欄
+    allId.push(...collectCol(tbody, 1));   // # 欄
+    allMain.push(...collectCol(tbody, 2)); // 職稱欄
+    allMain.push(...collectCol(tbody, 3)); // 姓名欄
+    allMain.push(...collectCol(tbody, 4)); // 分機欄
   }
-  autoFitColumnGroup(all, AUTOFIT_MIN, c => c.querySelector('.ext-text') || c);
+  const mainSize = autoFitColumnGroup(allMain, AUTOFIT_MIN, c => c.querySelector('.ext-text') || c);
+  const idSize = Math.max(ID_MIN, mainSize / 2);
+  allId.forEach(c => { c.style.fontSize = idSize + 'px'; });
 }
 window.autoFitPhoneTable = autoFitPhoneTable;
 
