@@ -1133,7 +1133,7 @@ window.APP = {
 // ─── Category mapping ─────────────────────────────────────
 const CAT_ORDER = [
   { key: 'admin', label: '行政主管', cssClass: 'cat-admin', match: t => ['校　　長','教務主任','學務主任','總務主任','輔導主任','會計主任','人事主任'].includes(t) },
-  { key: 'group', label: '各組組長', cssClass: 'cat-group', match: t => t.includes('處-') },
+  { key: 'group', label: '各組組長', cssClass: 'cat-group', match: t => t.endsWith('組') },
   { key: 'g1', label: '一年級', cssClass: 'cat-grade', match: t => /^1\d\d$/.test(t) },
   { key: 'g2', label: '二年級', cssClass: 'cat-grade', match: t => /^2\d\d$/.test(t) },
   { key: 'g3', label: '三年級', cssClass: 'cat-grade', match: t => /^3\d\d$/.test(t) },
