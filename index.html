@@ -277,10 +277,10 @@
   }
   /* Fixed proportional column widths. Widened title/name columns and
      given the id column a touch more room so text isn't clipped. */
-  .phone-col th:nth-child(1), .phone-col td:nth-child(1) { width: 26px; }
-  .phone-col th:nth-child(2), .phone-col td:nth-child(2) { width: 34%; }
-  .phone-col th:nth-child(3), .phone-col td:nth-child(3) { width: 32%; text-align: right; }
-  .phone-col th:nth-child(4), .phone-col td:nth-child(4) { width: 34%; text-align: right; }
+  .phone-col th:nth-child(1), .phone-col td:nth-child(1) { width: 8%; }
+  .phone-col th:nth-child(2), .phone-col td:nth-child(2) { width: 32%; }
+  .phone-col th:nth-child(3), .phone-col td:nth-child(3) { width: 30%; text-align: right; }
+  .phone-col th:nth-child(4), .phone-col td:nth-child(4) { width: 30%; text-align: right; }
   /* Cells stay on a single line (no wrapping). Padding is halved so more
      of the column width goes to the text itself instead of to whitespace —
      matching the thin 1px gap between the phone-col divisions. Text that's
@@ -1274,13 +1274,22 @@ function collectCol(tbody, nth) {
 }
 
 function autoFitPhoneTable() {
+  // 改成「整個頁面」統一計算一個大小，而不是每個 table（畫面上並排的 6 欄）
+  // 各自獨立判斷 —— 之前每個 table 各自根據自己欄內最長的內容縮放，會導致
+  // 同一頁面不同區塊（左邊表格 vs 右邊表格）算出不同的字體大小，看起來忽大忽小。
+  // 現在把 6 個 table 的同類型欄位（職稱／姓名／分機）全部合併在一起量測，
+  // 取全頁面最長的那筆內容決定縮到多小，讓整個頁面視覺上完全一致。
+  const allTitle = [], allName = [], allExt = [];
   for (let i = 0; i < 6; i++) {
     const tbody = document.getElementById(`phone-tbody-${i}`);
     if (!tbody) continue;
-    autoFitColumnGroup(collectCol(tbody, 2), AUTOFIT_MIN);      // 職稱
-    autoFitColumnGroup(collectCol(tbody, 3), AUTOFIT_MIN);      // 姓名
-    autoFitColumnGroup(collectCol(tbody, 4), AUTOFIT_MIN_EXT, c => c.querySelector('.ext-text') || c); // 分機（排除隱藏的刪除鈕）
+    allTitle.push(...collectCol(tbody, 2));
+    allName.push(...collectCol(tbody, 3));
+    allExt.push(...collectCol(tbody, 4));
   }
+  autoFitColumnGroup(allTitle, AUTOFIT_MIN);
+  autoFitColumnGroup(allName, AUTOFIT_MIN);
+  autoFitColumnGroup(allExt, AUTOFIT_MIN_EXT, c => c.querySelector('.ext-text') || c);
 }
 window.autoFitPhoneTable = autoFitPhoneTable;
 
