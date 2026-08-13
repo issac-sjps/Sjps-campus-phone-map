@@ -1153,7 +1153,7 @@ const CAT_ORDER = [
   // 否則會被那條更寬的規則搶走。
   { key: 'sp3', label: '特教-專任輔導教師', cssClass: 'cat-sp3', match: t => t.startsWith('專任輔導') },
   { key: 'sp4', label: '特教-專任助理員', cssClass: 'cat-sp4', match: t => t.startsWith('專任特教助理') },
-  { key: 'kinder', label: '幼兒園', cssClass: 'cat-kinder', match: t => t.startsWith('幼兒') || t.startsWith('學前') },
+  { key: 'kinder', label: '幼兒園', cssClass: 'cat-kinder', match: t => t.startsWith('幼兒') || t.startsWith('學前') || t.includes('教保員') },
   // 「教學支援人員」現在改成明確規則，只抓教學/語言相關的支援人員（教支人員＊語），
   // 不再是保底分類。外籍教師、特教專任助理員已各自獨立成類，排除在這條規則外。
   { key: 'support', label: '教學支援人員', cssClass: 'cat-support', match: t => t.startsWith('教支') || t.startsWith('專任') },
