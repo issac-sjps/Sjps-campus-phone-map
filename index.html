@@ -1249,10 +1249,16 @@ const AUTOFIT_STEP = 0.5; // px，每次縮小的幅度
 // 縮放結果不一樣」的不一致情況（量測時機、瀏覽器 subpixel 差異都可能造成）。
 // 改成：整欄裡最長的那一格決定這一欄要縮到多小，其餘格子跟著用同一個大小，
 // 確保同一欄內視覺一致，也保證欄內最長的內容一定放得下。
-function autoFitColumnGroup(cells, minSize) {
+//
+// getMeasureEl 可以指定「量測寬度時要看哪個子元素」而不是整個 td——分機欄
+// 的刪除按鈕（✕）平常是隱藏的，只有滑鼠移過去才出現，它的寬度不會隨字體
+// 縮放而變小，混進 td 的 scrollWidth 一起量測會讓判斷失準，所以分機欄改成
+// 只量測包住數字的 <span class="ext-text">，不把按鈕算進去。
+function autoFitColumnGroup(cells, minSize, getMeasureEl) {
   if (!cells.length) return;
+  const measure = getMeasureEl || (c => c);
   cells.forEach(c => { c.style.fontSize = ''; });
-  const fits = () => cells.every(c => c.scrollWidth <= c.clientWidth + 0.5);
+  const fits = () => cells.every(c => { const m = measure(c); return m.scrollWidth <= c.clientWidth + 0.5; });
   if (fits()) return;
   let size = AUTOFIT_MAX;
   let guard = 0;
@@ -1273,7 +1279,7 @@ function autoFitPhoneTable() {
     if (!tbody) continue;
     autoFitColumnGroup(collectCol(tbody, 2), AUTOFIT_MIN);      // 職稱
     autoFitColumnGroup(collectCol(tbody, 3), AUTOFIT_MIN);      // 姓名
-    autoFitColumnGroup(collectCol(tbody, 4), AUTOFIT_MIN_EXT);  // 分機
+    autoFitColumnGroup(collectCol(tbody, 4), AUTOFIT_MIN_EXT, c => c.querySelector('.ext-text') || c); // 分機（排除隱藏的刪除鈕）
   }
 }
 window.autoFitPhoneTable = autoFitPhoneTable;
@@ -1420,7 +1426,7 @@ window.renderPhone = function(filter = '') {
       <td class="id-col id-star-cell" onclick="toggleStar('${item.id}')" style="${idStyle}"${isStar ? titleAttr : ' title="編輯模式下可標記學年主任"'}>${idDisplay}</td>
       <td class="editable" onclick="editCell(this,'title')"${titleAttr}>${item.title}</td>
       <td class="name-col editable copy-name" data-raw-name="${rawName.replace(/"/g,'&quot;')}" data-record-id="${item.id}" title="${rawName.replace(/"/g,'&quot;')}" onclick="handleNameClick(event,this)">${displayName}</td>
-      <td class="ext-col editable" onclick="editCell(this,'ext')"${extTitleAttr}>${item.ext}<button class="person-del-btn" onclick="deletePerson(event,'${item.id}')" title="刪除此人">✕</button></td>
+      <td class="ext-col editable" onclick="editCell(this,'ext')"${extTitleAttr}><span class="ext-text">${item.ext}</span><button class="person-del-btn" onclick="deletePerson(event,'${item.id}')" title="刪除此人">✕</button></td>
     </tr>`;
   }
 
