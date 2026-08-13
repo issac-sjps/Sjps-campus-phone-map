@@ -1276,26 +1276,21 @@ function collectCol(tbody, nth) {
 }
 
 function autoFitPhoneTable() {
-  // 改成「整個頁面」統一計算一個大小，而不是每個 table（畫面上並排的 6 欄）
-  // 各自獨立判斷 —— 之前每個 table 各自根據自己欄內最長的內容縮放，會導致
-  // 同一頁面不同區塊（左邊表格 vs 右邊表格）算出不同的字體大小，看起來忽大忽小。
-  // 現在把 6 個 table 的同類型欄位（職稱／姓名／分機）全部合併在一起量測，
-  // 取全頁面最長的那筆內容決定縮到多小，讓整個頁面視覺上完全一致。
-  //
-  // 「#」欄現在也併入「職稱」欄同一組一起計算，兩者共用同一個字體大小，
-  // 不再是寫死的 12px —— 這樣序號跟職稱的數字大小就會一致。
-  const allTitle = [], allName = [], allExt = [];
+  // 「#」「職稱」「姓名」「分機」全部合併成同一組，整個頁面共用同一個字體
+  // 大小 —— 方便之後只要調一個地方，就能同時控制全部欄位，不用分開處理。
+  // 量測時用 measureEl 幫每個 cell 找出「實際要看的文字寬度」：分機欄有隱藏
+  // 的刪除按鈕（✕），要排除掉只看 .ext-text 這個文字 span，其餘欄位直接看
+  // cell 本身。
+  const all = [];
   for (let i = 0; i < 6; i++) {
     const tbody = document.getElementById(`phone-tbody-${i}`);
     if (!tbody) continue;
-    allTitle.push(...collectCol(tbody, 1)); // # 欄
-    allTitle.push(...collectCol(tbody, 2)); // 職稱欄
-    allName.push(...collectCol(tbody, 3));
-    allExt.push(...collectCol(tbody, 4));
+    all.push(...collectCol(tbody, 1)); // # 欄
+    all.push(...collectCol(tbody, 2)); // 職稱欄
+    all.push(...collectCol(tbody, 3)); // 姓名欄
+    all.push(...collectCol(tbody, 4)); // 分機欄
   }
-  autoFitColumnGroup(allTitle, AUTOFIT_MIN);
-  autoFitColumnGroup(allName, AUTOFIT_MIN);
-  autoFitColumnGroup(allExt, AUTOFIT_MIN_EXT, c => c.querySelector('.ext-text') || c);
+  autoFitColumnGroup(all, AUTOFIT_MIN, c => c.querySelector('.ext-text') || c);
 }
 window.autoFitPhoneTable = autoFitPhoneTable;
 
