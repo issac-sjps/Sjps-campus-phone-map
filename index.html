@@ -1151,7 +1151,7 @@ const CAT_ORDER = [
   { key: 'kinder', label: '幼兒園', cssClass: 'cat-kinder', match: t => t.startsWith('幼兒') || t.startsWith('學前') },
   // 「教學支援人員」現在改成明確規則，只抓教學/語言相關的支援人員（教支人員＊語），
   // 不再是保底分類。外籍教師、特教專任助理員已各自獨立成類，排除在這條規則外。
-  { key: 'support', label: '教學支援人員', cssClass: 'cat-support', match: t => t.startsWith('教支人員') || t.startsWith('專任') },
+  { key: 'support', label: '教學支援人員', cssClass: 'cat-support', match: t => t.startsWith('教支') || t.startsWith('專任') },
   { key: 'foreign', label: '外籍教師', cssClass: 'cat-foreign', match: t => t.startsWith('外籍教師') },
   // 保底分類：護理師、營養師、幹事、技工、委外、人事助理…等不屬於教學支援的人，
   // 全部落在這裡。這個規則一定要留在比對順序的最後一個（符合任何職稱）。
