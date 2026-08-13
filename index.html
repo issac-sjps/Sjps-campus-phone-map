@@ -286,7 +286,7 @@
   tbody tr { border-bottom: 1px solid #edf0f4; }
   tbody tr:last-child { border-bottom: none; }
   tbody tr:hover { background: var(--primary-light); }
-  td { padding: 4px 3px; font-size: 12px; overflow: visible; white-space: nowrap; vertical-align: middle; height: 23px; line-height: 1.3; }
+  td { padding: 4px 3px; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; height: 23px; line-height: 1.3; }
   td.id-col { color: var(--text-light); font-size: 12px; width: 28px; line-height: 1; }
   td.id-star-cell { cursor: default; }
   body.edit-mode td.id-star-cell { cursor: pointer; }
@@ -1305,7 +1305,7 @@ window.renderPhone = function(filter = '') {
     return `<tr data-id="${item.id}"${draggableAttr}>
       <td class="id-col id-star-cell" onclick="toggleStar('${item.id}')" style="${idStyle}"${isStar ? titleAttr : ' title="編輯模式下可標記學年主任"'}>${idDisplay}</td>
       <td class="editable" onclick="editCell(this,'title')"${titleAttr}>${item.title}</td>
-      <td class="name-col editable copy-name" data-raw-name="${rawName.replace(/"/g,'&quot;')}" data-record-id="${item.id}" onclick="handleNameClick(event,this)">${displayName}</td>
+      <td class="name-col editable copy-name" data-raw-name="${rawName.replace(/"/g,'&quot;')}" data-record-id="${item.id}" title="${rawName.replace(/"/g,'&quot;')}" onclick="handleNameClick(event,this)">${displayName}</td>
       <td class="ext-col editable" onclick="editCell(this,'ext')"${extTitleAttr}>${item.ext}<button class="person-del-btn" onclick="deletePerson(event,'${item.id}')" title="刪除此人">✕</button></td>
     </tr>`;
   }
