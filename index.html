@@ -1241,7 +1241,7 @@ window.syncPhoneRowHeights = syncPhoneRowHeights;
 // 可能比欄位還寬。與其讓文字溢出蓋到隔壁欄（會變成重疊的亂碼），這裡改成
 // 「量測實際需要的寬度，太寬就一點一點縮小字體」，縮到 MIN_FONT_SIZE
 // 還是放不下才交給 CSS 的 text-overflow:ellipsis 兜底（絕對不會重疊）。
-const AUTOFIT_MAX = 12;   // px，跟 CSS 預設的 12px 一致
+const AUTOFIT_MAX = 13;   // px，預設先從這個大小開始嘗試，放不下才往下縮
 const AUTOFIT_MIN = 8;    // px，字太小會看不清楚，縮到這裡就停止改用省略號
 const AUTOFIT_MIN_EXT = 6.5; // px，分機是等寬數字，縮更小還是看得清楚，優先讓「兩個分機」也能完整顯示
 const AUTOFIT_STEP = 0.5; // px，每次縮小的幅度
@@ -1291,7 +1291,7 @@ function autoFitPhoneTable() {
     allMain.push(...collectCol(tbody, 4)); // 分機欄
   }
   const mainSize = autoFitColumnGroup(allMain, AUTOFIT_MIN, c => c.querySelector('.ext-text') || c);
-  const idSize = Math.max(ID_MIN, mainSize / 2);
+  const idSize = Math.max(ID_MIN, mainSize / 2 + 2);
   allId.forEach(c => { c.style.fontSize = idSize + 'px'; });
 }
 window.autoFitPhoneTable = autoFitPhoneTable;
