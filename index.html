@@ -2361,13 +2361,13 @@ function formatDays(days) {
   return days.slice().sort((a, b) => a - b).map(d => DAY_LABELS[d] || '').join('');
 }
 
-// "2026-08-25" -> "08/25"
-// "2026-08-25" -> "8/25"
+// "2026-08-25" -> "115/8/25" (ROC year / month / day, no leading zeros)
 function formatDateShort(d) {
   if (!d) return '';
   const parts = d.split('-');
   if (parts.length !== 3) return d;
-  return `${Number(parts[1])}/${Number(parts[2])}`;
+  const rocYear = Number(parts[0]) - 1911;
+  return `${rocYear}/${Number(parts[1])}/${Number(parts[2])}`;
 }
 
 // Actual calendar weekday (一~日) for a given "YYYY-MM-DD" date string
@@ -2381,7 +2381,7 @@ function weekdayOf(d) {
 
 function formatDateRange(dateStart, dateEnd) {
   if (!dateStart || !dateEnd) return '';
-  return `${formatDateShort(dateStart)}(${weekdayOf(dateStart)}) ${formatDateShort(dateEnd)}(${weekdayOf(dateEnd)})`;
+  return `${formatDateShort(dateStart)}(${weekdayOf(dateStart)}) ~ ${formatDateShort(dateEnd)}(${weekdayOf(dateEnd)})`;
 }
 
 function getRentalsForCode(code) {
