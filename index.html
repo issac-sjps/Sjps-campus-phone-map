@@ -1063,6 +1063,16 @@
         <label>租借團體／原因</label>
         <input type="text" id="rental-form-group" placeholder="例：課後直笛社團">
       </div>
+      <div class="form-group" style="display:flex;gap:8px">
+        <div style="flex:1">
+          <label>開始日期</label>
+          <input type="date" id="rental-form-date-start">
+        </div>
+        <div style="flex:1">
+          <label>結束日期</label>
+          <input type="date" id="rental-form-date-end">
+        </div>
+      </div>
       <div class="form-group">
         <label>星期幾</label>
         <div id="rental-form-days" style="display:flex;gap:6px;flex-wrap:wrap">
@@ -1833,7 +1843,7 @@ window.renderMap = function() {
       : '';
     const roomRentals = room.code ? getRentalsForCode(room.code) : [];
     const rentalDot = roomRentals.length
-      ? `<span class="room-rental-dot" title="${roomRentals.map(r => `${r.group}｜${formatDays(r.days)} ${r.start}-${r.end}`).join('\n').replace(/"/g,'&quot;')}"></span>`
+      ? `<span class="room-rental-dot" title="${roomRentals.map(r => `${r.group}｜${formatDateRange(r.dateStart, r.dateEnd)}｜星期${formatDays(r.days)} ${r.start}-${r.end}`).join('\n').replace(/"/g,'&quot;')}"></span>`
       : '';
     return `<div class="room-card ${typeClass}" ${dragAttrs} onclick="openRoomEdit('${b}','${floor}',${idx})">
       ${rentalDot}
@@ -2243,6 +2253,18 @@ function formatDays(days) {
   return days.slice().sort((a, b) => a - b).map(d => DAY_LABELS[d] || '').join('');
 }
 
+// "2026-08-25" -> "08/25"
+function formatDateShort(d) {
+  if (!d) return '';
+  const parts = d.split('-');
+  return parts.length === 3 ? `${parts[1]}/${parts[2]}` : d;
+}
+
+function formatDateRange(dateStart, dateEnd) {
+  if (!dateStart || !dateEnd) return '';
+  return `${formatDateShort(dateStart)}–${formatDateShort(dateEnd)}`;
+}
+
 function getRentalsForCode(code) {
   if (!code) return [];
   return APP.rentalData.filter(r => r.code === code);
@@ -2268,7 +2290,7 @@ window.renderRentalMap = function() {
     const hasRental = rentals.length > 0;
     const entriesHtml = hasRental
       ? `<div class="rental-entries">${rentals.map(r =>
-          `<div class="rental-entry-line"><span class="re-days">${formatDays(r.days)}</span> ${r.group} <span class="re-time">${r.start}-${r.end}</span></div>`
+          `<div class="rental-entry-line">${r.group}<br><span class="re-days">星期${formatDays(r.days)}</span> <span class="re-time">${r.start}-${r.end}</span>　<span class="re-time">${formatDateRange(r.dateStart, r.dateEnd)}</span></div>`
         ).join('')}</div>`
       : (room.code ? '' : `<div class="rental-nocode">未設定教室代號</div>`);
     return `<div class="room-card rental-card ${hasRental ? 'has-rental' : ''}" ondblclick="openRentalRoomModal('${b}','${floor}',${idx})">
@@ -2342,7 +2364,7 @@ function renderRentalEntryList() {
   }
   listEl.innerHTML = entries.map(r => `
     <div class="rental-entry-row">
-      <div class="re-info"><b>${r.group}</b><br>星期${formatDays(r.days)}　${r.start}–${r.end}</div>
+      <div class="re-info"><b>${r.group}</b><br>${formatDateRange(r.dateStart, r.dateEnd)}　星期${formatDays(r.days)}　${r.start}–${r.end}</div>
       <div class="re-actions">
         <button onclick="editRentalEntry('${r.id}')">編輯</button>
         <button class="del" onclick="deleteRentalEntry('${r.id}')">刪除</button>
@@ -2354,6 +2376,8 @@ function renderRentalEntryList() {
 window.showRentalEntryForm = function() {
   APP.editingRentalId = null;
   document.getElementById('rental-form-group').value = '';
+  document.getElementById('rental-form-date-start').value = '';
+  document.getElementById('rental-form-date-end').value = '';
   document.querySelectorAll('#rental-form-days input[type=checkbox]').forEach(cb => cb.checked = false);
   document.getElementById('rental-form-start').value = '16:00';
   document.getElementById('rental-form-end').value = '18:00';
@@ -2367,6 +2391,8 @@ window.editRentalEntry = function(id) {
   if (!entry) return;
   APP.editingRentalId = id;
   document.getElementById('rental-form-group').value = entry.group;
+  document.getElementById('rental-form-date-start').value = entry.dateStart || '';
+  document.getElementById('rental-form-date-end').value = entry.dateEnd || '';
   document.querySelectorAll('#rental-form-days input[type=checkbox]').forEach(cb => {
     cb.checked = entry.days.includes(Number(cb.value));
   });
@@ -2395,39 +2421,50 @@ function timeRangesOverlap(startA, endA, startB, endB) {
   return startA < endB && startB < endA;
 }
 
-// Check for overlapping rentals in the SAME room (same code), excluding one entry id
-function findOverlap(code, days, start, end, excludeId) {
+// Date ranges (YYYY-MM-DD strings) overlap check
+function dateRangesOverlap(startA, endA, startB, endB) {
+  return startA <= endB && startB <= endA;
+}
+
+// Check for overlapping rentals in the SAME room (same code), excluding one entry id.
+// Overlap requires: shared weekday AND overlapping date range AND overlapping time range.
+function findOverlap(code, days, start, end, dateStart, dateEnd, excludeId) {
   return APP.rentalData.find(r => {
     if (r.code !== code || r.id === excludeId) return false;
     const shareDay = r.days.some(d => days.includes(d));
     if (!shareDay) return false;
+    if (!dateRangesOverlap(dateStart, dateEnd, r.dateStart, r.dateEnd)) return false;
     return timeRangesOverlap(start, end, r.start, r.end);
   });
 }
 
 window.saveRentalEntry = function() {
   const group = document.getElementById('rental-form-group').value.trim();
+  const dateStart = document.getElementById('rental-form-date-start').value;
+  const dateEnd = document.getElementById('rental-form-date-end').value;
   const days = Array.from(document.querySelectorAll('#rental-form-days input[type=checkbox]:checked')).map(cb => Number(cb.value));
   const start = document.getElementById('rental-form-start').value;
   const end = document.getElementById('rental-form-end').value;
 
   if (!group) { alert('請填寫租借團體／原因'); return; }
+  if (!dateStart || !dateEnd) { alert('請填寫租借的開始日期與結束日期'); return; }
+  if (dateStart > dateEnd) { alert('請確認開始日期早於（或等於）結束日期'); return; }
   if (!days.length) { alert('請至少選擇一個星期幾'); return; }
   if (!start || !end || start >= end) { alert('請確認開始時間早於結束時間'); return; }
 
   const code = APP.editingRentalRoom.code;
-  const overlap = findOverlap(code, days, start, end, APP.editingRentalId);
+  const overlap = findOverlap(code, days, start, end, dateStart, dateEnd, APP.editingRentalId);
   if (overlap) {
-    alert(`⚠️ 提醒：與「${overlap.group}」的租借時段重疊（星期${formatDays(overlap.days)} ${overlap.start}-${overlap.end}），但仍會儲存此筆。`);
+    alert(`⚠️ 提醒：與「${overlap.group}」的租借時段重疊（${formatDateRange(overlap.dateStart, overlap.dateEnd)}　星期${formatDays(overlap.days)} ${overlap.start}-${overlap.end}），但仍會儲存此筆。`);
   }
 
   if (APP.editingRentalId) {
     const entry = APP.rentalData.find(r => r.id === APP.editingRentalId);
-    Object.assign(entry, { group, days, start, end });
+    Object.assign(entry, { group, days, start, end, dateStart, dateEnd });
   } else {
     APP.rentalData.push({
       id: 'r' + Date.now() + Math.random().toString(36).slice(2, 7),
-      code, group, days, start, end
+      code, group, days, start, end, dateStart, dateEnd
     });
   }
   APP.pendingChanges = true;
