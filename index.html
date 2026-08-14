@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>新莊國小 Campus Phone &amp; Map</title>
+<title>新莊國小</title>
 <style>
   :root {
     --primary: #1a5c8a;
@@ -560,6 +560,42 @@
   body.edit-mode .add-room-btn { display: flex; }
   body.edit-mode .add-room-btn:hover { border-color: var(--accent); color: var(--accent); background: #fffdf8; }
 
+  /* ── Rental map ── */
+  .room-card.rental-card { background: #fff; cursor: default; }
+  body.edit-mode .room-card.rental-card { cursor: pointer; }
+  .room-card.rental-card.has-rental { background: var(--accent-light); border-color: var(--accent); }
+  .rental-code { font-size: 10px; color: var(--text-light); margin-top: 1px; }
+  .rental-entries { display: flex; flex-direction: column; gap: 2px; margin-top: 3px; }
+  .rental-entry-line { font-size: 10px; font-weight: 600; color: #a04010; line-height: 1.35; white-space: normal; }
+  .rental-entry-line .re-days { font-weight: 700; }
+  .rental-entry-line .re-time { font-weight: 500; opacity: 0.85; }
+  .rental-nocode { font-size: 10px; color: var(--text-light); font-style: italic; margin-top: 3px; }
+
+  /* Small badge dot on map (場地配置) cards showing a room has rentals */
+  .room-rental-dot {
+    position: absolute; top: 5px; right: 5px;
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--accent); border: 1.5px solid #fff;
+    box-shadow: 0 0 0 1px var(--accent); cursor: help;
+  }
+
+  /* Rental entry rows inside the rental modal */
+  .rental-entry-row {
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;
+    padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 12.5px;
+  }
+  .rental-entry-row:last-child { border-bottom: none; }
+  .rental-entry-row .re-info { flex: 1; line-height: 1.5; }
+  .rental-entry-row .re-info b { color: var(--text); }
+  .rental-entry-row .re-actions { display: flex; gap: 4px; flex-shrink: 0; }
+  .rental-entry-row .re-actions button {
+    border: 1px solid var(--border); background: var(--surface); border-radius: 5px;
+    font-size: 11px; padding: 3px 7px; cursor: pointer; color: var(--text-muted);
+  }
+  .rental-entry-row .re-actions button:hover { border-color: var(--primary-mid); color: var(--primary); }
+  .rental-entry-row .re-actions button.del:hover { border-color: #c0392b; color: #c0392b; }
+  .rental-empty-hint { font-size: 12.5px; color: var(--text-light); padding: 6px 0 10px; }
+
   /* Room edit modal */
   .modal-overlay {
     display: none; position: fixed; inset: 0;
@@ -806,7 +842,7 @@
 <header>
   <div class="header-top">
     <div class="header-left">
-      <div class="school-name">新莊國小電話與地圖</div>
+      <div class="school-name">新莊國小</div>
       <div class="year-badge" id="year-toggle" onclick="toggleYearPicker()">
         <span id="current-year-label">114學年度</span>
         <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
@@ -826,6 +862,10 @@
         <svg width="13" height="13" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="1" y="1" width="13" height="13" rx="1.5"/><path d="M1 5h13M5 5v9"/></svg>
         場地配置
       </div>
+      <div class="tab" onclick="switchTab('rental', this)" id="tab-rental">
+        <svg width="13" height="13" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="1" y="2" width="13" height="11" rx="1.5"/><path d="M1 5.5h13M4 1v2.5M11 1v2.5"/></svg>
+        租借
+      </div>
       <div class="tab-legend" id="tab-legend-phone">
         <span>編輯模式下點擊 # 欄位可標記／取消 ★ 學年主任</span>
       </div>
@@ -834,6 +874,11 @@
         <span><span class="dot" style="background:#fdf3ec;border:1.5px solid #e07b39"></span>辦公室</span>
         <span><span class="dot" style="background:#eef7f2;border:1.5px solid #2e7d52"></span>特殊</span>
         <span><span class="dot" style="background:#f3f0fa;border:1.5px solid #7c5cbf"></span>其他</span>
+      </div>
+      <div class="tab-legend" id="tab-legend-rental" style="display:none">
+        <span><span class="dot" style="background:#fff;border:1.5px solid var(--border)"></span>無租借</span>
+        <span><span class="dot" style="background:#fdf0e6;border:1.5px solid var(--accent)"></span>有租借</span>
+        <span style="color:var(--text-light)">｜編輯模式下雙擊教室可設定租借</span>
       </div>
     </div>
     <div class="header-search" id="header-search-area">
@@ -946,6 +991,33 @@
     <!-- Print-only map layout -->
     <div id="map-print-root"></div>
   </div>
+
+  <!-- ── Rental Panel ── -->
+  <div class="tab-panel" id="panel-rental">
+    <div class="map-layout">
+      <div class="map-sidebar" id="rental-sidebar">
+        <div class="btab active" onclick="switchRentalBuilding('F', this)">至誠樓</div>
+        <div class="btab" onclick="switchRentalBuilding('B', this)">至美樓</div>
+        <div class="btab" onclick="switchRentalBuilding('C', this)">至善樓</div>
+        <div class="btab" onclick="switchRentalBuilding('Z', this)">至真樓</div>
+        <hr style="border:none;border-top:1px solid var(--border);margin:4px 0">
+        <div class="btab" onclick="switchRentalBuilding('A', this)">新莊樓</div>
+        <div class="btab" onclick="switchRentalBuilding('X', this)">其他</div>
+      </div>
+      <div class="map-content">
+        <div class="map-search-bar">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M10 10l3 3"/></svg>
+          <input type="text" id="rental-search-input" placeholder="搜尋教室名稱、房號或租借團體…" oninput="searchRentalMap(this.value)">
+          <span id="rental-search-count"></span>
+        </div>
+        <div class="building-map" id="rental-map"></div>
+      </div>
+    </div>
+    <div class="meta-bar">
+      <span></span>
+      <span id="last-edit-rental"></span>
+    </div>
+  </div>
 </main>
 
 <!-- Room edit modal -->
@@ -976,6 +1048,51 @@
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeModal()">取消</button>
       <button class="btn-save" onclick="saveRoom()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Rental edit modal -->
+<div class="modal-overlay" id="rental-modal">
+  <div class="modal" style="width:380px">
+    <h3 id="rental-modal-title">教室租借設定</h3>
+    <div id="rental-modal-room-info" style="font-size:12px;color:var(--text-muted);margin:-8px 0 14px"></div>
+    <div id="rental-entry-list"></div>
+    <div id="rental-entry-form" style="display:none;border-top:1px solid var(--border);margin-top:10px;padding-top:12px">
+      <div class="form-group">
+        <label>租借團體／原因</label>
+        <input type="text" id="rental-form-group" placeholder="例：課後直笛社團">
+      </div>
+      <div class="form-group">
+        <label>星期幾</label>
+        <div id="rental-form-days" style="display:flex;gap:6px;flex-wrap:wrap">
+          <label style="display:flex;align-items:center;gap:3px;font-size:12px;font-weight:400"><input type="checkbox" value="1">一</label>
+          <label style="display:flex;align-items:center;gap:3px;font-size:12px;font-weight:400"><input type="checkbox" value="2">二</label>
+          <label style="display:flex;align-items:center;gap:3px;font-size:12px;font-weight:400"><input type="checkbox" value="3">三</label>
+          <label style="display:flex;align-items:center;gap:3px;font-size:12px;font-weight:400"><input type="checkbox" value="4">四</label>
+          <label style="display:flex;align-items:center;gap:3px;font-size:12px;font-weight:400"><input type="checkbox" value="5">五</label>
+          <label style="display:flex;align-items:center;gap:3px;font-size:12px;font-weight:400"><input type="checkbox" value="6">六</label>
+          <label style="display:flex;align-items:center;gap:3px;font-size:12px;font-weight:400"><input type="checkbox" value="7">日</label>
+        </div>
+      </div>
+      <div class="form-group" style="display:flex;gap:8px">
+        <div style="flex:1">
+          <label>開始時間</label>
+          <input type="time" id="rental-form-start" value="16:00">
+        </div>
+        <div style="flex:1">
+          <label>結束時間</label>
+          <input type="time" id="rental-form-end" value="18:00">
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="cancelRentalEntryForm()">取消</button>
+        <button class="btn-save" onclick="saveRentalEntry()">儲存這筆</button>
+      </div>
+    </div>
+    <div class="modal-actions" id="rental-modal-add-row">
+      <button class="btn-cancel" onclick="closeRentalModal()">關閉</button>
+      <button class="btn-save" onclick="showRentalEntryForm()">＋ 新增一筆</button>
     </div>
   </div>
 </div>
@@ -1025,7 +1142,8 @@ async function loadYear(year) {
   try {
     const phoneRef = doc(db, 'extensions', String(year));
     const mapRef = doc(db, 'rooms', String(year));
-    const [phoneSnap, mapSnap] = await Promise.all([getDoc(phoneRef), getDoc(mapRef)]);
+    const rentalRef = doc(db, 'rentals', String(year));
+    const [phoneSnap, mapSnap, rentalSnap] = await Promise.all([getDoc(phoneRef), getDoc(mapRef), getDoc(rentalRef)]);
 
     if (phoneSnap.exists()) {
       window.APP.phoneData = phoneSnap.data().staff || window.APP.defaultPhone;
@@ -1042,13 +1160,22 @@ async function loadYear(year) {
       window.APP.mapData = JSON.parse(JSON.stringify(window.APP.defaultMap));
       window.APP.floorOrder = {};
     }
+    if (rentalSnap.exists()) {
+      window.APP.rentalData = rentalSnap.data().list || [];
+      window.APP.rentalLastEdit = rentalSnap.data().last_edited || '';
+    } else {
+      window.APP.rentalData = [];
+      window.APP.rentalLastEdit = '';
+    }
   } catch(e) {
     console.warn('Firebase load failed, using local data:', e);
     window.APP.phoneData = JSON.parse(JSON.stringify(window.APP.defaultPhone));
     window.APP.mapData = JSON.parse(JSON.stringify(window.APP.defaultMap));
+    window.APP.rentalData = [];
   }
   window.renderPhone();
   window.renderMap();
+  if (window.renderRentalMap) window.renderRentalMap();
 }
 
 async function saveToFirebase(year) {
@@ -1065,10 +1192,17 @@ async function saveToFirebase(year) {
       floorOrder: window.APP.floorOrder || {},
       last_edited: now
     });
+    await window._setDoc(window._doc(window._db, 'rentals', String(year)), {
+      list: window.APP.rentalData || [],
+      last_edited: now
+    });
     window.APP.phoneLastEdit = now;
     window.APP.mapLastEdit = now;
+    window.APP.rentalLastEdit = now;
     document.getElementById('last-edit-phone').textContent = '最後編輯：' + now;
     document.getElementById('last-edit-map').textContent = '最後編輯：' + now;
+    const rentalEditEl = document.getElementById('last-edit-rental');
+    if (rentalEditEl) rentalEditEl.textContent = '最後編輯：' + now;
     return true;
   } catch(e) {
     alert('儲存失敗，請確認網路連線。\n' + e.message);
@@ -1123,10 +1257,15 @@ window.APP = {
   editMode: false,
   phoneData: [],
   mapData: {},
+  rentalData: [],
   phoneLastEdit: '',
   mapLastEdit: '',
+  rentalLastEdit: '',
   currentBuilding: 'F',
+  currentRentalBuilding: 'F',
   editingRoomKey: null,
+  editingRentalRoom: null,
+  editingRentalId: null,
   pendingChanges: false,
 
   // ── Default phone data (114學年度) ──
@@ -1692,7 +1831,12 @@ window.renderMap = function() {
           return `<span class="room-ext-item" title="${tooltipText.replace(/"/g,'&quot;')}"><span class="ext-num">☎${n}</span>${nameHtml}</span>`;
         }).join('')}</div>`
       : '';
+    const roomRentals = room.code ? getRentalsForCode(room.code) : [];
+    const rentalDot = roomRentals.length
+      ? `<span class="room-rental-dot" title="${roomRentals.map(r => `${r.group}｜${formatDays(r.days)} ${r.start}-${r.end}`).join('\n').replace(/"/g,'&quot;')}"></span>`
+      : '';
     return `<div class="room-card ${typeClass}" ${dragAttrs} onclick="openRoomEdit('${b}','${floor}',${idx})">
+      ${rentalDot}
       <div class="room-name">${room.name || '（未命名）'}</div>
       ${room.code ? `<div class="room-code">${room.code}</div>` : ''}
       ${extHtml}
@@ -2034,6 +2178,21 @@ window.closeModal = function() {
   document.getElementById('room-modal').classList.remove('visible');
 };
 
+// Check whether a room code is already used by another room (returns the conflicting room, or null)
+function findDuplicateCode(code, excludeBuilding, excludeFloor, excludeIdx) {
+  if (!code) return null;
+  for (const b in APP.mapData) {
+    for (const floor in APP.mapData[b]) {
+      const rooms = APP.mapData[b][floor] || [];
+      for (let i = 0; i < rooms.length; i++) {
+        if (b === excludeBuilding && floor === excludeFloor && i === excludeIdx) continue;
+        if ((rooms[i].code || '').trim() === code) return { name: rooms[i].name, building: b, floor };
+      }
+    }
+  }
+  return null;
+}
+
 window.saveRoom = function() {
   const { building, floor, idx } = APP.editingRoomKey;
   const roomData = {
@@ -2042,6 +2201,12 @@ window.saveRoom = function() {
     ext: document.getElementById('modal-ext').value.trim(),
     type: document.getElementById('modal-type').value
   };
+  if (roomData.code) {
+    const dup = findDuplicateCode(roomData.code, building, floor, idx);
+    if (dup && !confirm(`教室代號「${roomData.code}」已被「${dup.name || '未命名'}」使用，確定要儲存重複的代號嗎？`)) {
+      return;
+    }
+  }
   if (!APP.mapData[building][floor]) APP.mapData[building][floor] = [];
   if (idx === -1) {
     APP.mapData[building][floor].push(roomData);
@@ -2068,6 +2233,212 @@ window.addRoom = function(building, floor) {
 // Close modal only when clicking directly on overlay background (not bubbled)
 document.getElementById('room-modal').addEventListener('mousedown', function(e) {
   if (e.target === this) closeModal();
+});
+
+// ─── Rental panel ───────────────────────────────────────────
+const DAY_LABELS = { 1: '一', 2: '二', 3: '三', 4: '四', 5: '五', 6: '六', 7: '日' };
+
+function formatDays(days) {
+  if (!days || !days.length) return '';
+  return days.slice().sort((a, b) => a - b).map(d => DAY_LABELS[d] || '').join('');
+}
+
+function getRentalsForCode(code) {
+  if (!code) return [];
+  return APP.rentalData.filter(r => r.code === code);
+}
+
+window.switchRentalBuilding = function(b, el) {
+  APP.currentRentalBuilding = b;
+  document.querySelectorAll('#rental-sidebar .btab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  const si = document.getElementById('rental-search-input');
+  if (si) si.value = '';
+  document.getElementById('rental-search-count') && (document.getElementById('rental-search-count').textContent = '');
+  renderRentalMap();
+};
+
+window.renderRentalMap = function() {
+  const b = APP.currentRentalBuilding;
+  if (!APP.mapData[b]) APP.mapData[b] = {};
+  const sortedFloors = getFloorOrder(b).filter(f => APP.mapData[b][f] !== undefined);
+
+  function rentalCardHtml(room, floor, idx) {
+    const rentals = room.code ? getRentalsForCode(room.code) : [];
+    const hasRental = rentals.length > 0;
+    const entriesHtml = hasRental
+      ? `<div class="rental-entries">${rentals.map(r =>
+          `<div class="rental-entry-line"><span class="re-days">${formatDays(r.days)}</span> ${r.group} <span class="re-time">${r.start}-${r.end}</span></div>`
+        ).join('')}</div>`
+      : (room.code ? '' : `<div class="rental-nocode">未設定教室代號</div>`);
+    return `<div class="room-card rental-card ${hasRental ? 'has-rental' : ''}" ondblclick="openRentalRoomModal('${b}','${floor}',${idx})">
+      <div class="room-name">${room.name || '（未命名）'}</div>
+      ${room.code ? `<div class="rental-code">${room.code}${room.ext ? ' ／ ☎' + room.ext.split(/[\s,、\n]+/)[0] : ''}</div>` : ''}
+      ${entriesHtml}
+    </div>`;
+  }
+
+  function floorSectionHtml(floor, rooms) {
+    return `<div class="floor-section">
+      <div class="floor-label"><span>${floor}</span></div>
+      <div class="rooms-grid">${rooms.map((r, i) => rentalCardHtml(r, floor, i)).join('')}</div>
+    </div>`;
+  }
+
+  let html = `<div class="building-title">${BNAMES[b]}</div>`;
+  sortedFloors.forEach(floor => {
+    html += floorSectionHtml(floor, APP.mapData[b][floor] || []);
+  });
+  document.getElementById('rental-map').innerHTML = html;
+  if (APP.rentalLastEdit) document.getElementById('last-edit-rental').textContent = '最後編輯：' + APP.rentalLastEdit;
+};
+
+window.searchRentalMap = function(q) {
+  q = q.trim().toLowerCase();
+  const cards = document.querySelectorAll('#rental-map .room-card');
+  const countEl = document.getElementById('rental-search-count');
+  if (!q) {
+    cards.forEach(c => c.classList.remove('map-match', 'map-dim'));
+    if (countEl) countEl.textContent = '';
+    return;
+  }
+  let count = 0;
+  cards.forEach(c => {
+    const text = c.textContent.toLowerCase();
+    if (text.includes(q)) { c.classList.add('map-match'); c.classList.remove('map-dim'); count++; }
+    else { c.classList.add('map-dim'); c.classList.remove('map-match'); }
+  });
+  if (countEl) countEl.textContent = `符合 ${count} 筆`;
+};
+
+window.openRentalRoomModal = function(building, floor, idx) {
+  if (!APP.editMode) return;
+  const room = APP.mapData[building][floor][idx];
+  if (!room.code || !room.code.trim()) {
+    alert('請先在場地配置設定教室代號');
+    return;
+  }
+  APP.editingRentalRoom = { code: room.code.trim(), name: room.name || '（未命名）' };
+  document.getElementById('rental-modal-title').textContent = `教室租借設定 — ${room.name || ''}`;
+  document.getElementById('rental-modal-room-info').textContent =
+    `代號：${room.code}${room.ext ? '　分機：' + room.ext : ''}`;
+  cancelRentalEntryForm();
+  renderRentalEntryList();
+  document.getElementById('rental-modal').classList.add('visible');
+};
+
+window.closeRentalModal = function() {
+  document.getElementById('rental-modal').classList.remove('visible');
+  APP.editingRentalRoom = null;
+};
+
+function renderRentalEntryList() {
+  const code = APP.editingRentalRoom.code;
+  const entries = getRentalsForCode(code);
+  const listEl = document.getElementById('rental-entry-list');
+  if (!entries.length) {
+    listEl.innerHTML = `<div class="rental-empty-hint">目前尚無租借紀錄</div>`;
+    return;
+  }
+  listEl.innerHTML = entries.map(r => `
+    <div class="rental-entry-row">
+      <div class="re-info"><b>${r.group}</b><br>星期${formatDays(r.days)}　${r.start}–${r.end}</div>
+      <div class="re-actions">
+        <button onclick="editRentalEntry('${r.id}')">編輯</button>
+        <button class="del" onclick="deleteRentalEntry('${r.id}')">刪除</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+window.showRentalEntryForm = function() {
+  APP.editingRentalId = null;
+  document.getElementById('rental-form-group').value = '';
+  document.querySelectorAll('#rental-form-days input[type=checkbox]').forEach(cb => cb.checked = false);
+  document.getElementById('rental-form-start').value = '16:00';
+  document.getElementById('rental-form-end').value = '18:00';
+  document.getElementById('rental-entry-form').style.display = 'block';
+  document.getElementById('rental-modal-add-row').style.display = 'none';
+  setTimeout(() => document.getElementById('rental-form-group').focus(), 50);
+};
+
+window.editRentalEntry = function(id) {
+  const entry = APP.rentalData.find(r => r.id === id);
+  if (!entry) return;
+  APP.editingRentalId = id;
+  document.getElementById('rental-form-group').value = entry.group;
+  document.querySelectorAll('#rental-form-days input[type=checkbox]').forEach(cb => {
+    cb.checked = entry.days.includes(Number(cb.value));
+  });
+  document.getElementById('rental-form-start').value = entry.start;
+  document.getElementById('rental-form-end').value = entry.end;
+  document.getElementById('rental-entry-form').style.display = 'block';
+  document.getElementById('rental-modal-add-row').style.display = 'none';
+};
+
+window.cancelRentalEntryForm = function() {
+  APP.editingRentalId = null;
+  document.getElementById('rental-entry-form').style.display = 'none';
+  document.getElementById('rental-modal-add-row').style.display = 'flex';
+};
+
+window.deleteRentalEntry = function(id) {
+  if (!confirm('確定要刪除這筆租借紀錄？')) return;
+  APP.rentalData = APP.rentalData.filter(r => r.id !== id);
+  APP.pendingChanges = true;
+  renderRentalEntryList();
+  renderRentalMap();
+};
+
+// Check whether two time ranges (HH:MM strings) overlap
+function timeRangesOverlap(startA, endA, startB, endB) {
+  return startA < endB && startB < endA;
+}
+
+// Check for overlapping rentals in the SAME room (same code), excluding one entry id
+function findOverlap(code, days, start, end, excludeId) {
+  return APP.rentalData.find(r => {
+    if (r.code !== code || r.id === excludeId) return false;
+    const shareDay = r.days.some(d => days.includes(d));
+    if (!shareDay) return false;
+    return timeRangesOverlap(start, end, r.start, r.end);
+  });
+}
+
+window.saveRentalEntry = function() {
+  const group = document.getElementById('rental-form-group').value.trim();
+  const days = Array.from(document.querySelectorAll('#rental-form-days input[type=checkbox]:checked')).map(cb => Number(cb.value));
+  const start = document.getElementById('rental-form-start').value;
+  const end = document.getElementById('rental-form-end').value;
+
+  if (!group) { alert('請填寫租借團體／原因'); return; }
+  if (!days.length) { alert('請至少選擇一個星期幾'); return; }
+  if (!start || !end || start >= end) { alert('請確認開始時間早於結束時間'); return; }
+
+  const code = APP.editingRentalRoom.code;
+  const overlap = findOverlap(code, days, start, end, APP.editingRentalId);
+  if (overlap) {
+    alert(`⚠️ 提醒：與「${overlap.group}」的租借時段重疊（星期${formatDays(overlap.days)} ${overlap.start}-${overlap.end}），但仍會儲存此筆。`);
+  }
+
+  if (APP.editingRentalId) {
+    const entry = APP.rentalData.find(r => r.id === APP.editingRentalId);
+    Object.assign(entry, { group, days, start, end });
+  } else {
+    APP.rentalData.push({
+      id: 'r' + Date.now() + Math.random().toString(36).slice(2, 7),
+      code, group, days, start, end
+    });
+  }
+  APP.pendingChanges = true;
+  cancelRentalEntryForm();
+  renderRentalEntryList();
+  renderRentalMap();
+  renderMap();
+};
+
+document.getElementById('rental-modal').addEventListener('mousedown', function(e) {
+  if (e.target === this) closeRentalModal();
 });
 
 // ─── Edit mode ────────────────────────────────────────────
@@ -2165,10 +2536,13 @@ window.switchTab = function(name, el) {
   // Toggle legend
   const legendPhone = document.getElementById('tab-legend-phone');
   const legendMap = document.getElementById('tab-legend-map');
+  const legendRental = document.getElementById('tab-legend-rental');
   if (legendPhone) legendPhone.style.display = name === 'phone' ? 'flex' : 'none';
   if (legendMap) legendMap.style.display = name === 'map' ? 'flex' : 'none';
+  if (legendRental) legendRental.style.display = name === 'rental' ? 'flex' : 'none';
   // Ext→name matching depends on the latest phone data, so refresh on entering the map tab
   if (name === 'map') renderMap();
+  if (name === 'rental') renderRentalMap();
 };
 
 // ─── Year picker ──────────────────────────────────────────
@@ -2249,7 +2623,8 @@ window.exportJSON = function() {
     exportedAt: new Date().toLocaleString('zh-TW', {timeZone:'Asia/Taipei'}),
     phone: APP.phoneData,
     map: APP.mapData,
-    floorOrder: APP.floorOrder || {}
+    floorOrder: APP.floorOrder || {},
+    rental: APP.rentalData || []
   };
   const blob = new Blob([JSON.stringify(payload, null, 2)], {type: 'application/json'});
   const url = URL.createObjectURL(blob);
@@ -2280,6 +2655,7 @@ window.importJSON = function(e) {
       APP.phoneData = data.phone;
       APP.mapData = data.map;
       APP.floorOrder = data.floorOrder || {};
+      APP.rentalData = data.rental || [];
       if (data.year && !APP.years.includes(data.year)) {
         APP.years.push(data.year);
       }
@@ -2288,6 +2664,7 @@ window.importJSON = function(e) {
       APP.pendingChanges = true;
       renderPhone();
       renderMap();
+      renderRentalMap();
       showToast(`✅ 匯入完成（${importYear}學年度），請記得儲存到 Firebase`);
     } catch(err) {
       alert('JSON 解析失敗：' + err.message);
@@ -2304,8 +2681,10 @@ setTimeout(() => {
   if (!APP.phoneData.length) {
     APP.phoneData = JSON.parse(JSON.stringify(APP.defaultPhone));
     APP.mapData = JSON.parse(JSON.stringify(APP.defaultMap));
+    APP.rentalData = APP.rentalData || [];
     renderPhone();
     renderMap();
+    renderRentalMap();
   }
 }, 1500);
 </script>
