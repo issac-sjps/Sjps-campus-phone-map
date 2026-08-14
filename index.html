@@ -2404,6 +2404,7 @@ window.renderRentalMap = function() {
   const b = APP.currentRentalBuilding;
   if (!APP.mapData[b]) APP.mapData[b] = {};
   const sortedFloors = getFloorOrder(b).filter(f => APP.mapData[b][f] !== undefined);
+  const extNameMap = buildExtNameMap();
 
   function rentalCardHtml(room, floor, idx) {
     const rentals = room.code ? getRentalsForCode(room.code) : [];
@@ -2413,9 +2414,12 @@ window.renderRentalMap = function() {
           `<div class="rental-entry-line">${r.group}<br><span class="re-days">${formatDays(r.days)}</span> <span class="re-time">${r.start}-${r.end}</span><br><span class="re-date">${formatDateRange(r.dateStart, r.dateEnd)}</span></div>`
         ).join('')}</div>`
       : (room.code ? '' : `<div class="rental-nocode">未設定教室代號</div>`);
+    const firstExt = room.ext ? room.ext.split(/[\s,、\n]+/).filter(Boolean)[0] : '';
+    const names = firstExt ? extNameMap[firstExt] : null;
+    const nameSuffix = names && names.length ? ' ／ ' + names.join('、') : '';
     return `<div class="room-card rental-card ${hasRental ? 'has-rental' : ''}" ondblclick="openRentalRoomModal('${b}','${floor}',${idx})">
       <div class="room-name">${room.name || '（未命名）'}</div>
-      ${room.code ? `<div class="rental-code">${room.code}${room.ext ? ' ／ ☎' + room.ext.split(/[\s,、\n]+/)[0] : ''}</div>` : ''}
+      ${room.code ? `<div class="rental-code">${room.code}${firstExt ? ' ／ ☎' + firstExt : ''}${nameSuffix}</div>` : ''}
       ${entriesHtml}
     </div>`;
   }
