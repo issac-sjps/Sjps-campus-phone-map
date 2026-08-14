@@ -1843,7 +1843,7 @@ window.renderMap = function() {
       : '';
     const roomRentals = room.code ? getRentalsForCode(room.code) : [];
     const rentalDot = roomRentals.length
-      ? `<span class="room-rental-dot" title="${roomRentals.map(r => `${r.group}｜${formatDateRange(r.dateStart, r.dateEnd)}｜星期${formatDays(r.days)} ${r.start}-${r.end}`).join('\n').replace(/"/g,'&quot;')}"></span>`
+      ? `<span class="room-rental-dot" title="${roomRentals.map(r => `${r.group}｜${formatDateRange(r.dateStart, r.dateEnd)}｜${formatDays(r.days)} ${r.start}-${r.end}`).join('\n').replace(/"/g,'&quot;')}"></span>`
       : '';
     return `<div class="room-card ${typeClass}" ${dragAttrs} onclick="openRoomEdit('${b}','${floor}',${idx})">
       ${rentalDot}
@@ -2254,15 +2254,26 @@ function formatDays(days) {
 }
 
 // "2026-08-25" -> "08/25"
+// "2026-08-25" -> "8/25"
 function formatDateShort(d) {
   if (!d) return '';
   const parts = d.split('-');
-  return parts.length === 3 ? `${parts[1]}/${parts[2]}` : d;
+  if (parts.length !== 3) return d;
+  return `${Number(parts[1])}/${Number(parts[2])}`;
+}
+
+// Actual calendar weekday (一~日) for a given "YYYY-MM-DD" date string
+function weekdayOf(d) {
+  if (!d) return '';
+  const parts = d.split('-').map(Number);
+  const dt = new Date(parts[0], parts[1] - 1, parts[2]);
+  const dow = dt.getDay(); // 0=Sun..6=Sat
+  return DAY_LABELS[dow === 0 ? 7 : dow] || '';
 }
 
 function formatDateRange(dateStart, dateEnd) {
   if (!dateStart || !dateEnd) return '';
-  return `${formatDateShort(dateStart)}–${formatDateShort(dateEnd)}`;
+  return `${formatDateShort(dateStart)}(${weekdayOf(dateStart)}) ${formatDateShort(dateEnd)}(${weekdayOf(dateEnd)})`;
 }
 
 function getRentalsForCode(code) {
@@ -2290,7 +2301,7 @@ window.renderRentalMap = function() {
     const hasRental = rentals.length > 0;
     const entriesHtml = hasRental
       ? `<div class="rental-entries">${rentals.map(r =>
-          `<div class="rental-entry-line">${r.group}<br><span class="re-days">星期${formatDays(r.days)}</span> <span class="re-time">${r.start}-${r.end}</span>　<span class="re-time">${formatDateRange(r.dateStart, r.dateEnd)}</span></div>`
+          `<div class="rental-entry-line">${r.group}<br><span class="re-days">${formatDays(r.days)}</span> <span class="re-time">${r.start}-${r.end}</span><br><span class="re-time">${formatDateRange(r.dateStart, r.dateEnd)}</span></div>`
         ).join('')}</div>`
       : (room.code ? '' : `<div class="rental-nocode">未設定教室代號</div>`);
     return `<div class="room-card rental-card ${hasRental ? 'has-rental' : ''}" ondblclick="openRentalRoomModal('${b}','${floor}',${idx})">
@@ -2364,7 +2375,7 @@ function renderRentalEntryList() {
   }
   listEl.innerHTML = entries.map(r => `
     <div class="rental-entry-row">
-      <div class="re-info"><b>${r.group}</b><br>${formatDateRange(r.dateStart, r.dateEnd)}　星期${formatDays(r.days)}　${r.start}–${r.end}</div>
+      <div class="re-info"><b>${r.group}</b><br>${formatDateRange(r.dateStart, r.dateEnd)}　${formatDays(r.days)}　${r.start}–${r.end}</div>
       <div class="re-actions">
         <button onclick="editRentalEntry('${r.id}')">編輯</button>
         <button class="del" onclick="deleteRentalEntry('${r.id}')">刪除</button>
@@ -2455,7 +2466,7 @@ window.saveRentalEntry = function() {
   const code = APP.editingRentalRoom.code;
   const overlap = findOverlap(code, days, start, end, dateStart, dateEnd, APP.editingRentalId);
   if (overlap) {
-    alert(`⚠️ 提醒：與「${overlap.group}」的租借時段重疊（${formatDateRange(overlap.dateStart, overlap.dateEnd)}　星期${formatDays(overlap.days)} ${overlap.start}-${overlap.end}），但仍會儲存此筆。`);
+    alert(`⚠️ 提醒：與「${overlap.group}」的租借時段重疊（${formatDateRange(overlap.dateStart, overlap.dateEnd)}　${formatDays(overlap.days)} ${overlap.start}-${overlap.end}），但仍會儲存此筆。`);
   }
 
   if (APP.editingRentalId) {
