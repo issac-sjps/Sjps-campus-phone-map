@@ -595,6 +595,10 @@
   .rental-entry-row .re-actions button:hover { border-color: var(--primary-mid); color: var(--primary); }
   .rental-entry-row .re-actions button.del:hover { border-color: #c0392b; color: #c0392b; }
   .rental-empty-hint { font-size: 12.5px; color: var(--text-light); padding: 6px 0 10px; }
+  .copy-building-group { margin-bottom: 10px; }
+  .copy-building-title { font-size: 12px; font-weight: 600; color: var(--primary); margin-bottom: 4px; }
+  .copy-room-item { display: flex; align-items: center; gap: 6px; font-size: 13px; padding: 3px 0; }
+  .copy-room-item.self { opacity: 0.4; }
 
   /* Room edit modal */
   .modal-overlay {
@@ -1052,6 +1056,19 @@
   </div>
 </div>
 
+<!-- Rental copy-to-rooms modal -->
+<div class="modal-overlay" id="rental-copy-modal">
+  <div class="modal" style="width:360px">
+    <h3>複製這筆租借到其他教室</h3>
+    <div style="font-size:12px;color:var(--text-muted);margin:-8px 0 12px">勾選要複製到的教室，會建立相同的團體／日期／星期／時段設定</div>
+    <div id="rental-copy-room-list" style="max-height:320px;overflow-y:auto"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeRentalCopyModal()">取消</button>
+      <button class="btn-save" onclick="confirmRentalCopy()">複製</button>
+    </div>
+  </div>
+</div>
+
 <!-- Rental edit modal -->
 <div class="modal-overlay" id="rental-modal">
   <div class="modal" style="width:380px">
@@ -1066,13 +1083,14 @@
       <div class="form-group" style="display:flex;gap:8px">
         <div style="flex:1">
           <label>開始日期</label>
-          <input type="date" id="rental-form-date-start">
+          <input type="text" id="rental-form-date-start" placeholder="例：1150927" onblur="normalizeDateField(this)">
         </div>
         <div style="flex:1">
           <label>結束日期</label>
-          <input type="date" id="rental-form-date-end">
+          <input type="text" id="rental-form-date-end" placeholder="例：1160107" onblur="normalizeDateField(this)">
         </div>
       </div>
+      <div style="font-size:11px;color:var(--text-light);margin:-10px 0 12px">可直接打民國年月日，例如 1150927 會自動轉為 115/09/27</div>
       <div class="form-group">
         <label>星期幾</label>
         <div id="rental-form-days" style="display:flex;gap:6px;flex-wrap:wrap">
@@ -1088,13 +1106,14 @@
       <div class="form-group" style="display:flex;gap:8px">
         <div style="flex:1">
           <label>開始時間</label>
-          <input type="time" id="rental-form-start" value="16:00">
+          <input type="text" id="rental-form-start" placeholder="例：1600" onblur="normalizeTimeField(this, true)">
         </div>
         <div style="flex:1">
           <label>結束時間</label>
-          <input type="time" id="rental-form-end" value="18:00">
+          <input type="text" id="rental-form-end" placeholder="例：1730" onblur="normalizeTimeField(this, false)">
         </div>
       </div>
+      <div style="font-size:11px;color:var(--text-light);margin:-10px 0 12px">可直接打 1600，或在開始時間打 1600-1730 自動拆成兩欄</div>
       <div class="modal-actions">
         <button class="btn-cancel" onclick="cancelRentalEntryForm()">取消</button>
         <button class="btn-save" onclick="saveRentalEntry()">儲存這筆</button>
@@ -1276,6 +1295,7 @@ window.APP = {
   editingRoomKey: null,
   editingRentalRoom: null,
   editingRentalId: null,
+  copyingRentalId: null,
   pendingChanges: false,
 
   // ── Default phone data (114學年度) ──
@@ -2248,6 +2268,94 @@ document.getElementById('room-modal').addEventListener('mousedown', function(e) 
 // ─── Rental panel ───────────────────────────────────────────
 const DAY_LABELS = { 1: '一', 2: '二', 3: '三', 4: '四', 5: '五', 6: '六', 7: '日' };
 
+// ── Quick-entry parsing for date / time fields ──────────────
+// Accepts ROC-style digits like "1150927" (民國115年09月27日), or already-typed
+// "115/09/27", "2026-09-27", etc. Returns "YYYY-MM-DD" (Gregorian) or null.
+function parseRocDate(raw) {
+  if (!raw) return null;
+  const digits = raw.replace(/\D/g, '');
+  if (digits.length === 7) {
+    // ROC year (3 digits) + month (2) + day (2)
+    const rocYear = Number(digits.slice(0, 3));
+    const month = Number(digits.slice(3, 5));
+    const day = Number(digits.slice(5, 7));
+    const adYear = rocYear + 1911;
+    return isValidYMD(adYear, month, day) ? toISO(adYear, month, day) : null;
+  }
+  if (digits.length === 8) {
+    // Assume already Gregorian YYYYMMDD
+    const y = Number(digits.slice(0, 4));
+    const month = Number(digits.slice(4, 6));
+    const day = Number(digits.slice(6, 8));
+    return isValidYMD(y, month, day) ? toISO(y, month, day) : null;
+  }
+  // Already formatted with separators, e.g. "115/09/27" or "2026-09-27"
+  const m = raw.match(/(\d{2,4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})/);
+  if (m) {
+    let y = Number(m[1]);
+    if (y < 1000) y += 1911; // ROC year with separators
+    const month = Number(m[2]), day = Number(m[3]);
+    return isValidYMD(y, month, day) ? toISO(y, month, day) : null;
+  }
+  return null;
+}
+function isValidYMD(y, m, d) { return y > 1900 && y < 2100 && m >= 1 && m <= 12 && d >= 1 && d <= 31; }
+function toISO(y, m, d) { return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`; }
+
+window.normalizeDateField = function(el) {
+  const val = el.value.trim();
+  if (!val) return;
+  const iso = parseRocDate(val);
+  if (!iso) { alert('日期格式無法辨識，請用類似 1150927（民國年月日）的格式輸入'); el.focus(); return; }
+  const parts = iso.split('-');
+  const rocYear = Number(parts[0]) - 1911;
+  el.value = `${rocYear}/${parts[1]}/${parts[2]}`;
+  el.dataset.iso = iso;
+};
+
+// Accepts "1600", "16:00", or a range "1600-1730" (range only meaningful on the
+// start field — auto-fills the paired end field when present).
+window.normalizeTimeField = function(el, isStart) {
+  const val = el.value.trim();
+  if (!val) return;
+  const rangeMatch = val.match(/^(\d{3,4}|\d{1,2}:\d{2})\s*[-~至]\s*(\d{3,4}|\d{1,2}:\d{2})$/);
+  if (rangeMatch && isStart) {
+    const startT = parseQuickTime(rangeMatch[1]);
+    const endT = parseQuickTime(rangeMatch[2]);
+    if (startT) el.value = startT;
+    if (endT) {
+      const endEl = document.getElementById('rental-form-end');
+      if (endEl) endEl.value = endT;
+    }
+    return;
+  }
+  const t = parseQuickTime(val);
+  if (!t) { alert('時間格式無法辨識，請用類似 1600 或 16:00 的格式輸入'); el.focus(); return; }
+  el.value = t;
+};
+
+function parseQuickTime(raw) {
+  raw = raw.trim();
+  if (/^\d{1,2}:\d{2}$/.test(raw)) {
+    const [h, m] = raw.split(':').map(Number);
+    if (h <= 23 && m <= 59) return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+    return null;
+  }
+  const digits = raw.replace(/\D/g, '');
+  if (digits.length === 3 || digits.length === 4) {
+    const padded = digits.padStart(4, '0');
+    const h = Number(padded.slice(0, 2)), m = Number(padded.slice(2, 4));
+    if (h <= 23 && m <= 59) return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+  }
+  return null;
+}
+
+// Convert a normalized display value ("115/09/27") back to ISO "YYYY-MM-DD"
+function dateFieldToISO(el) {
+  if (el.dataset.iso) return el.dataset.iso;
+  return parseRocDate(el.value.trim());
+}
+
 function formatDays(days) {
   if (!days || !days.length) return '';
   return days.slice().sort((a, b) => a - b).map(d => DAY_LABELS[d] || '').join('');
@@ -2378,6 +2486,7 @@ function renderRentalEntryList() {
       <div class="re-info"><b>${r.group}</b><br>${formatDateRange(r.dateStart, r.dateEnd)}　${formatDays(r.days)}　${r.start}–${r.end}</div>
       <div class="re-actions">
         <button onclick="editRentalEntry('${r.id}')">編輯</button>
+        <button onclick="openRentalCopyModal('${r.id}')">複製</button>
         <button class="del" onclick="deleteRentalEntry('${r.id}')">刪除</button>
       </div>
     </div>
@@ -2402,8 +2511,12 @@ window.editRentalEntry = function(id) {
   if (!entry) return;
   APP.editingRentalId = id;
   document.getElementById('rental-form-group').value = entry.group;
-  document.getElementById('rental-form-date-start').value = entry.dateStart || '';
-  document.getElementById('rental-form-date-end').value = entry.dateEnd || '';
+  const dsEl = document.getElementById('rental-form-date-start');
+  const deEl = document.getElementById('rental-form-date-end');
+  dsEl.value = entry.dateStart || '';
+  deEl.value = entry.dateEnd || '';
+  if (entry.dateStart) normalizeDateField(dsEl);
+  if (entry.dateEnd) normalizeDateField(deEl);
   document.querySelectorAll('#rental-form-days input[type=checkbox]').forEach(cb => {
     cb.checked = entry.days.includes(Number(cb.value));
   });
@@ -2451,17 +2564,27 @@ function findOverlap(code, days, start, end, dateStart, dateEnd, excludeId) {
 
 window.saveRentalEntry = function() {
   const group = document.getElementById('rental-form-group').value.trim();
-  const dateStart = document.getElementById('rental-form-date-start').value;
-  const dateEnd = document.getElementById('rental-form-date-end').value;
+  const dsEl = document.getElementById('rental-form-date-start');
+  const deEl = document.getElementById('rental-form-date-end');
+  const startEl = document.getElementById('rental-form-start');
+  const endEl = document.getElementById('rental-form-end');
+  // Normalize in case the person clicked Save without leaving the field (no blur fired)
+  if (dsEl.value.trim()) normalizeDateField(dsEl);
+  if (deEl.value.trim()) normalizeDateField(deEl);
+  if (startEl.value.trim()) normalizeTimeField(startEl, true);
+  if (endEl.value.trim()) normalizeTimeField(endEl, false);
+
+  const dateStart = dateFieldToISO(dsEl);
+  const dateEnd = dateFieldToISO(deEl);
   const days = Array.from(document.querySelectorAll('#rental-form-days input[type=checkbox]:checked')).map(cb => Number(cb.value));
-  const start = document.getElementById('rental-form-start').value;
-  const end = document.getElementById('rental-form-end').value;
+  const start = startEl.value.trim();
+  const end = endEl.value.trim();
 
   if (!group) { alert('請填寫租借團體／原因'); return; }
   if (!dateStart || !dateEnd) { alert('請填寫租借的開始日期與結束日期'); return; }
   if (dateStart > dateEnd) { alert('請確認開始日期早於（或等於）結束日期'); return; }
   if (!days.length) { alert('請至少選擇一個星期幾'); return; }
-  if (!start || !end || start >= end) { alert('請確認開始時間早於結束時間'); return; }
+  if (!/^\d{2}:\d{2}$/.test(start) || !/^\d{2}:\d{2}$/.test(end) || start >= end) { alert('請確認開始時間早於結束時間'); return; }
 
   const code = APP.editingRentalRoom.code;
   const overlap = findOverlap(code, days, start, end, dateStart, dateEnd, APP.editingRentalId);
@@ -2487,6 +2610,71 @@ window.saveRentalEntry = function() {
 
 document.getElementById('rental-modal').addEventListener('mousedown', function(e) {
   if (e.target === this) closeRentalModal();
+});
+
+// ─── Copy rental entry to other rooms ───────────────────────
+window.openRentalCopyModal = function(entryId) {
+  const entry = APP.rentalData.find(r => r.id === entryId);
+  if (!entry) return;
+  APP.copyingRentalId = entryId;
+
+  // Build a flat list of all rooms that have a code, grouped by building
+  let html = '';
+  Object.keys(BNAMES).forEach(b => {
+    if (!APP.mapData[b]) return;
+    const rooms = [];
+    Object.keys(APP.mapData[b]).forEach(floor => {
+      (APP.mapData[b][floor] || []).forEach(room => {
+        if (room.code && room.code.trim()) rooms.push(room);
+      });
+    });
+    if (!rooms.length) return;
+    html += `<div class="copy-building-group"><div class="copy-building-title">${BNAMES[b]}</div>`;
+    rooms.forEach(room => {
+      const isSelf = room.code.trim() === entry.code;
+      html += `<label class="copy-room-item ${isSelf ? 'self' : ''}">
+        <input type="checkbox" value="${room.code.trim()}" ${isSelf ? 'disabled' : ''}>
+        ${room.name || '（未命名）'}（${room.code}）${isSelf ? '　— 本教室' : ''}
+      </label>`;
+    });
+    html += `</div>`;
+  });
+  document.getElementById('rental-copy-room-list').innerHTML = html || '<div class="rental-empty-hint">找不到其他有設定代號的教室</div>';
+  document.getElementById('rental-copy-modal').classList.add('visible');
+};
+
+window.closeRentalCopyModal = function() {
+  document.getElementById('rental-copy-modal').classList.remove('visible');
+  APP.copyingRentalId = null;
+};
+
+window.confirmRentalCopy = function() {
+  const entry = APP.rentalData.find(r => r.id === APP.copyingRentalId);
+  if (!entry) { closeRentalCopyModal(); return; }
+  const targetCodes = Array.from(document.querySelectorAll('#rental-copy-room-list input[type=checkbox]:checked')).map(cb => cb.value);
+  if (!targetCodes.length) { alert('請至少勾選一間教室'); return; }
+
+  const overlapNotes = [];
+  targetCodes.forEach(code => {
+    const overlap = findOverlap(code, entry.days, entry.start, entry.end, entry.dateStart, entry.dateEnd, null);
+    if (overlap) overlapNotes.push(`${code}（與「${overlap.group}」重疊）`);
+    APP.rentalData.push({
+      id: 'r' + Date.now() + Math.random().toString(36).slice(2, 7),
+      code, group: entry.group, days: entry.days.slice(),
+      start: entry.start, end: entry.end,
+      dateStart: entry.dateStart, dateEnd: entry.dateEnd
+    });
+  });
+  APP.pendingChanges = true;
+  closeRentalCopyModal();
+  renderRentalEntryList();
+  renderRentalMap();
+  renderMap();
+  showToast(`✅ 已複製到 ${targetCodes.length} 間教室` + (overlapNotes.length ? `（注意重疊：${overlapNotes.join('、')}）` : ''));
+};
+
+document.getElementById('rental-copy-modal').addEventListener('mousedown', function(e) {
+  if (e.target === this) closeRentalCopyModal();
 });
 
 // ─── Edit mode ────────────────────────────────────────────
