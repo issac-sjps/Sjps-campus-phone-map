@@ -569,6 +569,8 @@
   .rental-entry-line { font-size: 10px; font-weight: 600; color: #a04010; line-height: 1.35; white-space: normal; }
   .rental-entry-line .re-days { font-weight: 700; }
   .rental-entry-line .re-time { font-weight: 500; opacity: 0.85; }
+  .rental-entry-line .re-date { font-size: 9px; font-weight: 500; opacity: 0.85; white-space: nowrap; }
+  .room-card.rental-card { width: 172px; }
   .rental-nocode { font-size: 10px; color: var(--text-light); font-style: italic; margin-top: 3px; }
 
   /* Small badge dot on map (場地配置) cards showing a room has rentals */
@@ -2409,7 +2411,7 @@ window.renderRentalMap = function() {
     const hasRental = rentals.length > 0;
     const entriesHtml = hasRental
       ? `<div class="rental-entries">${rentals.map(r =>
-          `<div class="rental-entry-line">${r.group}<br><span class="re-days">${formatDays(r.days)}</span> <span class="re-time">${r.start}-${r.end}</span><br><span class="re-time">${formatDateRange(r.dateStart, r.dateEnd)}</span></div>`
+          `<div class="rental-entry-line">${r.group}<br><span class="re-days">${formatDays(r.days)}</span> <span class="re-time">${r.start}-${r.end}</span><br><span class="re-date">${formatDateRange(r.dateStart, r.dateEnd)}</span></div>`
         ).join('')}</div>`
       : (room.code ? '' : `<div class="rental-nocode">未設定教室代號</div>`);
     return `<div class="room-card rental-card ${hasRental ? 'has-rental' : ''}" ondblclick="openRentalRoomModal('${b}','${floor}',${idx})">
