@@ -354,6 +354,7 @@
   .cat-header.cat-group   td { background: #fbe2cc; color: #a2531b; }
   .cat-header.cat-grade   td { background: #d8ecdf; color: #1f6b45; }
   .cat-header.cat-sub     td { background: #e5ddf5; color: #5b3a9e; }
+  .cat-header.cat-agent   td { background: #ede0f7; color: #6a2ba0; }
   .cat-header.cat-subst   td { background: #faf0cf; color: #92700a; }
   .cat-header.cat-sp1     td { background: #fbdde2; color: #a5324c; }
   .cat-header.cat-sp2     td { background: #f8cdd6; color: #922a44; }
@@ -363,6 +364,7 @@
   .cat-header.cat-kinder  td { background: #d7eef4; color: #146a80; }
   .cat-header.cat-support td { background: #e6e6e9; color: #4d4d55; }
   .cat-header.cat-foreign td { background: #d9e7de; color: #2b6b4a; }
+  .cat-header.cat-intern  td { background: #e0ecdc; color: #3d6b2a; }
   .cat-header.cat-adminsupport td { background: #f5e3da; color: #96431e; }
   .cat-add-btn {
     display: none;
@@ -712,6 +714,7 @@
     #phone-print-grid .p-cat.cat-group   td { background: #fbe2cc !important; color: #a2531b; }
     #phone-print-grid .p-cat.cat-grade   td { background: #d8ecdf !important; color: #1f6b45; }
     #phone-print-grid .p-cat.cat-sub     td { background: #e5ddf5 !important; color: #5b3a9e; }
+    #phone-print-grid .p-cat.cat-agent   td { background: #ede0f7 !important; color: #6a2ba0; }
     #phone-print-grid .p-cat.cat-subst   td { background: #faf0cf !important; color: #92700a; }
     #phone-print-grid .p-cat.cat-sp1     td { background: #fbdde2 !important; color: #a5324c; }
     #phone-print-grid .p-cat.cat-sp2     td { background: #f8cdd6 !important; color: #922a44; }
@@ -721,6 +724,7 @@
     #phone-print-grid .p-cat.cat-kinder  td { background: #d7eef4 !important; color: #146a80; }
     #phone-print-grid .p-cat.cat-support td { background: #e6e6e9 !important; color: #4d4d55; }
     #phone-print-grid .p-cat.cat-foreign td { background: #d9e7de !important; color: #2b6b4a; }
+    #phone-print-grid .p-cat.cat-intern  td { background: #e0ecdc !important; color: #3d6b2a; }
     #phone-print-grid .p-cat.cat-adminsupport td { background: #f5e3da !important; color: #96431e; }
     #phone-print-grid .p-ext { font-weight: 700; color: #1a5c8a; font-family: monospace; }
     #phone-print-grid .p-star { color: #c0560a; font-weight: 700; }
@@ -1318,6 +1322,7 @@ const CAT_ORDER = [
   { key: 'g5', label: '五年級', cssClass: 'cat-grade', match: t => /^5\d\d$/.test(t) },
   { key: 'g6', label: '六年級', cssClass: 'cat-grade', match: t => /^6\d\d$/.test(t) },
   { key: 'sub', label: '科任教師', cssClass: 'cat-sub', match: t => t.startsWith('科任') },
+  { key: 'agent', label: '代理教師', cssClass: 'cat-agent', match: t => t.startsWith('代理') },
   { key: 'subst', label: '代課教師', cssClass: 'cat-subst', match: t => t.startsWith('代課') },
   { key: 'sp1', label: '特教-資優班教師', cssClass: 'cat-sp1', match: t => t.startsWith('資優') },
   { key: 'sp2', label: '特教-資源班教師', cssClass: 'cat-sp2', match: t => t.startsWith('資源') },
@@ -1331,6 +1336,7 @@ const CAT_ORDER = [
   // 不再是保底分類。外籍教師、特教專任助理員已各自獨立成類，排除在這條規則外。
   { key: 'support', label: '教學支援人員', cssClass: 'cat-support', match: t => t.startsWith('教支') || t.startsWith('專任') },
   { key: 'foreign', label: '外籍教師', cssClass: 'cat-foreign', match: t => t.startsWith('外籍教師') },
+  { key: 'intern', label: '實習教師', cssClass: 'cat-intern', match: t => t.startsWith('實習教師') },
   // 保底分類：護理師、營養師、幹事、技工、委外、人事助理…等不屬於教學支援的人，
   // 全部落在這裡。這個規則一定要留在比對順序的最後一個（符合任何職稱）。
   { key: 'adminSupport', label: '行政支援人員', cssClass: 'cat-adminsupport', match: t => true }
@@ -1341,7 +1347,7 @@ const CAT_ORDER = [
 // 否則它會搶走後面規則更明確的類別。
 // 這裡的 DISPLAY_ORDER 只決定畫面上標題列的排列順序，可以自由調整不影響比對邏輯。
 const DISPLAY_ORDER_KEYS = [
-  'admin','group','g1','g2','g3','g4','g5','g6','sub','subst','sp1','sp2','sp3','sp4','sp5','kinder','support','foreign','adminSupport'
+  'admin','group','g1','g2','g3','g4','g5','g6','sub','agent','subst','sp1','sp2','sp3','sp4','sp5','kinder','support','foreign','intern','adminSupport'
 ];
 const DISPLAY_ORDER = DISPLAY_ORDER_KEYS.map(k => CAT_ORDER.find(c => c.key === k)).filter(Boolean);
 
