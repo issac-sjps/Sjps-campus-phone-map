@@ -515,7 +515,6 @@
     background: var(--surface); cursor: default;
     transition: all 0.15s; position: relative;
     flex-shrink: 0; box-sizing: border-box;
-    overflow: hidden;
   }
   /* Full colored border per type */
   .room-card.has-class  { border-color: var(--primary);   background: #f0f5fa; }
@@ -535,8 +534,8 @@
   }
   .room-ext-item {
     font-size: 10px; font-weight: 600;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    line-height: 1.5;
+    white-space: normal; word-break: break-word;
+    line-height: 1.4;
     cursor: help;
   }
   .room-ext-item .ext-num { font-family: monospace; }
