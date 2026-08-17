@@ -296,11 +296,11 @@
   td.id-star-cell { cursor: default; }
   body.edit-mode td.id-star-cell { cursor: pointer; }
   body.edit-mode td.id-star-cell:hover { background: #fff8e1; }
-  /* Copy name on click (view mode) */
-  td.copy-name { cursor: copy; }
-  body.edit-mode td.copy-name { cursor: pointer; }
-  td.copy-name:hover { background: var(--primary-light); }
-  td.copy-name:hover::after {
+  /* Copy name/title/ext on click (view mode) */
+  td.copy-name, td.copy-title, td.copy-ext { cursor: copy; }
+  body.edit-mode td.copy-name, body.edit-mode td.copy-title, body.edit-mode td.copy-ext { cursor: pointer; }
+  td.copy-name:hover, td.copy-title:hover, td.copy-ext:hover { background: var(--primary-light); }
+  td.copy-name:hover::after, td.copy-title:hover::after, td.copy-ext:hover::after {
     content: '⎘';
     font-size: 10px; color: var(--primary-mid);
     margin-left: 3px; opacity: 0.7;
@@ -1609,9 +1609,9 @@ window.renderPhone = function(filter = '') {
     const draggableAttr = APP.editMode ? ' draggable="true" ondragstart="dragStartPerson(event,\'' + item.id + '\')" ondragover="event.preventDefault()" ondrop="dropPersonOnRow(event,\'' + item.id + '\')"' : '';
     return `<tr data-id="${item.id}"${draggableAttr}>
       <td class="id-col id-star-cell" onclick="toggleStar('${item.id}')" style="${idStyle}"${isStar ? titleAttr : ' title="編輯模式下可標記學年主任"'}>${idDisplay}</td>
-      <td class="editable" onclick="editCell(this,'title')"${titleAttr}>${item.title}</td>
+      <td class="editable copy-title" data-record-id="${item.id}"${titleAttr} onclick="handleFieldClick(event,this,'title')">${item.title}</td>
       <td class="name-col editable copy-name" data-raw-name="${rawName.replace(/"/g,'&quot;')}" data-record-id="${item.id}" title="${rawName.replace(/"/g,'&quot;')}" onclick="handleNameClick(event,this)">${displayName}</td>
-      <td class="ext-col editable" onclick="editCell(this,'ext')"${extTitleAttr}><span class="ext-text">${item.ext}</span><button class="person-del-btn" onclick="deletePerson(event,'${item.id}')" title="刪除此人">✕</button></td>
+      <td class="ext-col editable copy-ext" data-record-id="${item.id}"${extTitleAttr} onclick="handleFieldClick(event,this,'ext')"><span class="ext-text">${item.ext}</span><button class="person-del-btn" onclick="deletePerson(event,'${item.id}')" title="刪除此人">✕</button></td>
     </tr>`;
   }
 
@@ -1654,6 +1654,26 @@ window.handleNameClick = function(e, td) {
       document.execCommand('copy');
       document.body.removeChild(ta);
       showToast(`✅ 已複製「${name}」`);
+    });
+  }
+};
+
+// Click title/ext cell: edit-mode → edit cell; view-mode → copy value
+window.handleFieldClick = function(e, td, field) {
+  if (APP.editMode) {
+    editCell(td, field);
+  } else {
+    const text = field === 'ext' ? (td.querySelector('.ext-text')?.textContent || '') : td.textContent.trim();
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(() => {
+      showToast(`✅ 已複製「${text}」`);
+    }).catch(() => {
+      const ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      showToast(`✅ 已複製「${text}」`);
     });
   }
 };
