@@ -1322,8 +1322,8 @@ const CAT_ORDER = [
   { key: 'g5', label: '五年級', cssClass: 'cat-grade', match: t => /^5\d\d$/.test(t) },
   { key: 'g6', label: '六年級', cssClass: 'cat-grade', match: t => /^6\d\d$/.test(t) },
   { key: 'sub', label: '科任教師', cssClass: 'cat-sub', match: t => t.startsWith('科任') },
-  { key: 'agent', label: '代理教師', cssClass: 'cat-agent', match: t => t.startsWith('代理') },
-  { key: 'subst', label: '代課教師', cssClass: 'cat-subst', match: t => t.startsWith('代課') },
+  { key: 'agent', label: '科任代理教師', cssClass: 'cat-agent', match: t => t.startsWith('代理') },
+  { key: 'subst', label: '科任代課教師', cssClass: 'cat-subst', match: t => t.startsWith('代課') },
   { key: 'sp1', label: '特教-資優班教師', cssClass: 'cat-sp1', match: t => t.startsWith('資優') },
   { key: 'sp2', label: '特教-資源班教師', cssClass: 'cat-sp2', match: t => t.startsWith('資源') },
   // 專任輔導教師要在下面的「教學支援人員」規則（t.startsWith('專任')）之前比對，
