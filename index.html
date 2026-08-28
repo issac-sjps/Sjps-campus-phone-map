@@ -653,6 +653,11 @@
   .year-option .check { color: var(--primary); font-size: 12px; }
   .year-new { border-top: 1px solid var(--border); margin-top: 4px; padding-top: 4px; }
   .year-new .year-option { color: var(--text-muted); font-size: 13px; }
+  .year-del-btn {
+    color: var(--text-light); font-size: 13px; padding: 2px 6px; border-radius: 4px;
+    flex-shrink: 0; margin-left: 6px;
+  }
+  .year-del-btn:hover { background: #fbe4e0; color: #c0392b; }
 
   /* Last edited */
   #last-edit-phone, #last-edit-map { font-size: 11px; color: var(--text-light); }
@@ -1151,7 +1156,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc, collection } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDK-YvxvjAee_VDUmcfK3O-3YhubMyKx-4",
@@ -1169,6 +1174,7 @@ window._db = db;
 window._doc = doc;
 window._getDoc = getDoc;
 window._setDoc = setDoc;
+window._deleteDoc = deleteDoc;
 
 // Load data for current year
 async function loadYear(year) {
@@ -1268,9 +1274,26 @@ async function saveYearsList() {
   }
 }
 
+// Permanently delete a school year's data from Firestore (extensions/rooms/rentals docs).
+// Does NOT touch the years list itself — caller updates & saves that separately.
+async function deleteYearData(year) {
+  try {
+    await Promise.all([
+      window._deleteDoc(window._doc(window._db, 'extensions', String(year))),
+      window._deleteDoc(window._doc(window._db, 'rooms', String(year))),
+      window._deleteDoc(window._doc(window._db, 'rentals', String(year)))
+    ]);
+    return true;
+  } catch (e) {
+    alert('刪除失敗，請確認網路連線。\n' + e.message);
+    return false;
+  }
+}
+
 window._loadYear = loadYear;
 window._saveToFirebase = saveToFirebase;
 window._saveYearsList = saveYearsList;
+window._deleteYearData = deleteYearData;
 
 // Init — always default to the most recent school year, so a refresh (or a newly
 // created year) never appears to "disappear": the years list itself is always
@@ -2712,11 +2735,7 @@ const EDIT_PASSWORD = '073411373';
 
 window.toggleEdit = function() {
   if (!APP.editMode) {
-    // Show password modal to enter edit mode
-    document.getElementById('pw-input').value = '';
-    document.getElementById('pw-error').style.display = 'none';
-    document.getElementById('pw-modal').classList.add('visible');
-    setTimeout(() => document.getElementById('pw-input').focus(), 100);
+    _openPwModal(_enterEditMode);
   } else {
     _exitEditMode();
   }
@@ -2740,11 +2759,23 @@ function _exitEditMode() {
   renderPhone(document.getElementById('phone-search').value);
 }
 
+// Generic password gate: opens the shared password modal, then runs `onSuccess`
+// once the correct password is entered. Used by edit mode, 新增學年, 刪除學年.
+function _openPwModal(onSuccess) {
+  window._pwCallback = onSuccess;
+  document.getElementById('pw-input').value = '';
+  document.getElementById('pw-error').style.display = 'none';
+  document.getElementById('pw-modal').classList.add('visible');
+  setTimeout(() => document.getElementById('pw-input').focus(), 100);
+}
+
 window.checkPassword = function() {
   const val = document.getElementById('pw-input').value;
   if (val === EDIT_PASSWORD) {
     document.getElementById('pw-modal').classList.remove('visible');
-    _enterEditMode();
+    const cb = window._pwCallback || _enterEditMode;
+    window._pwCallback = null;
+    cb();
   } else {
     const err = document.getElementById('pw-error');
     err.style.display = 'block';
@@ -2755,6 +2786,7 @@ window.checkPassword = function() {
 
 window.closePwModal = function() {
   document.getElementById('pw-modal').classList.remove('visible');
+  window._pwCallback = null;
 };
 
 window.discardEdit = function() {
@@ -2828,8 +2860,9 @@ function closeYearPickerOutside(e) {
 function renderYearList() {
   const list = document.getElementById('year-list');
   list.innerHTML = APP.years.map(y =>
-    `<div class="year-option ${y === APP.currentYear ? 'active' : ''}" onclick="selectYear(${y})">
-      ${y}學年度 ${y === APP.currentYear ? '<span class="check">✓</span>' : ''}
+    `<div class="year-option ${y === APP.currentYear ? 'active' : ''}">
+      <span onclick="selectYear(${y})" style="flex:1">${y}學年度 ${y === APP.currentYear ? '<span class="check">✓</span>' : ''}</span>
+      ${APP.years.length > 1 ? `<span class="year-del-btn" onclick="event.stopPropagation(); deleteYear(${y})" title="刪除此學年度">🗑</span>` : ''}
     </div>`
   ).join('');
 }
@@ -2841,7 +2874,12 @@ window.selectYear = function(y) {
   if (window._loadYear) window._loadYear(y);
 };
 
-window.newYear = async function() {
+window.newYear = function() {
+  document.getElementById('year-dropdown').classList.remove('visible');
+  _openPwModal(_doNewYear);
+};
+
+async function _doNewYear() {
   const next = Math.max(...APP.years) + 1;
   const confirmed = confirm(`建立 ${next}學年度？\n將複製 ${APP.currentYear}學年度的資料做為起點。`);
   if (!confirmed) return;
@@ -2868,7 +2906,51 @@ window.newYear = async function() {
     APP.currentYear = fromYear;
     document.getElementById('current-year-label').textContent = fromYear + '學年度';
   }
+}
+
+// ─── Delete year (password + typed-confirmation, since this is irreversible) ──
+window.deleteYear = function(y) {
+  document.getElementById('year-dropdown').classList.remove('visible');
+  _openPwModal(() => _confirmDeleteYear(y));
 };
+
+async function _confirmDeleteYear(y) {
+  if (APP.years.length <= 1) {
+    alert('至少要保留一個學年度，無法刪除。');
+    return;
+  }
+  // Extra step beyond the password: must type the exact year number to proceed,
+  // so a slip of the finger can't wipe out a year's data.
+  const typed = prompt(`此操作無法復原！\n將永久刪除「${y}學年度」的所有分機、場地、租借資料。\n\n請輸入「${y}」以確認刪除：`);
+  if (typed === null) return; // cancelled
+  if (typed.trim() !== String(y)) {
+    alert('輸入不符，已取消刪除。');
+    return;
+  }
+
+  const wasCurrent = (APP.currentYear === y);
+  const prevYears = APP.years.slice();
+  const prevCurrent = APP.currentYear;
+
+  const dataOk = await window._deleteYearData(y);
+  if (!dataOk) return; // error already alerted inside deleteYearData
+
+  APP.years = APP.years.filter(yr => yr !== y);
+  const listOk = await window._saveYearsList();
+  if (!listOk) {
+    // Roll back the in-memory years list if we couldn't persist it, so the UI
+    // doesn't disagree with Firebase.
+    APP.years = prevYears;
+    return;
+  }
+
+  if (wasCurrent) {
+    APP.currentYear = Math.max(...APP.years);
+    document.getElementById('current-year-label').textContent = APP.currentYear + '學年度';
+    window._loadYear(APP.currentYear);
+  }
+  showToast(`🗑 已刪除 ${y}學年度`);
+}
 
 // ─── Export Excel ─────────────────────────────────────────
 window.exportExcel = function() {
