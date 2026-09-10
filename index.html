@@ -527,7 +527,8 @@
   .room-loc { font-size: 9px; color: var(--text-light); opacity: 0.75; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   body:not(.edit-mode) .room-name:hover,
   body:not(.edit-mode) .room-code:hover,
-  body:not(.edit-mode) .room-loc:hover { text-decoration: underline; text-decoration-style: dotted; cursor: pointer; }
+  body:not(.edit-mode) .room-loc:hover,
+  body:not(.edit-mode) .room-ext-item:hover { text-decoration: underline; text-decoration-style: dotted; cursor: pointer; }
 
   /* Ext list: one line per extension, with matched teacher name if found */
   .room-ext-grid {
@@ -1933,9 +1934,10 @@ window.renderMap = function() {
       ? `<div class="room-ext-grid">${extNums.map(n => {
           const names = extNameMap[n];
           const joined = names && names.length ? names.join('／') : '';
-          const tooltipText = joined ? `☎${n} ${joined}` : `☎${n}`;
+          const tooltipText = (joined ? `☎${n} ${joined}` : `☎${n}`) + '　點擊複製分機';
           const nameHtml = joined ? `<span class="ext-name">${joined}</span>` : '';
-          return `<span class="room-ext-item" title="${tooltipText.replace(/"/g,'&quot;')}"><span class="ext-num">☎${n}</span>${nameHtml}</span>`;
+          const nEsc = n.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+          return `<span class="room-ext-item" title="${tooltipText.replace(/"/g,'&quot;')}" onclick="copyRoomField(event,'${nEsc}')"><span class="ext-num">☎${n}</span>${nameHtml}</span>`;
         }).join('')}</div>`
       : '';
     const roomRentals = room.code ? getRentalsForCode(room.code) : [];
