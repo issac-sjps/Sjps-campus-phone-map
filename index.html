@@ -1925,7 +1925,7 @@ window.renderMap = function() {
 
   const extNameMap = buildExtNameMap();
 
-  function roomCardHtml(room, floor, idx) {
+  function roomCardHtml(room, floor, idx, total) {
     const typeClass = room.type === 'class' ? 'has-class' : room.type === 'office' ? 'has-office' : room.type === 'other' ? 'has-other' : 'has-special';
     const dragAttrs = `draggable="true" ondragstart="dragStart(event,'${b}','${floor}',${idx})" ondragover="dragOver(event)" ondrop="dropRoom(event,'${b}','${floor}',${idx})" ondragend="dragEnd(event)"`;
     const extNums = room.ext ? room.ext.split(/[\s,、\n]+/).filter(Boolean) : [];
@@ -1945,7 +1945,10 @@ window.renderMap = function() {
     const escAttr = s => (s || '').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;');
     const nameEsc = escAttr(room.name || '（未命名）');
     const codeEsc = escAttr(room.code || '');
-    const locLabel = `${BNAMES[b] || ''}${floor}-${idx + 1}`;
+    // Room cards render left→right, but the physical room numbering runs the
+    // opposite way (rightmost card is "-1"), so count position from the end.
+    const posNum = (total || 1) - idx;
+    const locLabel = `${BNAMES[b] || ''}${floor}-${posNum}`;
     const locEsc = escAttr(locLabel);
     return `<div class="room-card ${typeClass}" ${dragAttrs} onclick="openRoomEdit('${b}','${floor}',${idx})">
       ${rentalDot}
@@ -1969,7 +1972,7 @@ window.renderMap = function() {
       <div class="floor-label"><span class="floor-drag-handle">${floor}</span>
         <span class="floor-actions">${upBtn}${downBtn} ${renameBtn} ${addBtn} ${delFloorBtn}</span>
       </div>
-      <div class="rooms-grid">${rooms.map((r,i) => roomCardHtml(r,floor,i)).join('')}</div>
+      <div class="rooms-grid">${rooms.map((r,i) => roomCardHtml(r,floor,i,rooms.length)).join('')}</div>
     </div>`;
   }
 
