@@ -524,8 +524,10 @@
 
   .room-name { font-size: 11px; font-weight: 600; color: var(--text); line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .room-code { font-size: 10px; color: var(--text-light); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .room-loc { font-size: 9px; color: var(--text-light); opacity: 0.75; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   body:not(.edit-mode) .room-name:hover,
-  body:not(.edit-mode) .room-code:hover { text-decoration: underline; text-decoration-style: dotted; cursor: pointer; }
+  body:not(.edit-mode) .room-code:hover,
+  body:not(.edit-mode) .room-loc:hover { text-decoration: underline; text-decoration-style: dotted; cursor: pointer; }
 
   /* Ext list: one line per extension, with matched teacher name if found */
   .room-ext-grid {
@@ -1943,10 +1945,13 @@ window.renderMap = function() {
     const escAttr = s => (s || '').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;');
     const nameEsc = escAttr(room.name || '（未命名）');
     const codeEsc = escAttr(room.code || '');
+    const locLabel = `${BNAMES[b] || ''}${floor}-${idx + 1}`;
+    const locEsc = escAttr(locLabel);
     return `<div class="room-card ${typeClass}" ${dragAttrs} onclick="openRoomEdit('${b}','${floor}',${idx})">
       ${rentalDot}
       <div class="room-name" title="點擊複製教室名稱" onclick="copyRoomField(event,'${nameEsc}')">${room.name || '（未命名）'}</div>
       ${room.code ? `<div class="room-code" title="點擊複製教室代碼" onclick="copyRoomField(event,'${codeEsc}')">${room.code}</div>` : ''}
+      <div class="room-loc" title="點擊複製位置代碼" onclick="copyRoomField(event,'${locEsc}')">${locLabel}</div>
       ${extHtml}
       <button class="room-del-btn" onclick="deleteRoom(event,'${b}','${floor}',${idx})" title="刪除">✕</button>
     </div>`;
