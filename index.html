@@ -1,916 +1,3085 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="zh-TW">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>新莊國小 志工證 列印管理系統</title>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>新莊國小</title>
 <style>
-  body { font-family: "Microsoft JhengHei", sans-serif; background: #f2f5f7; margin: 0; padding: 20px; }
-  h1 { text-align: center; color: #234; font-size: 20px; }
-  .toolbar { text-align: center; margin-bottom: 16px; }
-  .toolbar button {
-    padding: 8px 16px; font-size: 14px; border: none; border-radius: 6px;
-    background: #2f6f4f; color: #fff; cursor: pointer; margin: 0 4px;
+  :root {
+    --primary: #1a5c8a;
+    --primary-light: #e8f2f9;
+    --primary-mid: #4a8db5;
+    --accent: #e07b39;
+    --accent-light: #fdf0e6;
+    --success: #2e7d52;
+    --success-light: #e8f5ee;
+    --bg: #f5f7fa;
+    --surface: #ffffff;
+    --border: #dde3ea;
+    --text: #1a2332;
+    --text-muted: #5a6a7e;
+    --text-light: #8a9ab0;
+    --shadow: 0 1px 4px rgba(0,0,0,0.08);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.10);
+    --radius: 8px;
+    --radius-lg: 14px;
   }
-  table { width: 100%; max-width: 640px; margin: 0 auto; border-collapse: collapse; background: #fff; }
-  th, td { border: 1px solid #ddd; padding: 8px; font-size: 14px; text-align: center; vertical-align: middle; }
-  th { background: #34495e; color: #fff; }
-  input, select { width: 100%; padding: 6px 4px; font-size: 14px; box-sizing: border-box; }
-  .del-btn { margin: 2px; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; color: #fff; background: #c0392b; }
-  .toolbar .save-all-btn { background: #2980b9; font-weight: bold; }
-  .save-hint { text-align: center; font-size: 13px; color: #888; margin: -6px 0 14px; }
-  .table-wrap { overflow-x: auto; }
-  .filter-bar { max-width: 640px; margin: 0 auto 14px; text-align: center; }
-  .filter-bar button {
-    padding: 6px 14px; margin: 3px; border: 1px solid #ccc; border-radius: 20px;
-    background: #fff; cursor: pointer; font-size: 13px; color: #333;
-  }
-  .filter-bar button.active { background: #2f6f4f; color: #fff; border-color: #2f6f4f; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Noto Sans TC', -apple-system, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
 
-  /* 各組別對應底色(跟列印卡片背景色系一致,方便對照) */
-  .filter-bar button[data-group="行政"] { background: #eaf1ff; border-color: #a9c2ea; color: #33507d; }
-  .filter-bar button[data-group="課輔"] { background: #fff8e1; border-color: #e6cf8a; color: #7d6608; }
-  .filter-bar button[data-group="導護"] { background: #ffece9; border-color: #e6a89f; color: #9c4a3c; }
-  .filter-bar button[data-group="醫護"] { background: #e8f8ef; border-color: #9fd6b5; color: #2f7d54; }
-  .filter-bar button[data-group="故事"] { background: #f5ecff; border-color: #c7a8e8; color: #6b3fa0; }
-  .filter-bar button[data-group="圖書"] { background: #f5ebe0; border-color: #c9a876; color: #8a6d3b; }
+  /* ── Header ── */
+  header {
+    background: var(--primary);
+    color: #fff;
+    padding: 0 24px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    --hscale: 1; /* JS 動態調整：header 內容放不下時整體縮小這個比例 */
+  }
+  .header-top {
+    height: calc(36px * var(--hscale));
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: calc(12px * var(--hscale));
+  }
+  .header-left { display: flex; align-items: center; gap: calc(12px * var(--hscale)); flex-shrink: 1; min-width: 0; }
+  .school-name { font-size: calc(15px * var(--hscale)); font-weight: 600; letter-spacing: 0.02em; white-space: nowrap; flex-shrink: 0; }
+  .year-badge {
+    background: rgba(255,255,255,0.18);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 20px;
+    padding: calc(2px * var(--hscale)) calc(10px * var(--hscale));
+    font-size: calc(12px * var(--hscale));
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s;
+    display: flex; align-items: center; gap: 4px;
+    flex-shrink: 0;
+    position: relative;
+    white-space: nowrap;
+  }
+  .year-badge:hover { background: rgba(255,255,255,0.28); }
 
-  .filter-bar button[data-group="行政"].active { background: #5b84c4; border-color: #5b84c4; color: #fff; }
-  .filter-bar button[data-group="課輔"].active { background: #c9a227; border-color: #c9a227; color: #fff; }
-  .filter-bar button[data-group="導護"].active { background: #cf7360; border-color: #cf7360; color: #fff; }
-  .filter-bar button[data-group="醫護"].active { background: #4fa578; border-color: #4fa578; color: #fff; }
-  .filter-bar button[data-group="故事"].active { background: #9464cf; border-color: #9464cf; color: #fff; }
-  .filter-bar button[data-group="圖書"].active { background: #a67c3d; border-color: #a67c3d; color: #fff; }
-
-  .group-admin   { background: #eaf1ff !important; }
-  .group-tutor   { background: #fff8e1 !important; }
-  .group-guard   { background: #ffece9 !important; }
-  .group-medical { background: #e8f8ef !important; }
-  .group-story   { background: #f5ecff !important; }
-  .group-library { background: #f5ebe0 !important; }
-  tr.dup-row td { background: #fff3cd !important; }
-  tr.dup-row .nameInput { border: 2px solid #e0a800; background: #fff3cd; }
-  .dup-badge {
-    display: inline-block; margin-left: 4px; font-size: 11px; color: #fff;
-    background: #e0a800; border-radius: 4px; padding: 1px 5px; vertical-align: middle;
+  /* Search bar embedded in header */
+  .header-search {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    max-width: 680px;
   }
-  tr.multi-role-row td { background: #e3f2fd !important; }
-  tr.multi-role-row .nameInput { border: 2px solid #4a90d9; background: #e3f2fd; }
-  .multi-role-badge {
-    display: inline-block; margin-left: 4px; font-size: 11px; color: #fff;
-    background: #4a90d9; border-radius: 4px; padding: 1px 5px; vertical-align: middle;
-  }
-  /* 同時符合「重複」與「兼任」時,以黃色(重複,較急迫)為主要底色 */
-  tr.dup-row.multi-role-row td { background: #fff3cd !important; }
-  tr.dup-row.multi-role-row .nameInput { border: 2px solid #e0a800; background: #fff3cd; }
-  .toolbar .settings-btn { background: #7d6608; }
-  .toolbar .import-btn { background: #8e44ad; }
-  .import-panel {
-    max-width: 640px; margin: 0 auto 20px; background: #fff;
-    border: 1px solid #ddd; border-radius: 8px; padding: 16px 20px;
-  }
-  .import-panel h3 { margin: 0 0 6px; font-size: 15px; color: #234; }
-  .import-panel .sub { font-size: 12px; color: #999; margin-bottom: 14px; }
-  .import-block {
-    border-top: 1px dashed #ddd; padding-top: 12px; margin-top: 12px;
-  }
-  .import-block:first-of-type { border-top: none; padding-top: 0; margin-top: 0; }
-  .import-block h4 { margin: 0 0 8px; font-size: 14px; color: #333; }
-  .import-block p { margin: 0 0 10px; font-size: 12.5px; color: #888; }
-  .import-block button, .import-block input[type="file"] {
+  .header-search-wrap { position: relative; flex: 1; }
+  .header-search-wrap svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: rgba(255,255,255,0.6); width: 14px; height: 14px; }
+  .header-search-input {
+    width: 100%; padding: 4px 12px 4px 32px;
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 20px;
     font-size: 13px;
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+    outline: none;
+    transition: all 0.15s;
   }
-  .import-block button {
-    background: #2980b9; color: #fff; border: none; padding: 7px 14px;
-    border-radius: 6px; cursor: pointer; margin-right: 8px;
+  .header-search-input::placeholder { color: rgba(255,255,255,0.6); }
+  .header-search-input:focus { background: rgba(255,255,255,0.25); border-color: rgba(255,255,255,0.7); }
+  .header-search-btn {
+    display: flex; align-items: center; gap: 5px;
+    padding: calc(3px * var(--hscale)) calc(12px * var(--hscale));
+    border-radius: 16px;
+    font-size: calc(12px * var(--hscale)); font-weight: 500;
+    cursor: pointer;
+    border: 1px solid rgba(255,255,255,0.4);
+    background: rgba(255,255,255,0.12);
+    color: #fff;
+    transition: all 0.15s; white-space: nowrap;
+    flex-shrink: 0;
   }
-  .import-mode-row { display: flex; align-items: center; gap: 16px; margin: 10px 0; font-size: 13px; }
-  .import-mode-row label { display: flex; align-items: center; gap: 4px; color: #444; }
-  .import-mode-row input[type="radio"] { width: auto; }
-  #importRunBtn { background: #c0392b; }
-  .settings-panel {
-    max-width: 640px; margin: 0 auto 20px; background: #fff;
-    border: 1px solid #ddd; border-radius: 8px; padding: 16px 20px;
+  .header-search-btn:hover { background: rgba(255,255,255,0.22); }
+  .header-search-btn svg { width: 13px; height: 13px; }
+
+  .header-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+  /* Tabs — inline pill buttons in header */
+  .tab {
+    padding: calc(3px * var(--hscale)) calc(12px * var(--hscale));
+    font-size: calc(13px * var(--hscale)); font-weight: 500;
+    color: rgba(255,255,255,0.65);
+    cursor: pointer;
+    border: 1.5px solid rgba(255,255,255,0.25);
+    border-radius: 16px;
+    transition: all 0.15s;
+    display: flex; align-items: center; gap: 5px;
+    user-select: none; white-space: nowrap;
+    flex-shrink: 0;
   }
-  .settings-panel h3 { margin: 0 0 12px; font-size: 15px; color: #234; }
-  .settings-row {
-    display: flex; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 14px;
+  .tab:hover { color: #fff; border-color: rgba(255,255,255,0.6); }
+  .tab.active { color: #fff; background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.7); }
+
+  .tab-legend {
+    font-size: 11px; color: rgba(255,255,255,0.55);
+    display: flex; align-items: center; gap: 8px;
   }
-  .settings-row label { flex: 0 0 150px; text-align: right; color: #444; }
-  .settings-row input { width: 100px; flex: none; }
-  .settings-row .settings-desc { flex: 1; color: #999; font-size: 12px; }
-  .settings-panel .save-settings-btn {
-    background: #2980b9; color: #fff; border: none; padding: 8px 18px;
-    border-radius: 6px; cursor: pointer; margin-top: 6px;
+  .tab-legend span { display: flex; align-items: center; gap: 4px; }
+  .tab-legend .dot { width: 8px; height: 8px; border-radius: 2px; display: inline-block; flex-shrink: 0; }
+
+  /* ── Map search ── */
+  .map-search-bar {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 10px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 20px; padding: 6px 14px;
+    box-shadow: var(--shadow);
   }
-  .lock-screen {
-    position: fixed; inset: 0; background: #eef1f3;
-    display: flex; align-items: center; justify-content: center;
+  .map-search-bar svg { width: 14px; height: 14px; color: var(--text-light); flex-shrink: 0; }
+  .map-search-bar input {
+    border: none; outline: none; flex: 1;
+    font-size: 13px; background: transparent; color: var(--text);
   }
-  .lock-box {
-    background: #fff; padding: 32px; border-radius: 12px; width: 300px;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.1); text-align: center;
+  .map-search-bar input::placeholder { color: var(--text-light); }
+  #map-search-count { font-size: 11px; color: var(--text-muted); white-space: nowrap; }
+  .room-card.map-match {
+    box-shadow: 0 0 0 3px var(--accent), 0 4px 12px rgba(224,123,57,0.3) !important;
+    transform: scale(1.05); z-index: 1; position: relative;
   }
-  .lock-box h1 { font-size: 19px; line-height: 1.5; color: #234; margin-bottom: 18px; }
-  .lock-box input { width: 100%; padding: 10px; margin: 12px 0; box-sizing: border-box; font-size: 15px; }
-  .lock-box button { width: 100%; padding: 10px; background: #2f6f4f; color: #fff; border: none; border-radius: 6px; cursor: pointer; }
-  .err { color: #c0392b; font-size: 13px; min-height: 18px; }
-  .loading-box {
-    text-align: center;
-    color: #555;
-    font-size: 14px;
-    padding: 30px 0;
+  .room-card.map-dim { opacity: 0.22; }
+
+  /* ── Map tab ── */
+  /* Left sidebar + content layout */
+  .map-layout { display: flex; gap: 10px; align-items: flex-start; }
+  .map-sidebar {
+    display: flex; flex-direction: column; gap: 4px;
+    flex-shrink: 0; padding-top: 0;
   }
-  .spinner {
-    display: inline-block;
-    width: 24px; height: 24px;
-    border: 4px solid #cdd7dc;
-    border-top-color: #2f6f4f;
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-    margin-bottom: 8px;
+  .btab {
+    padding: 8px 14px; border-radius: var(--radius);
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    border: 1.5px solid var(--border); background: var(--surface);
+    color: var(--text-muted); transition: all 0.15s;
+    text-align: left; white-space: nowrap; min-width: 100px;
+    display: block;
   }
-  @keyframes spin { to { transform: rotate(360deg); } }
+  .btab.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .btab:hover:not(.active):not(.disabled) { border-color: var(--primary-mid); color: var(--primary); }
+  .btab.disabled { color: var(--text-light); cursor: default; font-size: 11px; }
+  .map-content { flex: 1; min-width: 0; }
+
+  .building-map { background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow); padding: 14px; }
+  #edit-btn {
+    display: flex; align-items: center; gap: 6px;
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    border: 1.5px solid rgba(255,255,255,0.5);
+    background: transparent;
+    color: #fff;
+  }
+  #edit-btn:hover { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.8); }
+  #edit-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  #edit-btn svg { width: 14px; height: 14px; }
+
+  /* Edit status bar */
+  #edit-bar {
+    display: none;
+    background: var(--accent-light);
+    border-bottom: 1px solid #f0c090;
+    padding: 8px 24px;
+    font-size: 13px;
+    color: #b05010;
+    align-items: center;
+    gap: 8px;
+  }
+  #edit-bar.visible { display: flex; }
+  #edit-bar .save-btn {
+    margin-left: auto;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 5px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+    font-weight: 500;
+  }
+  #edit-bar .save-btn:hover { background: #c06028; }
+  #edit-bar .discard-btn {
+    background: transparent;
+    color: #b05010;
+    border: 1px solid #f0c090;
+    padding: 5px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+
+  /* Edit button */
+  main { max-width: 100%; margin: 0; padding: 2px 4px; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ── Phone tab ── */
+  .toolbar {
+    display: flex; gap: 10px; align-items: center;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .search-wrap { position: relative; flex: 1; min-width: 200px; }
+  .search-wrap svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-light); width: 16px; height: 16px; }
+  .search-input {
+    width: 100%; padding: 8px 12px 8px 34px;
+    border: 1px solid var(--border); border-radius: var(--radius);
+    font-size: 14px; background: var(--surface); color: var(--text);
+    outline: none; transition: border-color 0.15s;
+  }
+  .search-input:focus { border-color: var(--primary); }
+  .toolbar-btn {
+    display: flex; align-items: center; gap: 5px;
+    padding: 7px 14px; border-radius: var(--radius);
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    border: 1px solid var(--border); background: var(--surface);
+    color: var(--text-muted); transition: all 0.15s; white-space: nowrap;
+  }
+  .toolbar-btn:hover { border-color: var(--primary-mid); color: var(--primary); }
+  .toolbar-btn svg { width: 15px; height: 15px; }
+  .toolbar-btn.primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .toolbar-btn.primary:hover { background: #154d76; }
+
+  /* Phone table */
+  .phone-table-wrap {
+    background: var(--surface); border-radius: 0;
+    box-shadow: var(--shadow); overflow: visible;
+  }
+  /* 5-column grid layout for phone table */
+  .phone-grid {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 0 1px;
+    background: var(--border);
+  }
+  .phone-col {
+    background: var(--surface);
+    overflow: visible;
+    min-width: 0;
+  }
+  .phone-col:first-child { border-radius: 0; }
+  .phone-col:last-child  { border-radius: 0; }
+  table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+  thead th {
+    background: var(--primary); color: #fff;
+    padding: 3px 3px; text-align: left;
+    font-size: 11px; font-weight: 600; white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis;
+  }
+  /* Fixed proportional column widths. Widened title/name columns and
+     given the id column a touch more room so text isn't clipped. */
+  .phone-col th:nth-child(1), .phone-col td:nth-child(1) { width: 10%; border-right: 1px dashed rgba(0,0,0,0.15); }
+  .phone-col th:nth-child(2), .phone-col td:nth-child(2) { width: 35%; border-right: 1px dashed rgba(0,0,0,0.15); }
+  .phone-col th:nth-child(3), .phone-col td:nth-child(3) { width: 27%; text-align: right; border-right: 1px dashed rgba(0,0,0,0.15); }
+  .phone-col th:nth-child(4), .phone-col td:nth-child(4) { width: 28%; text-align: right; }
+  /* 分類標題列（cat-header）是合併儲存格，虛線不適用，蓋掉避免視覺上斷斷續續 */
+  .cat-header td { border-right: none !important; }
+  /* Cells stay on a single line (no wrapping). Padding is halved so more
+     of the column width goes to the text itself instead of to whitespace —
+     matching the thin 1px gap between the phone-col divisions. Text that's
+     still too long for its column overflows visibly rather than wrapping
+     or being clipped with an ellipsis. */
+  tbody tr { border-bottom: 1px solid #edf0f4; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--primary-light); }
+  td { padding: 4px 3px; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; height: 23px; line-height: 1.3; }
+  td.id-col { color: var(--text-light); font-size: 12px; width: 28px; line-height: 1; }
+  td.id-star-cell { cursor: default; }
+  body.edit-mode td.id-star-cell { cursor: pointer; }
+  body.edit-mode td.id-star-cell:hover { background: #fff8e1; }
+  /* Copy name/title/ext on click (view mode) */
+  td.copy-name, td.copy-title, td.copy-ext { cursor: copy; }
+  body.edit-mode td.copy-name, body.edit-mode td.copy-title, body.edit-mode td.copy-ext { cursor: pointer; }
+  td.copy-name:hover, td.copy-title:hover, td.copy-ext:hover { background: var(--primary-light); }
+  td.copy-name:hover::after, td.copy-title:hover::after, td.copy-ext:hover::after {
+    content: '⎘';
+    font-size: 10px; color: var(--primary-mid);
+    margin-left: 3px; opacity: 0.7;
+  }
+  td.ext-col { font-weight: 700; color: var(--primary); font-family: monospace; font-size: 12px; white-space: nowrap; }
+  td.name-col .star { color: var(--accent); font-size: 9px; margin-right: 1px; line-height: 1; display: inline-block; vertical-align: middle; }
+
+  /* Editable cells */
+  body.edit-mode tr[draggable="true"] { cursor: grab; }
+  body.edit-mode tr[draggable="true"]:active { cursor: grabbing; }
+  body.edit-mode .cat-header td { cursor: default; }
+  .person-del-btn {
+    display: none;
+    background: none; border: none;
+    color: #c0392b; font-size: 10px; cursor: pointer;
+    padding: 0 3px; margin-left: 3px; border-radius: 3px; line-height: 1;
+    vertical-align: middle;
+  }
+  body.edit-mode tr:hover .person-del-btn { display: inline-block; }
+  .person-del-btn:hover { background: #fde8e8; }
+  body.edit-mode td.editable { cursor: pointer; position: relative; }
+  body.edit-mode td.editable:hover { background: #fff8e1; }
+  .inline-edit {
+    width: 100%; border: 1.5px solid var(--accent); border-radius: 3px;
+    padding: 2px 4px; font-size: 12px; background: #fffdf8;
+    outline: none; font-family: inherit;
+  }
+
+  /* Category group header */
+  .cat-header td {
+    background: var(--primary-light);
+    color: var(--primary);
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 4px;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+    height: 23px;
+    line-height: 1.3;
+  }
+  .cat-count {
+    font-weight: 500;
+    opacity: 0.65;
+    margin-left: 1px;
+    letter-spacing: 0;
+  }
+  /* Distinct color per category group so they're easy to scan.
+     All six grade levels (1~6年級) share one color since they're all
+     homeroom teachers — the same kind of role. */
+  .cat-header.cat-admin   td { background: #dbe8f2; color: #12496e; }
+  .cat-header.cat-group   td { background: #fbe2cc; color: #a2531b; }
+  .cat-header.cat-grade   td { background: #d8ecdf; color: #1f6b45; }
+  .cat-header.cat-sub     td { background: #e5ddf5; color: #5b3a9e; }
+  .cat-header.cat-agent   td { background: #c9b8ea; color: #4a2d8a; }
+  .cat-header.cat-subst   td { background: #faf0cf; color: #92700a; }
+  .cat-header.cat-sp1     td { background: #fbdde2; color: #a5324c; }
+  .cat-header.cat-sp2     td { background: #f8cdd6; color: #922a44; }
+  .cat-header.cat-sp3     td { background: #f5bcc8; color: #7e1f39; }
+  .cat-header.cat-sp4     td { background: #f2acba; color: #6a152e; }
+  .cat-header.cat-sp5     td { background: #eeaebc; color: #611a34; }
+  .cat-header.cat-kinder  td { background: #d7eef4; color: #146a80; }
+  .cat-header.cat-support td { background: #e6e6e9; color: #4d4d55; }
+  .cat-header.cat-foreign td { background: #cfe6f0; color: #0d5c73; }
+  .cat-header.cat-intern  td { background: #f0d9ea; color: #8a2d6e; }
+  .cat-header.cat-adminsupport td { background: #ede4d0; color: #6b4f1e; }
+  .cat-add-btn {
+    display: none;
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-size: 11px;
+    cursor: pointer;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  body.edit-mode .cat-add-btn { display: inline-block; }
+  body.edit-mode .cat-add-btn:hover { background: #154d76; }
+
+  /* Add row button */
+  .add-row-btn {
+    display: none;
+    width: 100%; padding: 10px;
+    background: none; border: none;
+    color: var(--primary); font-size: 13px;
+    cursor: pointer; text-align: center;
+  }
+  body.edit-mode .add-row-btn { display: block; }
+  .add-row-btn:hover { background: var(--primary-light); }
+
+  /* Footer meta */
+  .meta-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-top: 12px; font-size: 12px; color: var(--text-light);
+    padding: 0 4px;
+  }
+
+  /* ── Map tab continued ── */
+  /* Rotated layout for 新莊樓 */
+  .rotated-map {
+    display: flex;
+    gap: 6px;
+    align-items: flex-start;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+  .rotated-col {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 96px;
+  }
+  .rotated-floor-label {
+    font-size: 11px; font-weight: 700; color: #fff;
+    background: var(--primary);
+    border-radius: 5px; padding: 4px 8px;
+    text-align: center; letter-spacing: 0.06em;
+    margin-bottom: 2px;
+    display: flex; align-items: center; justify-content: space-between; gap: 4px;
+  }
+
+  /* Delete room button */
+  .room-del-btn {
+    display: none;
+    position: absolute; top: 2px; right: 3px;
+    background: none; border: none;
+    color: #c0392b; font-size: 10px; cursor: pointer;
+    padding: 1px 3px; border-radius: 3px; line-height: 1;
+  }
+  body.edit-mode .room-del-btn { display: block; }
+  .room-del-btn:hover { background: #fde8e8; }
+
+  /* Delete floor button */
+  .del-floor-btn {
+    display: none;
+    background: none; border: none;
+    color: #c0392b; font-size: 11px; cursor: pointer;
+    padding: 1px 4px; border-radius: 3px; opacity: 0.7;
+  }
+  body.edit-mode .del-floor-btn { display: inline-block; }
+  .del-floor-btn:hover { opacity: 1; background: #fde8e8; }
+
+  .rename-floor-btn {
+    display: none;
+    background: none; border: none;
+    color: var(--primary); font-size: 12px; cursor: pointer;
+    padding: 1px 5px; border-radius: 3px; opacity: 0.7;
+  }
+  body.edit-mode .rename-floor-btn { display: inline-block; }
+  .rename-floor-btn:hover { opacity: 1; background: var(--primary-light); }
+
+  .move-floor-btn {
+    display: none;
+    background: none; border: 1px solid var(--border);
+    color: var(--text-muted); font-size: 11px; cursor: pointer;
+    padding: 1px 5px; border-radius: 3px; line-height: 1.4;
+  }
+  body.edit-mode .move-floor-btn { display: inline-block; }
+  body.edit-mode .move-floor-btn:hover { background: var(--primary-light); color: var(--primary); border-color: var(--primary-mid); }
+
+  /* Add floor button */
+  .add-floor-btn {
+    display: none;
+    margin-left: 10px;
+    background: var(--primary-light); color: var(--primary);
+    border: 1px solid var(--primary-mid); border-radius: 5px;
+    font-size: 11px; font-weight: 500; cursor: pointer;
+    padding: 3px 10px;
+  }
+  body.edit-mode .add-floor-btn { display: inline-block; }
+  .add-floor-btn:hover { background: var(--primary); color: #fff; }
+
+  /* Floor label actions */
+  .floor-actions { display: flex; align-items: center; gap: 4px; margin-left: 8px; }
+
+  /* Drag styles */
+  .room-card { position: relative; }
+  body.edit-mode .room-card { cursor: grab; }
+  body.edit-mode .room-card:active { cursor: grabbing; }
+  .room-card.drag-over { border-color: var(--accent) !important; background: #fffdf8 !important; }
+  .building-title { font-size: 15px; font-weight: 600; color: var(--primary); margin-bottom: 12px; }
+  .floor-section { margin-bottom: 12px; }
+  .floor-label {
+    font-size: 11px; font-weight: 600; color: var(--text-muted);
+    letter-spacing: 0.06em; margin-bottom: 6px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .floor-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .rooms-grid { display: flex; flex-wrap: wrap; gap: 5px; }
+
+  /* Color legend bar */
+  .map-legend {
+    display: flex; gap: 12px; flex-wrap: wrap;
+    margin-bottom: 10px; padding: 7px 12px;
+    background: var(--surface); border-radius: var(--radius);
+    box-shadow: var(--shadow); font-size: 11px;
+  }
+  .map-legend span {
+    display: flex; align-items: center; gap: 5px;
+    color: var(--text-muted); font-weight: 500;
+  }
+  .legend-dot {
+    width: 12px; height: 12px; border-radius: 3px;
+    display: inline-block; flex-shrink: 0;
+  }
+
+  .room-card {
+    border: 2px solid var(--border); border-radius: 7px;
+    padding: 5px 7px;
+    width: 128px;
+    background: var(--surface); cursor: default;
+    transition: all 0.15s; position: relative;
+    flex-shrink: 0; box-sizing: border-box;
+  }
+  /* Full colored border per type */
+  .room-card.has-class  { border-color: var(--primary);   background: #f0f5fa; }
+  .room-card.has-office { border-color: var(--accent);    background: #fdf3ec; }
+  .room-card.has-special{ border-color: var(--success);   background: #eef7f2; }
+  .room-card.has-other  { border-color: #7c5cbf;          background: #f3f0fa; }
+
+  .room-name { font-size: 11px; font-weight: 600; color: var(--text); line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .room-code { font-size: 10px; color: var(--text-light); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .room-loc { font-size: 9px; color: var(--text-light); opacity: 0.75; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  body:not(.edit-mode) .room-name:hover,
+  body:not(.edit-mode) .room-code:hover,
+  body:not(.edit-mode) .room-loc:hover,
+  body:not(.edit-mode) .room-ext-item .ext-num:hover,
+  body:not(.edit-mode) .room-ext-item .ext-name:hover { text-decoration: underline; text-decoration-style: dotted; cursor: pointer; }
+
+  /* Ext list: one line per extension, with matched teacher name if found */
+  .room-ext-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    margin-top: 3px;
+  }
+  .room-ext-item {
+    font-size: 10px; font-weight: 600;
+    white-space: normal; word-break: break-word;
+    line-height: 1.4;
+    cursor: help;
+  }
+  .room-ext-item .ext-num { font-family: monospace; }
+  .room-ext-item .ext-name { font-weight: 500; margin-left: 3px; opacity: 0.9; }
+  .room-card.has-class   .room-ext-item { color: var(--primary); }
+  .room-card.has-office  .room-ext-item { color: #a04010; }
+  .room-card.has-special .room-ext-item { color: var(--success); }
+  .room-card.has-other   .room-ext-item { color: #7c5cbf; }
+
+  body.edit-mode .room-card { cursor: pointer; }
+  body.edit-mode .room-card:hover { opacity: 0.82; box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
+
+  /* Add room button (edit mode) */
+  .add-room-btn {
+    display: none;
+    border: 2px dashed var(--border); border-radius: 7px;
+    padding: 5px 7px; width: 128px;
+    background: none; color: var(--text-light);
+    font-size: 11px; cursor: pointer; transition: all 0.15s;
+    flex-shrink: 0; box-sizing: border-box;
+    min-height: 68px; align-items: center; justify-content: center;
+  }
+  body.edit-mode .add-room-btn { display: flex; }
+  body.edit-mode .add-room-btn:hover { border-color: var(--accent); color: var(--accent); background: #fffdf8; }
+
+  /* ── Rental map ── */
+  .room-card.rental-card { background: #fff; cursor: default; }
+  body.edit-mode .room-card.rental-card { cursor: pointer; }
+  .room-card.rental-card.has-rental { background: var(--accent-light); border-color: var(--accent); }
+  .rental-code { font-size: 10px; color: var(--text-light); margin-top: 1px; }
+  .rental-entries { display: flex; flex-direction: column; gap: 2px; margin-top: 3px; }
+  .rental-entry-line { font-size: 10px; font-weight: 600; color: #a04010; line-height: 1.35; white-space: normal; }
+  .rental-entry-line .re-days { font-weight: 700; }
+  .rental-entry-line .re-time { font-weight: 500; opacity: 0.85; }
+  .rental-entry-line .re-date { font-size: 8px; font-weight: 500; opacity: 0.85; white-space: nowrap; }
+  .rental-nocode { font-size: 10px; color: var(--text-light); font-style: italic; margin-top: 3px; }
+
+  /* Small badge dot on map (場地配置) cards showing a room has rentals */
+  .room-rental-dot {
+    position: absolute; top: 5px; right: 5px;
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--accent); border: 1.5px solid #fff;
+    box-shadow: 0 0 0 1px var(--accent); cursor: help;
+  }
+
+  /* Rental entry rows inside the rental modal */
+  .rental-entry-row {
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;
+    padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 12.5px;
+  }
+  .rental-entry-row:last-child { border-bottom: none; }
+  .rental-entry-row .re-info { flex: 1; line-height: 1.5; }
+  .rental-entry-row .re-info b { color: var(--text); }
+  .rental-entry-row .re-actions { display: flex; gap: 4px; flex-shrink: 0; }
+  .rental-entry-row .re-actions button {
+    border: 1px solid var(--border); background: var(--surface); border-radius: 5px;
+    font-size: 11px; padding: 3px 7px; cursor: pointer; color: var(--text-muted);
+  }
+  .rental-entry-row .re-actions button:hover { border-color: var(--primary-mid); color: var(--primary); }
+  .rental-entry-row .re-actions button.del:hover { border-color: #c0392b; color: #c0392b; }
+  .rental-empty-hint { font-size: 12.5px; color: var(--text-light); padding: 6px 0 10px; }
+  .copy-building-group { margin-bottom: 10px; }
+  .copy-building-title { font-size: 12px; font-weight: 600; color: var(--primary); margin-bottom: 4px; }
+  .copy-room-item { display: flex; align-items: center; gap: 6px; font-size: 13px; padding: 3px 0; }
+  .copy-room-item.self { opacity: 0.4; }
+
+  /* Room edit modal */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.4); z-index: 200;
+    align-items: center; justify-content: center;
+  }
+  .modal-overlay.visible { display: flex; }
+  .modal {
+    background: var(--surface); border-radius: var(--radius-lg);
+    padding: 24px; width: 340px; max-width: 90vw;
+    box-shadow: var(--shadow-md);
+  }
+  .modal h3 { font-size: 16px; margin-bottom: 16px; color: var(--primary); }
+  .form-group { margin-bottom: 14px; }
+  .form-group label { display: block; font-size: 12px; font-weight: 500; color: var(--text-muted); margin-bottom: 5px; }
+  .form-group input {
+    width: 100%; padding: 8px 10px;
+    border: 1px solid var(--border); border-radius: 6px;
+    font-size: 14px; outline: none; transition: border-color 0.15s;
+    font-family: inherit;
+  }
+  .form-group input:focus { border-color: var(--primary); }
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
+  .modal-actions button {
+    padding: 7px 18px; border-radius: 6px;
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    border: 1px solid var(--border);
+  }
+  .btn-save { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .btn-cancel { background: var(--surface); color: var(--text-muted); }
+
+  /* Year picker dropdown */
+  .year-dropdown {
+    display: none; position: absolute;
+    top: calc(100% + 6px); left: 0;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 8px;
+    box-shadow: var(--shadow-md); z-index: 150; min-width: 140px;
+    color: var(--text); cursor: default;
+  }
+  .year-dropdown.visible { display: block; }
+  .year-option {
+    padding: 8px 12px; border-radius: 6px; font-size: 14px;
+    cursor: pointer; transition: background 0.1s;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .year-option:hover { background: var(--primary-light); color: var(--primary); }
+  .year-option.active { font-weight: 600; color: var(--primary); }
+  .year-option .check { color: var(--primary); font-size: 12px; }
+  .year-new { border-top: 1px solid var(--border); margin-top: 4px; padding-top: 4px; }
+  .year-new .year-option { color: var(--text-muted); font-size: 13px; }
+  .year-del-btn {
+    color: var(--text-light); font-size: 13px; padding: 2px 6px; border-radius: 4px;
+    flex-shrink: 0; margin-left: 6px;
+  }
+  .year-del-btn:hover { background: #fbe4e0; color: #c0392b; }
+
+  /* Last edited */
+  #last-edit-phone, #last-edit-map { font-size: 11px; color: var(--text-light); }
+
+  /* Print styles */
+  @media print {
+    @page { size: A4 landscape; margin: 10mm 8mm; }
+
+    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    header, .tabs, .toolbar, .edit-bar, .meta-bar, .modal-overlay,
+    #pw-modal, #room-modal, .add-row-btn { display: none !important; }
+    body { background: #fff; font-size: 11px; }
+    main { padding: 0; max-width: 100%; }
+
+    /* Show only the active panel */
+    .tab-panel { display: none !important; }
+    .tab-panel.active { display: block !important; }
+
+    /* ── Phone print: 3-column layout like original ── */
+    #panel-phone .phone-table-wrap { box-shadow: none; border: none; }
+    #panel-phone { }
+
+    .print-header {
+      text-align: center; margin-bottom: 6mm;
+    }
+    .print-header h1 { font-size: 16px; font-weight: 700; margin-bottom: 2px; }
+    .print-header p { font-size: 11px; color: #555; }
+
+    /* Split phone data into 3 columns */
+    #phone-print-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr;
+      gap: 0 2mm;
+      width: 100%;
+    }
+    #phone-print-grid table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 10px;
+      break-inside: avoid-column;
+    }
+    #phone-print-grid table thead th {
+      background: #1a5c8a !important;
+      color: #fff !important;
+      padding: 3px 5px;
+      font-size: 10px;
+      font-weight: 600;
+      border: 1px solid #1a5c8a;
+    }
+    #phone-print-grid table tbody tr { border-bottom: 1px solid #e0e0e0; }
+    #phone-print-grid table tbody td { padding: 2.5px 5px; vertical-align: middle; }
+    #phone-print-grid .p-cat td {
+      background: #dde8f0 !important;
+      font-size: 9px; font-weight: 700;
+      padding: 2px 5px; color: #1a5c8a;
+    }
+    #phone-print-grid .p-cat.cat-admin   td { background: #dbe8f2 !important; color: #12496e; }
+    #phone-print-grid .p-cat.cat-group   td { background: #fbe2cc !important; color: #a2531b; }
+    #phone-print-grid .p-cat.cat-grade   td { background: #d8ecdf !important; color: #1f6b45; }
+    #phone-print-grid .p-cat.cat-sub     td { background: #e5ddf5 !important; color: #5b3a9e; }
+    #phone-print-grid .p-cat.cat-agent   td { background: #c9b8ea !important; color: #4a2d8a; }
+    #phone-print-grid .p-cat.cat-subst   td { background: #faf0cf !important; color: #92700a; }
+    #phone-print-grid .p-cat.cat-sp1     td { background: #fbdde2 !important; color: #a5324c; }
+    #phone-print-grid .p-cat.cat-sp2     td { background: #f8cdd6 !important; color: #922a44; }
+    #phone-print-grid .p-cat.cat-sp3     td { background: #f5bcc8 !important; color: #7e1f39; }
+    #phone-print-grid .p-cat.cat-sp4     td { background: #f2acba !important; color: #6a152e; }
+    #phone-print-grid .p-cat.cat-sp5     td { background: #eeaebc !important; color: #611a34; }
+    #phone-print-grid .p-cat.cat-kinder  td { background: #d7eef4 !important; color: #146a80; }
+    #phone-print-grid .p-cat.cat-support td { background: #e6e6e9 !important; color: #4d4d55; }
+    #phone-print-grid .p-cat.cat-foreign td { background: #cfe6f0 !important; color: #0d5c73; }
+    #phone-print-grid .p-cat.cat-intern  td { background: #f0d9ea !important; color: #8a2d6e; }
+    #phone-print-grid .p-cat.cat-adminsupport td { background: #ede4d0 !important; color: #6b4f1e; }
+    #phone-print-grid .p-ext { font-weight: 700; color: #1a5c8a; font-family: monospace; }
+    #phone-print-grid .p-star { color: #c0560a; font-weight: 700; }
+
+    /* Hide screen phone table in print */
+    #panel-phone .phone-table-wrap,
+    #panel-phone .toolbar { display: none !important; }
+    #phone-print-root { display: block !important; }
+
+    /* ── Map print ── */
+    #panel-map .map-sidebar,
+    #panel-map .map-layout > .map-sidebar { display: none !important; }
+    #map-print-root { display: block !important; }
+    #building-map { display: none !important; }
+
+    .map-print-page { page-break-after: always; }
+    .map-print-page:last-child { page-break-after: avoid; }
+    .map-print-title { font-size: 14px; font-weight: 700; text-align: center; margin-bottom: 4mm; color: #1a5c8a; }
+    .map-print-floor { margin-bottom: 4mm; }
+    .map-print-floor-label {
+      font-size: 10px; font-weight: 700; color: #1a5c8a;
+      border-bottom: 1.5px solid #1a5c8a; margin-bottom: 2mm; padding-bottom: 1mm;
+    }
+    .map-print-rooms { display: flex; flex-wrap: wrap; gap: 2mm; }
+    .map-print-room {
+      border: 1.5px solid #bbb; border-radius: 3px; padding: 2mm 3mm;
+      min-width: 22mm; font-size: 9px; line-height: 1.4;
+    }
+    .map-print-room.has-class  { border-color: #1a5c8a; background: #f0f5fa !important; }
+    .map-print-room.has-office { border-color: #e07b39; background: #fdf3ec !important; }
+    .map-print-room.has-special{ border-color: #2e7d52; background: #eef7f2 !important; }
+    .map-print-room.has-other  { border-color: #7c5cbf; background: #f3f0fa !important; }
+    .map-print-room .r-name { font-weight: 600; }
+    .map-print-room .r-code { color: #888; font-size: 8px; }
+    .map-print-room .r-ext  { font-weight: 700; font-size: 9px; }
+    .map-print-room.has-class   .r-ext { color: #1a5c8a; }
+    .map-print-room.has-office  .r-ext { color: #a04010; }
+    .map-print-room.has-special .r-ext { color: #2e7d52; }
+    .map-print-room.has-other   .r-ext { color: #7c5cbf; }
+  }
+  /* Hidden on screen, shown on print */
+  #phone-print-root { display: none; }
+  #map-print-root { display: none; }
+
+  /* ══════════════════════ Responsive (tablet / mobile) ══════════════════════ */
+  @media (max-width: 900px) {
+    header { padding: 8px 10px; }
+    .header-top {
+      height: auto;
+      flex-wrap: wrap;
+      row-gap: 8px;
+      padding: 2px 0;
+    }
+    .header-left { flex-wrap: wrap; row-gap: 6px; width: 100%; }
+    .school-name { font-size: 13px; }
+    .tab-legend { display: none !important; }
+    .header-search {
+      order: 5; width: 100%; max-width: none;
+      flex-wrap: wrap; row-gap: 6px;
+    }
+    .header-search-wrap { flex-basis: 100%; width: 100%; }
+    .header-right { width: 100%; justify-content: flex-end; order: 4; }
+
+    main { padding: 10px 10px 24px; }
+
+    /* Map layout: sidebar becomes a horizontal scroll strip above content */
+    .map-layout { flex-direction: column; }
+    .map-sidebar {
+      flex-direction: row; flex-wrap: nowrap;
+      overflow-x: auto; -webkit-overflow-scrolling: touch;
+      width: 100%; padding-bottom: 4px; gap: 6px;
+    }
+    .btab { min-width: auto; flex-shrink: 0; }
+
+    /* Phone table: collapse the 6-way column split into one flowing column */
+    .phone-grid { grid-template-columns: 1fr; }
+
+    .room-card, .add-room-btn { width: 118px; }
+  }
+
+  @media (max-width: 640px) {
+    main { padding: 10px; }
+    header { padding: 8px 10px; }
+    .school-name { font-size: 13px; }
+    td { padding: 8px 8px; font-size: 13px; }
+    th { font-size: 12px; }
+
+    .toolbar { gap: 8px; }
+    .toolbar-btn { padding: 8px 12px; font-size: 13px; }
+    .search-wrap { min-width: 100%; }
+
+    /* Larger tap targets for the tab pills */
+    .tab { padding: 6px 12px; font-size: 13px; }
+    .year-badge { padding: 4px 10px; font-size: 12px; }
+
+    /* Icon-only action buttons to save horizontal space */
+    .header-search-btn { padding: 6px 10px; gap: 0; }
+    .header-search-btn svg { width: 15px; height: 15px; }
+    .header-search-btn .btn-label { display: none; }
+
+    #edit-btn { padding: 6px 12px; font-size: 13px; }
+
+    .modal { width: 100%; padding: 18px; }
+    .modal-actions { flex-wrap: wrap; }
+    .modal-actions button { flex: 1; min-width: 90px; }
+
+    .room-card, .add-room-btn { width: 46%; flex: 1 1 46%; }
+    .rooms-grid { gap: 6px; }
+
+    #edit-bar { flex-wrap: wrap; padding: 8px 12px; font-size: 12px; }
+    #edit-bar .save-btn, #edit-bar .discard-btn { padding: 6px 12px; }
+  }
+
+  @media (max-width: 420px) {
+    .school-name { font-size: 12px; }
+    .year-badge span:first-child { font-size: 11px; }
+    .header-search-btn { padding: 6px 8px; }
+    .room-card, .add-room-btn { width: 100%; flex: 1 1 100%; }
+  }
 </style>
 </head>
 <body>
 
-  <div class="lock-screen" id="lockScreen">
-    <div class="lock-box">
-      <h1 style="margin-top:0;">新莊國小<br>志工證 列印管理系統</h1>
-      <div>請輸入管理密碼</div>
-      <input type="password" id="pwdInput" placeholder="密碼" />
-      <button id="unlockBtn">確認</button>
-      <div class="err" id="pwdErr"></div>
+<header>
+  <div class="header-top">
+    <div class="header-left">
+      <div class="school-name">新莊國小</div>
+      <div class="year-badge" id="year-toggle" onclick="toggleYearPicker()">
+        <span id="current-year-label">114學年度</span>
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        <!-- Year picker dropdown (anchored to this badge) -->
+        <div class="year-dropdown" id="year-dropdown" onclick="event.stopPropagation()">
+          <div id="year-list"></div>
+          <div class="year-new">
+            <div class="year-option" onclick="newYear()">＋ 建立新學年</div>
+          </div>
+        </div>
+      </div>
+      <div class="tab active" onclick="switchTab('phone', this)" id="tab-phone">
+        <svg width="13" height="13" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 2h3l1.5 3-2 1.5a9 9 0 003 3L10 8l3 1.5V13a1 1 0 01-1 1C5 14 1 10 1 4a1 1 0 011-1z"/></svg>
+        分機一覽
+      </div>
+      <div class="tab" onclick="switchTab('map', this)" id="tab-map">
+        <svg width="13" height="13" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="1" y="1" width="13" height="13" rx="1.5"/><path d="M1 5h13M5 5v9"/></svg>
+        場地配置
+      </div>
+      <div class="tab" onclick="switchTab('rental', this)" id="tab-rental">
+        <svg width="13" height="13" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="1" y="2" width="13" height="11" rx="1.5"/><path d="M1 5.5h13M4 1v2.5M11 1v2.5"/></svg>
+        租借
+      </div>
+      <div class="tab-legend" id="tab-legend-phone">
+        <span>編輯模式下點擊 # 欄位可標記／取消 ★ 學年主任</span>
+      </div>
+      <div class="tab-legend" id="tab-legend-map" style="display:none">
+        <span><span class="dot" style="background:#f0f5fa;border:1.5px solid #1a5c8a"></span>班級</span>
+        <span><span class="dot" style="background:#fdf3ec;border:1.5px solid #e07b39"></span>辦公室</span>
+        <span><span class="dot" style="background:#eef7f2;border:1.5px solid #2e7d52"></span>特殊</span>
+        <span><span class="dot" style="background:#f3f0fa;border:1.5px solid #7c5cbf"></span>其他</span>
+      </div>
+      <div class="tab-legend" id="tab-legend-rental" style="display:none">
+        <span><span class="dot" style="background:#fff;border:1.5px solid var(--border)"></span>無租借</span>
+        <span><span class="dot" style="background:#fdf0e6;border:1.5px solid var(--accent)"></span>有租借</span>
+        <span style="color:var(--text-light)">｜編輯模式下雙擊教室可設定租借</span>
+      </div>
+    </div>
+    <div class="header-search" id="header-search-area">
+      <div class="header-search-wrap">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M10 10l3 3"/></svg>
+        <input class="header-search-input" type="text" placeholder="搜尋姓名、職稱或分機號碼…" id="phone-search" name="phone-search-q" autocomplete="off" data-lpignore="true" data-1p-ignore data-bwignore oninput="filterPhone()">
+      </div>
+      <button class="header-search-btn" onclick="window.print()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="5" width="12" height="8" rx="1"/><path d="M5 5V2h6v3M5 12h6"/></svg>
+        <span class="btn-label">列印</span>
+      </button>
+      <button class="header-search-btn" onclick="exportExcel()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M9 2H4a1 1 0 00-1 1v10a1 1 0 001 1h8a1 1 0 001-1V6L9 2z"/><path d="M9 2v4h4M6 9l4 4M10 9l-4 4"/></svg>
+        <span class="btn-label">下載 Excel</span>
+      </button>
+      <button class="header-search-btn" onclick="exportJSON()" title="匯出資料為 JSON">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M9 2H4a1 1 0 00-1 1v10a1 1 0 001 1h8a1 1 0 001-1V6L9 2z"/><path d="M9 2v4h4"/><path d="M5 10h6M5 12.5h4"/></svg>
+        <span class="btn-label">匯出 JSON</span>
+      </button>
+      <label class="header-search-btn" style="cursor:pointer" title="匯入 JSON 覆蓋資料">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M9 2H4a1 1 0 00-1 1v10a1 1 0 001 1h8a1 1 0 001-1V6L9 2z"/><path d="M9 2v4h4"/><path d="M8 14V8m-2.5 3.5L8 14l2.5-2.5"/></svg>
+        <span class="btn-label">匯入 JSON</span>
+        <input type="file" accept=".json" onchange="importJSON(event)" style="display:none">
+      </label>
+    </div>
+    <div class="header-right">
+      <button id="edit-btn" onclick="toggleEdit()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+          <path d="M11 2L14 5L6 13H3V10L11 2Z"/>
+        </svg>
+        <span id="edit-label">編輯</span>
+      </button>
     </div>
   </div>
+</header>
 
-  <div id="mainContent" style="display:none;">
-    <h1>新莊國小 志工證 列印管理系統</h1>
-    <div class="toolbar">
-      <button id="addBtn">新增志工</button>
-      <button id="saveAllBtn" class="save-all-btn">總儲存</button>
-      <button id="printSelectedBtn">列印所選</button>
-      <button id="printAllBtn">列印全部</button>
-      <button id="deleteSelectedBtn" style="background:#c0392b;">刪除所選</button>
-      <button id="toggleSettingsBtn" class="settings-btn" title="再按一次可收合面板">卡片設定</button>
-      <button id="toggleImportBtn" class="import-btn" title="再按一次可收合面板">名單匯入/匯出</button>
-      <button id="toggleStatsBtn" class="import-btn" title="再按一次可收合面板">統計 / 核對清單</button>
-    </div>
-    <div class="import-panel" id="importPanel" style="display:none;">
-      <h3>名單匯入 / 匯出(Excel 檔案,共 6 個工作表)</h3>
-      <div class="sub">Excel 檔裡會有 6 個分頁(工作表),分頁名稱分別是「行政、課輔、導護、醫護、故事、圖書」,每個分頁只要填姓名就好,一列一位志工。</div>
+<!-- Edit mode bar -->
+<div id="edit-bar">
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="6"/><path d="M8 5v3.5l2 1.5"/></svg>
+  編輯模式 — 點擊任意欄位修改，完成後記得儲存
+  <button class="discard-btn" onclick="discardEdit()">取消</button>
+  <button class="save-btn" onclick="saveAll()">💾 儲存</button>
+</div>
 
-      <div class="import-block">
-        <h4>① 下載空白範本</h4>
-        <p>給老師的空白 Excel 檔,打開後下方會看到 6 個分頁籤,照組別填姓名就好。</p>
-        <button id="downloadTemplateBtn">下載空白範本.xlsx</button>
-      </div>
-
-      <div class="import-block">
-        <h4>② 匯出目前名單</h4>
-        <p>把資料庫目前所有志工,依組別自動分裝進 6 個分頁匯出成 Excel,方便整理、確認或備份。</p>
-        <button id="exportCsvBtn">匯出目前名單.xlsx</button>
-      </div>
-
-      <div class="import-block">
-        <h4>③ 匯入 Excel</h4>
-        <p>選一個填好的 Excel 檔案(.xlsx),再選擇匯入方式。系統會自動讀取 6 個分頁,分頁名稱要跟組別名稱一致。</p>
-        <input type="file" id="importFileInput" accept=".xlsx,.xls" />
-        <div class="import-mode-row">
-          <label><input type="radio" name="importMode" value="append" checked /> 新增(保留原有名單,把新名單加進去)</label>
-          <label><input type="radio" name="importMode" value="overwrite" /> 覆蓋(先清空,再匯入這份名單)</label>
+<main>
+  <!-- ── Phone Panel ── -->
+  <div class="tab-panel active" id="panel-phone">
+    <div class="phone-table-wrap">
+      <div class="phone-grid" id="phone-grid">
+        <div class="phone-col" id="phone-col-0">
+          <table><thead><tr><th title="點擊切換★學年主任">#</th><th>職稱</th><th>姓名</th><th>分機</th></tr></thead><tbody id="phone-tbody-0"></tbody></table>
         </div>
-        <button id="importRunBtn">開始匯入</button>
-        <div style="font-size:12px; color:#999; margin-top:8px; line-height:1.6;">
-          ⚠️ 提醒:系統判斷「同一人」的標準是「姓名文字完全相同 + 同一個組別」。<br>
-          如果同名同姓但分在不同組別,會被當成不同人;如果姓名打錯字或多打了空格,也可能判斷不出來是重複的。<br>
-          建議匯入後用上方的「搜尋姓名」功能檢查一下,確認名單沒有重複或缺漏。
+        <div class="phone-col" id="phone-col-1">
+          <table><thead><tr><th title="點擊切換★學年主任">#</th><th>職稱</th><th>姓名</th><th>分機</th></tr></thead><tbody id="phone-tbody-1"></tbody></table>
         </div>
-        <div id="importResult" style="font-size:13px; color:#c0392b; margin-top:8px;"></div>
+        <div class="phone-col" id="phone-col-2">
+          <table><thead><tr><th title="點擊切換★學年主任">#</th><th>職稱</th><th>姓名</th><th>分機</th></tr></thead><tbody id="phone-tbody-2"></tbody></table>
+        </div>
+        <div class="phone-col" id="phone-col-3">
+          <table><thead><tr><th title="點擊切換★學年主任">#</th><th>職稱</th><th>姓名</th><th>分機</th></tr></thead><tbody id="phone-tbody-3"></tbody></table>
+        </div>
+        <div class="phone-col" id="phone-col-4">
+          <table><thead><tr><th title="點擊切換★學年主任">#</th><th>職稱</th><th>姓名</th><th>分機</th></tr></thead><tbody id="phone-tbody-4"></tbody></table>
+        </div>
+        <div class="phone-col" id="phone-col-5">
+          <table><thead><tr><th title="點擊切換★學年主任">#</th><th>職稱</th><th>姓名</th><th>分機</th></tr></thead><tbody id="phone-tbody-5"></tbody></table>
+        </div>
       </div>
+      <button class="add-row-btn" onclick="addRow()">＋ 新增一筆（其他）</button>
     </div>
-    <div class="settings-panel" id="settingsPanel" style="display:none;">
-      <h3>卡片設定(每年可以來這裡修改學年度)</h3>
-      <div class="settings-row">
-        <label>學年度文字</label>
-        <input type="text" id="setYear" style="width:160px;" placeholder="例如:115學年度" />
-        <span class="settings-desc">會印在卡片上,每年開學前記得改一次</span>
-      </div>
-      <div class="settings-row">
-        <label>學校標題字級</label>
-        <input type="number" id="setFontSchool" min="10" max="40" />
-        <span class="settings-desc">px,越大字越大(校長要求的「標題大一點」)</span>
-      </div>
-      <div class="settings-row">
-        <label>學年度字級</label>
-        <input type="number" id="setFontYear" min="8" max="30" />
-        <span class="settings-desc">px</span>
-      </div>
-      <div class="settings-row">
-        <label>組別文字字級</label>
-        <input type="number" id="setFontGroup" min="8" max="30" />
-        <span class="settings-desc">px,例如「行政志工」四個字</span>
-      </div>
-      <div class="settings-row">
-        <label>組別圖示大小</label>
-        <input type="number" id="setFontIcon" min="16" max="60" />
-        <span class="settings-desc">px,例如 📖 這個符號的大小</span>
-      </div>
-      <div class="settings-row">
-        <label>姓名字級</label>
-        <input type="number" id="setFontName" min="12" max="50" />
-        <span class="settings-desc">px,姓名通常要最大最清楚</span>
-      </div>
-      <div style="text-align:center;">
-        <button class="save-settings-btn" id="saveSettingsBtn">儲存設定</button>
-      </div>
+    <div class="meta-bar">
+      <span id="phone-count"></span>
+      <span id="last-edit-phone"></span>
     </div>
-    <div class="settings-panel" id="statsPanel" style="display:none;">
-      <h3>統計 / 核對清單</h3>
-      <div id="statsGroupCounts" style="margin-bottom:16px;"></div>
-      <div id="statsDupList" style="margin-bottom:16px;"></div>
-      <div id="statsMultiRoleList"></div>
-    </div>
-    <div class="save-hint">改完姓名或組別後,記得按「總儲存」一次儲存全部</div>
-    <div id="dupBanner" style="display:none; max-width:640px; margin:0 auto 12px; background:#fff3cd; border:1px solid #e0a800; color:#7d6608; border-radius:6px; padding:10px 14px; font-size:13px; line-height:1.6;"></div>
-    <div id="multiRoleBanner" style="display:none; max-width:640px; margin:0 auto 12px; background:#e3f2fd; border:1px solid #4a90d9; color:#2a5d8a; border-radius:6px; padding:10px 14px; font-size:13px; line-height:1.6;"></div>
-    <div class="filter-bar" style="margin-bottom:6px;">
-      <input type="text" id="nameSearch" placeholder="搜尋姓名..." style="max-width:300px; padding:7px 10px; border:1px solid #ccc; border-radius:20px; font-size:13px; box-sizing:border-box;" />
-      <button id="nameSearchBtn" type="button" style="border-radius:20px; padding:7px 16px; font-size:13px;">🔍 搜尋</button>
-      <button id="nameSearchClearBtn" type="button" style="display:none; border-radius:20px; padding:7px 14px; font-size:13px; background:#999;">清除</button>
-    </div>
-    <div class="filter-bar" id="filterBar"></div>
-    <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th style="width:36px;">序號</th>
-          <th style="width:36px;"><input type="checkbox" id="checkAll" /></th>
-          <th>姓名</th>
-          <th>組別</th>
-          <th>操作</th>
-        </tr>
-      </thead>
-      <tbody id="tableBody"></tbody>
-    </table>
-    </div>
+    <!-- Print-only phone layout -->
+    <div id="phone-print-root"></div>
   </div>
 
-  <script type="module">
-    import { db, collection, getDocs, doc, getDoc, setDoc, deleteDoc } from "./firebase-config.js";
+  <!-- ── Map Panel ── -->
+  <div class="tab-panel" id="panel-map">
+    <div class="map-layout">
+      <div class="map-sidebar">
+        <div class="btab active" onclick="switchBuilding('F', this)">至誠樓</div>
+        <div class="btab" onclick="switchBuilding('B', this)">至美樓</div>
+        <div class="btab" onclick="switchBuilding('C', this)">至善樓</div>
+        <div class="btab" onclick="switchBuilding('Z', this)">至真樓</div>
+        <hr style="border:none;border-top:1px solid var(--border);margin:4px 0">
+        <div class="btab" onclick="switchBuilding('A', this)">新莊樓</div>
+        <div class="btab" onclick="switchBuilding('X', this)">其他</div>
+        <div style="margin-top:8px;border-top:1px solid var(--border);padding-top:8px;">
+          <button class="toolbar-btn" style="width:100%;justify-content:center;font-size:12px" onclick="window.print()">
+            <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="5" width="12" height="8" rx="1"/><path d="M5 5V2h6v3M5 12h6"/></svg>
+            列印
+          </button>
+        </div>
+      </div>
+      <div class="map-content">
+        <div class="map-search-bar">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M10 10l3 3"/></svg>
+          <input type="text" id="map-search-input" name="map-search-q" autocomplete="off" data-lpignore="true" data-1p-ignore data-bwignore placeholder="搜尋教室名稱、房號或分機…" oninput="searchMap(this.value)">
+          <span id="map-search-count"></span>
+        </div>
+        <div class="building-map" id="building-map"></div>
+      </div>
+    </div>
+    <div class="meta-bar">
+      <span></span>
+      <span id="last-edit-map"></span>
+    </div>
+    <!-- Print-only map layout -->
+    <div id="map-print-root"></div>
+  </div>
 
-    const ADMIN_PASSWORD = "073411373";
-    const groups = ["行政", "課輔", "導護", "醫護", "故事", "圖書"];
+  <!-- ── Rental Panel ── -->
+  <div class="tab-panel" id="panel-rental">
+    <div class="map-layout">
+      <div class="map-sidebar" id="rental-sidebar">
+        <div class="btab active" onclick="switchRentalBuilding('F', this)">至誠樓</div>
+        <div class="btab" onclick="switchRentalBuilding('B', this)">至美樓</div>
+        <div class="btab" onclick="switchRentalBuilding('C', this)">至善樓</div>
+        <div class="btab" onclick="switchRentalBuilding('Z', this)">至真樓</div>
+        <hr style="border:none;border-top:1px solid var(--border);margin:4px 0">
+        <div class="btab" onclick="switchRentalBuilding('A', this)">新莊樓</div>
+        <div class="btab" onclick="switchRentalBuilding('X', this)">其他</div>
+      </div>
+      <div class="map-content">
+        <div class="map-search-bar">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M10 10l3 3"/></svg>
+          <input type="text" id="rental-search-input" name="rental-search-q" autocomplete="off" data-lpignore="true" data-1p-ignore data-bwignore placeholder="搜尋教室名稱、房號或租借團體…" oninput="searchRentalMap(this.value)">
+          <span id="rental-search-count"></span>
+        </div>
+        <div class="building-map" id="rental-map"></div>
+      </div>
+    </div>
+    <div class="meta-bar">
+      <span></span>
+      <span id="last-edit-rental"></span>
+    </div>
+  </div>
+</main>
 
-    const groupColorClass = {
-      "行政": "group-admin", "課輔": "group-tutor", "導護": "group-guard",
-      "醫護": "group-medical", "故事": "group-story", "圖書": "group-library",
-    };
+<!-- Room edit modal -->
+<div class="modal-overlay" id="room-modal">
+  <div class="modal">
+    <h3>編輯教室資訊</h3>
+    <div class="form-group">
+      <label>教室名稱</label>
+      <input type="text" id="modal-name" placeholder="例：一年01班">
+    </div>
+    <div class="form-group">
+      <label>房號</label>
+      <input type="text" id="modal-code" placeholder="例：A101">
+    </div>
+    <div class="form-group">
+      <label>分機號碼</label>
+      <input type="text" id="modal-ext" placeholder="例：213">
+    </div>
+    <div class="form-group">
+      <label>類型</label>
+      <select id="modal-type" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:14px;outline:none;font-family:inherit;background:var(--surface)">
+        <option value="class">班級教室</option>
+        <option value="office">行政辦公室</option>
+        <option value="special">特殊／專科</option>
+        <option value="other">其他（川堂、儲藏室…）</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">取消</button>
+      <button class="btn-save" onclick="saveRoom()">儲存</button>
+    </div>
+  </div>
+</div>
 
-    const DEFAULT_SETTINGS = {
-      schoolYear: "115學年度",
-      fontSchool: 18,
-      fontYear: 18,
-      fontGroup: 13,
-      fontIcon: 30,
-      fontName: 24,
-    };
+<!-- Rental copy-to-rooms modal -->
+<div class="modal-overlay" id="rental-copy-modal" style="z-index:220">
+  <div class="modal" style="width:360px">
+    <h3>複製這筆租借到其他教室</h3>
+    <div style="font-size:12px;color:var(--text-muted);margin:-8px 0 12px">勾選要複製到的教室，會建立相同的團體／日期／星期／時段設定</div>
+    <div id="rental-copy-room-list" style="max-height:320px;overflow-y:auto"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeRentalCopyModal()">取消</button>
+      <button class="btn-save" onclick="confirmRentalCopy()">複製</button>
+    </div>
+  </div>
+</div>
 
-    let allVolunteers = []; // { id, name, group }
-    let currentFilter = "全部";
-    let currentSearch = "";
+<!-- Rental edit modal -->
+<div class="modal-overlay" id="rental-modal">
+  <div class="modal" style="width:380px">
+    <h3 id="rental-modal-title">教室租借設定</h3>
+    <div id="rental-modal-room-info" style="font-size:12px;color:var(--text-muted);margin:-8px 0 14px"></div>
+    <div id="rental-entry-list"></div>
+    <div id="rental-entry-form" style="display:none;border-top:1px solid var(--border);margin-top:10px;padding-top:12px">
+      <div class="form-group">
+        <label>租借團體／原因</label>
+        <input type="text" id="rental-form-group" placeholder="例：課後直笛社團">
+      </div>
+      <div class="form-group" style="display:flex;gap:8px">
+        <div style="flex:1">
+          <label>開始日期</label>
+          <input type="text" id="rental-form-date-start" placeholder="例：1150927" onblur="normalizeDateField(this)">
+        </div>
+        <div style="flex:1">
+          <label>結束日期</label>
+          <input type="text" id="rental-form-date-end" placeholder="例：1160107" onblur="normalizeDateField(this)">
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--text-light);margin:-10px 0 12px">可直接打民國年月日，例如 1150927 會自動轉為 115/09/27</div>
+      <div class="form-group">
+        <label>星期幾</label>
+        <div id="rental-form-days" style="display:flex;gap:6px;flex-wrap:wrap">
+          <label style="display:flex;align-items:center;gap:3px;font-size:12px;font-weight:400"><input type="checkbox" value="1">一</label>
+          <label style="display:flex;align-items:center;gap:3px;font-size:12px;font-weight:400"><input type="checkbox" value="2">二</label>
+          <label style="display:flex;align-items:center;gap:3px;font-size:12px;font-weight:400"><input type="checkbox" value="3">三</label>
+          <label style="display:flex;align-items:center;gap:3px;font-size:12px;font-weight:400"><input type="checkbox" value="4">四</label>
+          <label style="display:flex;align-items:center;gap:3px;font-size:12px;font-weight:400"><input type="checkbox" value="5">五</label>
+          <label style="display:flex;align-items:center;gap:3px;font-size:12px;font-weight:400"><input type="checkbox" value="6">六</label>
+          <label style="display:flex;align-items:center;gap:3px;font-size:12px;font-weight:400"><input type="checkbox" value="7">日</label>
+        </div>
+      </div>
+      <div class="form-group" style="display:flex;gap:8px">
+        <div style="flex:1">
+          <label>開始時間</label>
+          <input type="text" id="rental-form-start" placeholder="例：1600" onblur="normalizeTimeField(this, true)">
+        </div>
+        <div style="flex:1">
+          <label>結束時間</label>
+          <input type="text" id="rental-form-end" placeholder="例：1730" onblur="normalizeTimeField(this, false)">
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--text-light);margin:-10px 0 12px">可直接打 1600，或在開始時間打 1600-1730 自動拆成兩欄</div>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="cancelRentalEntryForm()">取消</button>
+        <button class="btn-save" onclick="saveRentalEntry()">儲存這筆</button>
+      </div>
+    </div>
+    <div class="modal-actions" id="rental-modal-add-row">
+      <button class="btn-cancel" onclick="closeRentalModal()">關閉</button>
+      <button class="btn-save" onclick="showRentalEntryForm()">＋ 新增一筆</button>
+    </div>
+  </div>
+</div>
 
-    document.getElementById("unlockBtn").addEventListener("click", () => {
-      const input = document.getElementById("pwdInput").value;
-      if (input === ADMIN_PASSWORD) {
-        document.getElementById("lockScreen").style.display = "none";
-        document.getElementById("mainContent").style.display = "block";
-        buildFilterBar();
-        loadVolunteers();
-        loadSettings();
-      } else {
-        document.getElementById("pwdErr").textContent = "密碼錯誤";
-      }
-    });
-    document.getElementById("pwdInput").addEventListener("keydown", (e) => {
-      if (e.key === "Enter") document.getElementById("unlockBtn").click();
-    });
+<!-- Password modal -->
+<div class="modal-overlay" id="pw-modal">
+  <div class="modal" style="width:300px">
+    <h3>🔒 請輸入編輯密碼</h3>
+    <div class="form-group" style="margin-top:8px">
+      <!-- Decoy fields: Chrome pairs the real password field below with the nearest
+           text input on the page (e.g. the name-search box) and offers to autofill a
+           saved login into it. These hidden dummy fields absorb that autofill instead. -->
+      <input type="text" name="fakeusernameremembered" autocomplete="username" style="position:absolute;opacity:0;height:0;width:0;pointer-events:none" tabindex="-1" aria-hidden="true">
+      <input type="password" name="fakepasswordremembered" autocomplete="new-password" style="position:absolute;opacity:0;height:0;width:0;pointer-events:none" tabindex="-1" aria-hidden="true">
+      <input type="password" id="pw-input" name="edit-pw-code" placeholder="輸入密碼…"
+        autocomplete="new-password" data-lpignore="true" data-1p-ignore data-bwignore
+        onkeydown="if(event.key==='Enter')checkPassword()"
+        style="letter-spacing:0.1em">
+      <div id="pw-error" style="color:#c0392b;font-size:12px;margin-top:6px;display:none">密碼錯誤，請再試一次</div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closePwModal()">取消</button>
+      <button class="btn-save" onclick="checkPassword()">確認</button>
+    </div>
+  </div>
+</div>
 
-    document.getElementById("toggleSettingsBtn").addEventListener("click", () => {
-      const panel = document.getElementById("settingsPanel");
-      const btn = document.getElementById("toggleSettingsBtn");
-      const isOpen = panel.style.display !== "none";
-      panel.style.display = isOpen ? "none" : "block";
-      btn.textContent = isOpen ? "卡片設定" : "收合面板 ▲";
-    });
+<!-- Firebase + SheetJS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-    async function loadSettings() {
-      let settings = { ...DEFAULT_SETTINGS };
-      try {
-        const snap = await getDoc(doc(db, "settings", "config"));
-        if (snap.exists()) settings = { ...settings, ...snap.data() };
-      } catch (err) {
-        console.error("讀取設定失敗,使用預設值", err);
-      }
-      document.getElementById("setYear").value = settings.schoolYear;
-      document.getElementById("setFontSchool").value = settings.fontSchool;
-      document.getElementById("setFontYear").value = settings.fontYear;
-      document.getElementById("setFontGroup").value = settings.fontGroup;
-      document.getElementById("setFontIcon").value = settings.fontIcon;
-      document.getElementById("setFontName").value = settings.fontName;
+const firebaseConfig = {
+  apiKey: "AIzaSyDK-YvxvjAee_VDUmcfK3O-3YhubMyKx-4",
+  authDomain: "sjps-campus-phone-map.firebaseapp.com",
+  projectId: "sjps-campus-phone-map",
+  storageBucket: "sjps-campus-phone-map.firebasestorage.app",
+  messagingSenderId: "796761997242",
+  appId: "1:796761997242:web:4d6aa9ad791b0ed9e16783",
+  measurementId: "G-E741WSKVPR"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+window._db = db;
+window._doc = doc;
+window._getDoc = getDoc;
+window._setDoc = setDoc;
+window._deleteDoc = deleteDoc;
+
+// Load data for current year
+async function loadYear(year) {
+  try {
+    const phoneRef = doc(db, 'extensions', String(year));
+    const mapRef = doc(db, 'rooms', String(year));
+    const rentalRef = doc(db, 'rentals', String(year));
+    const [phoneSnap, mapSnap, rentalSnap] = await Promise.all([getDoc(phoneRef), getDoc(mapRef), getDoc(rentalRef)]);
+
+    if (phoneSnap.exists()) {
+      window.APP.phoneData = phoneSnap.data().staff || window.APP.defaultPhone;
+      window.APP.phoneLastEdit = phoneSnap.data().last_edited || '';
+    } else {
+      window.APP.phoneData = JSON.parse(JSON.stringify(window.APP.defaultPhone));
     }
+    if (mapSnap.exists()) {
+      window.APP.mapData = mapSnap.data().buildings || window.APP.defaultMap;
+      window.APP.mapLastEdit = mapSnap.data().last_edited || '';
+      // floorOrder from Firebase is the source of truth; reset cache first
+      window.APP.floorOrder = mapSnap.data().floorOrder || {};
+    } else {
+      window.APP.mapData = JSON.parse(JSON.stringify(window.APP.defaultMap));
+      window.APP.floorOrder = {};
+    }
+    if (rentalSnap.exists()) {
+      window.APP.rentalData = rentalSnap.data().list || [];
+      window.APP.rentalLastEdit = rentalSnap.data().last_edited || '';
+    } else {
+      window.APP.rentalData = [];
+      window.APP.rentalLastEdit = '';
+    }
+  } catch(e) {
+    console.warn('Firebase load failed, using local data:', e);
+    window.APP.phoneData = JSON.parse(JSON.stringify(window.APP.defaultPhone));
+    window.APP.mapData = JSON.parse(JSON.stringify(window.APP.defaultMap));
+    window.APP.rentalData = [];
+  }
+  window.renderPhone();
+  window.renderMap();
+  if (window.renderRentalMap) window.renderRentalMap();
+}
 
-    document.getElementById("saveSettingsBtn").addEventListener("click", async () => {
-      const btn = document.getElementById("saveSettingsBtn");
-      const originalText = btn.textContent;
-      btn.disabled = true;
-      btn.textContent = "儲存中...";
-      try {
-        const payload = {
-          schoolYear: document.getElementById("setYear").value.trim() || DEFAULT_SETTINGS.schoolYear,
-          fontSchool: Number(document.getElementById("setFontSchool").value) || DEFAULT_SETTINGS.fontSchool,
-          fontYear: Number(document.getElementById("setFontYear").value) || DEFAULT_SETTINGS.fontYear,
-          fontGroup: Number(document.getElementById("setFontGroup").value) || DEFAULT_SETTINGS.fontGroup,
-          fontIcon: Number(document.getElementById("setFontIcon").value) || DEFAULT_SETTINGS.fontIcon,
-          fontName: Number(document.getElementById("setFontName").value) || DEFAULT_SETTINGS.fontName,
-        };
-        await setDoc(doc(db, "settings", "config"), payload, { merge: true });
-        alert("設定已儲存,下次列印會套用新設定");
-      } catch (err) {
-        console.error(err);
-        alert("設定儲存失敗:" + err.message);
-      } finally {
-        btn.disabled = false;
-        btn.textContent = originalText;
+async function saveToFirebase(year) {
+  try {
+    const now = new Date().toLocaleString('zh-TW', {timeZone:'Asia/Taipei'});
+    // Ensure floorOrder is populated for all buildings before saving
+    Object.keys(window.APP.mapData).forEach(b => getFloorOrder(b));
+    await window._setDoc(window._doc(window._db, 'extensions', String(year)), {
+      staff: window.APP.phoneData,
+      last_edited: now
+    });
+    await window._setDoc(window._doc(window._db, 'rooms', String(year)), {
+      buildings: window.APP.mapData,
+      floorOrder: window.APP.floorOrder || {},
+      last_edited: now
+    });
+    await window._setDoc(window._doc(window._db, 'rentals', String(year)), {
+      list: window.APP.rentalData || [],
+      last_edited: now
+    });
+    window.APP.phoneLastEdit = now;
+    window.APP.mapLastEdit = now;
+    window.APP.rentalLastEdit = now;
+    document.getElementById('last-edit-phone').textContent = '最後編輯：' + now;
+    document.getElementById('last-edit-map').textContent = '最後編輯：' + now;
+    const rentalEditEl = document.getElementById('last-edit-rental');
+    if (rentalEditEl) rentalEditEl.textContent = '最後編輯：' + now;
+    return true;
+  } catch(e) {
+    alert('儲存失敗，請確認網路連線。\n' + e.message);
+    return false;
+  }
+}
+
+// Load/save the list of school years that exist, so "新增年度" survives a refresh.
+async function loadYearsList() {
+  try {
+    const metaRef = doc(db, 'meta', 'years');
+    const snap = await getDoc(metaRef);
+    if (snap.exists() && Array.isArray(snap.data().years) && snap.data().years.length) {
+      window.APP.years = snap.data().years.slice().sort((a, b) => a - b);
+    }
+  } catch (e) {
+    console.warn('Firebase years list load failed, using default:', e);
+  }
+}
+
+async function saveYearsList() {
+  try {
+    await window._setDoc(window._doc(window._db, 'meta', 'years'), {
+      years: window.APP.years
+    });
+    return true;
+  } catch (e) {
+    alert('新增年度失敗，請確認網路連線。\n' + e.message);
+    return false;
+  }
+}
+
+// Permanently delete a school year's data from Firestore (extensions/rooms/rentals docs).
+// Does NOT touch the years list itself — caller updates & saves that separately.
+async function deleteYearData(year) {
+  try {
+    await Promise.all([
+      window._deleteDoc(window._doc(window._db, 'extensions', String(year))),
+      window._deleteDoc(window._doc(window._db, 'rooms', String(year))),
+      window._deleteDoc(window._doc(window._db, 'rentals', String(year)))
+    ]);
+    return true;
+  } catch (e) {
+    alert('刪除失敗，請確認網路連線。\n' + e.message);
+    return false;
+  }
+}
+
+window._loadYear = loadYear;
+window._saveToFirebase = saveToFirebase;
+window._saveYearsList = saveYearsList;
+window._deleteYearData = deleteYearData;
+
+// Init — always default to the most recent school year, so a refresh (or a newly
+// created year) never appears to "disappear": the years list itself is always
+// safely stored in Firebase the moment a year is created.
+loadYearsList().then(() => {
+  window.APP.currentYear = Math.max(...window.APP.years);
+  document.getElementById('current-year-label').textContent = window.APP.currentYear + '學年度';
+  loadYear(window.APP.currentYear);
+});
+</script>
+
+<script>
+// ─── App State ───────────────────────────────────────────
+window.APP = {
+  currentYear: 114,
+  years: [114],
+  editMode: false,
+  phoneData: [],
+  mapData: {},
+  rentalData: [],
+  phoneLastEdit: '',
+  mapLastEdit: '',
+  rentalLastEdit: '',
+  currentBuilding: 'F',
+  currentRentalBuilding: 'F',
+  editingRoomKey: null,
+  editingRentalRoom: null,
+  editingRentalId: null,
+  copyingRentalId: null,
+  pendingChanges: false,
+
+  // ── Default phone data (114學年度) ──
+  // ── Default phone data (載入自 Firebase) ──
+  defaultPhone: [],
+
+  // ── Default map data (載入自 Firebase) ──
+  defaultMap: {}
+};
+
+// ─── Category mapping ─────────────────────────────────────
+const CAT_ORDER = [
+  { key: 'admin', label: '行政主管', cssClass: 'cat-admin', match: t => ['校　　長','教務主任','學務主任','總務主任','輔導主任','會計主任','人事主任'].includes(t) },
+  { key: 'group', label: '各組組長', cssClass: 'cat-group', match: t => t.endsWith('組') },
+  { key: 'g1', label: '一年級', cssClass: 'cat-grade', match: t => /^1\d\d$/.test(t) },
+  { key: 'g2', label: '二年級', cssClass: 'cat-grade', match: t => /^2\d\d$/.test(t) },
+  { key: 'g3', label: '三年級', cssClass: 'cat-grade', match: t => /^3\d\d$/.test(t) },
+  { key: 'g4', label: '四年級', cssClass: 'cat-grade', match: t => /^4\d\d$/.test(t) },
+  { key: 'g5', label: '五年級', cssClass: 'cat-grade', match: t => /^5\d\d$/.test(t) },
+  { key: 'g6', label: '六年級', cssClass: 'cat-grade', match: t => /^6\d\d$/.test(t) },
+  { key: 'sub', label: '科任教師', cssClass: 'cat-sub', match: t => t.startsWith('科任') },
+  { key: 'agent', label: '科任代理教師', cssClass: 'cat-agent', match: t => t.startsWith('代理') },
+  { key: 'subst', label: '科任代課教師', cssClass: 'cat-subst', match: t => t.startsWith('代課') },
+  { key: 'sp1', label: '特教-資優班教師', cssClass: 'cat-sp1', match: t => t.startsWith('資優') },
+  { key: 'sp2', label: '特教-資源班教師', cssClass: 'cat-sp2', match: t => t.startsWith('資源') },
+  // 專任輔導教師要在下面的「教學支援人員」規則（t.startsWith('專任')）之前比對，
+  // 否則會被那條更寬的規則搶走。
+  { key: 'sp3', label: '特教-專任輔導教師', cssClass: 'cat-sp3', match: t => t.startsWith('專任輔導') },
+  { key: 'sp4', label: '特教-專任助理員', cssClass: 'cat-sp4', match: t => t.startsWith('專任特教助理') },
+  { key: 'sp5', label: '特教-學前巡迴教師(幼兒園)', cssClass: 'cat-sp5', match: t => t.startsWith('學前') },
+  { key: 'kinder', label: '幼兒園', cssClass: 'cat-kinder', match: t => t.startsWith('幼兒') || t.includes('教保員') },
+  // 「教學支援人員」現在改成明確規則，只抓教學/語言相關的支援人員（教支人員＊語），
+  // 不再是保底分類。外籍教師、特教專任助理員已各自獨立成類，排除在這條規則外。
+  { key: 'support', label: '教學支援人員', cssClass: 'cat-support', match: t => t.startsWith('教支') || t.startsWith('專任') },
+  { key: 'foreign', label: '外籍教師', cssClass: 'cat-foreign', match: t => t.startsWith('外籍教師') },
+  { key: 'intern', label: '實習教師', cssClass: 'cat-intern', match: t => t.startsWith('實習教師') },
+  // 保底分類：護理師、營養師、幹事、技工、委外、人事助理…等不屬於教學支援的人，
+  // 全部落在這裡。這個規則一定要留在比對順序的最後一個（符合任何職稱）。
+  { key: 'adminSupport', label: '行政支援人員', cssClass: 'cat-adminsupport', match: t => true }
+];
+
+// 顯示順序跟比對順序分開處理：比對順序（CAT_ORDER 本身的排列）決定「這個人歸類到哪個類別」，
+// 其中「行政支援人員」是保底規則（符合任何職稱），一定要留在比對順序的最後一個，
+// 否則它會搶走後面規則更明確的類別。
+// 這裡的 DISPLAY_ORDER 只決定畫面上標題列的排列順序，可以自由調整不影響比對邏輯。
+const DISPLAY_ORDER_KEYS = [
+  'admin','group','g1','g2','g3','g4','g5','g6','sub','agent','subst','sp1','sp2','sp3','sp4','sp5','kinder','support','foreign','intern','adminSupport'
+];
+const DISPLAY_ORDER = DISPLAY_ORDER_KEYS.map(k => CAT_ORDER.find(c => c.key === k)).filter(Boolean);
+
+function getCategory(title) {
+  for (const cat of CAT_ORDER) if (cat.match(title)) return cat;
+  return CAT_ORDER[CAT_ORDER.length - 1];
+}
+
+// Split a flat list (rows + category headers) into `numCols` columns as evenly
+// as possible. If a column would naturally end with a category header (with no
+// rows under it in that column — its rows got pushed into the next column),
+// that header is moved to the start of the next column instead. This shift is
+// purely local to that one boundary: each column's end is computed as
+// start + colSize from its own (possibly-shifted) start, so a 1-row nudge at
+// one boundary does NOT cascade into a larger row count in later columns.
+function distributeIntoColumns(flat, numCols) {
+  const total = flat.length;
+  const colSize = Math.ceil(total / numCols);
+  const cols = [];
+  let start = 0;
+  for (let c = 0; c < numCols; c++) {
+    let end = c === numCols - 1 ? total : Math.min(start + colSize, total);
+    if (c < numCols - 1 && end > start && end < total && flat[end - 1] && flat[end - 1].isCat) {
+      end -= 1; // don't strand a lone header at the bottom of this column
+    }
+    cols.push(flat.slice(start, end));
+    start = end;
+  }
+  return cols;
+}
+
+// ─── 6 欄列高強制對齊 ────────────────────────────────────────
+// phone-tbody-0 ~ phone-tbody-5 是 6 個各自獨立的 <table>，同一「列序」
+// (第 N 列) 分散在不同欄的內容不同，實際渲染高度可能因字型 metrics、
+// 邊框圓角、瀏覽器差異而有零星的 1px 落差，肉眼看起來就是「列高不整齊」。
+// 這裡在每次 renderPhone 之後，逐列比較 6 欄中對應列的實際高度，
+// 取最大值後統一寫回每一欄的那一列，讓格線在視覺上完全對齊。
+function syncPhoneRowHeights() {
+  const tbodies = [];
+  for (let i = 0; i < 6; i++) {
+    const el = document.getElementById(`phone-tbody-${i}`);
+    if (el) tbodies.push(el);
+  }
+  if (!tbodies.length) return;
+
+  // 先清掉先前設定的行內高度，讓每一列先以「自然高度」重新計算，
+  // 否則舊的高度值會一直累積、越同步越高。
+  tbodies.forEach(tb => {
+    Array.from(tb.children).forEach(tr => { tr.style.height = ''; });
+  });
+
+  const maxRows = Math.max(...tbodies.map(tb => tb.children.length));
+  for (let r = 0; r < maxRows; r++) {
+    let max = 0;
+    const rowsAtIndex = [];
+    tbodies.forEach(tb => {
+      const tr = tb.children[r];
+      if (tr) {
+        rowsAtIndex.push(tr);
+        if (tr.offsetHeight > max) max = tr.offsetHeight;
       }
     });
+    rowsAtIndex.forEach(tr => { tr.style.height = max + 'px'; });
+  }
+}
+window.syncPhoneRowHeights = syncPhoneRowHeights;
 
-    function renderStatsPanel() {
-      const normalizeName = (n) => (n || "").replace(/\s+/g, "").replace(/\u3000/g, "");
+// ─── 動態字體自適應 ──────────────────────────────────────
+// 不同電腦的瀏覽器縮放比例／字型度量不同，同一段文字實際渲染出來的寬度
+// 可能比欄位還寬。與其讓文字溢出蓋到隔壁欄（會變成重疊的亂碼），這裡改成
+// 「量測實際需要的寬度，太寬就一點一點縮小字體」，縮到 MIN_FONT_SIZE
+// 還是放不下才交給 CSS 的 text-overflow:ellipsis 兜底（絕對不會重疊）。
+const AUTOFIT_MAX = 13;   // px，預設先從這個大小開始嘗試，放不下才往下縮
+const AUTOFIT_MIN = 8;    // px，字太小會看不清楚，縮到這裡就停止改用省略號
+const AUTOFIT_MIN_EXT = 6.5; // px，分機是等寬數字，縮更小還是看得清楚，優先讓「兩個分機」也能完整顯示
+const AUTOFIT_STEP = 0.5; // px，每次縮小的幅度
 
-      // 各組人數
-      const groupCounts = {};
-      groups.forEach((g) => (groupCounts[g] = 0));
-      allVolunteers.forEach((v) => {
-        if (groupCounts[v.group] === undefined) groupCounts[v.group] = 0;
-        groupCounts[v.group]++;
-      });
-      const groupCountsHtml =
-        `<h4 style="margin:0 0 8px;">各組人數(共 ${allVolunteers.length} 人)</h4>` +
-        `<table style="width:100%; border-collapse:collapse; font-size:13px;">` +
-        Object.entries(groupCounts)
-          .map(
-            ([g, c]) =>
-              `<tr><td style="padding:4px 8px; border-bottom:1px solid #eee;">${g}</td><td style="padding:4px 8px; border-bottom:1px solid #eee; text-align:right;">${c} 人</td></tr>`
-          )
-          .join("") +
-        `</table>`;
-      document.getElementById("statsGroupCounts").innerHTML = groupCountsHtml;
+// 同一欄（同一個 table 裡的「職稱」欄／「姓名」欄／「分機」欄）統一用同一個字體
+// 大小，而不是每一格各自判斷 —— 逐格獨立判斷會出現「內容看起來差不多長，但
+// 縮放結果不一樣」的不一致情況（量測時機、瀏覽器 subpixel 差異都可能造成）。
+// 改成：整欄裡最長的那一格決定這一欄要縮到多小，其餘格子跟著用同一個大小，
+// 確保同一欄內視覺一致，也保證欄內最長的內容一定放得下。
+//
+// getMeasureEl 可以指定「量測寬度時要看哪個子元素」而不是整個 td——分機欄
+// 的刪除按鈕（✕）平常是隱藏的，只有滑鼠移過去才出現，它的寬度不會隨字體
+// 縮放而變小，混進 td 的 scrollWidth 一起量測會讓判斷失準，所以分機欄改成
+// 只量測包住數字的 <span class="ext-text">，不把按鈕算進去。
+function autoFitColumnGroup(cells, minSize, getMeasureEl) {
+  if (!cells.length) return AUTOFIT_MAX;
+  const measure = getMeasureEl || (c => c);
+  cells.forEach(c => { c.style.fontSize = ''; });
+  const fits = () => cells.every(c => { const m = measure(c); return m.scrollWidth <= c.clientWidth + 0.5; });
+  if (fits()) return AUTOFIT_MAX;
+  let size = AUTOFIT_MAX;
+  let guard = 0;
+  while (!fits() && size > minSize && guard < 40) {
+    size -= AUTOFIT_STEP;
+    cells.forEach(c => { c.style.fontSize = size + 'px'; });
+    guard++;
+  }
+  return size;
+}
 
-      // 重複清單(同姓名+同組別)
-      const dupCountMap = {};
-      allVolunteers.forEach((v) => {
-        const key = `${v.group}||${normalizeName(v.name)}`;
-        dupCountMap[key] = (dupCountMap[key] || 0) + 1;
-      });
-      const dupSeen = new Set();
-      const dupRows = [];
-      allVolunteers.forEach((v) => {
-        const key = `${v.group}||${normalizeName(v.name)}`;
-        if (dupCountMap[key] > 1 && !dupSeen.has(key)) {
-          dupSeen.add(key);
-          dupRows.push({ name: (v.name || "").trim(), group: v.group, count: dupCountMap[key] });
-        }
-      });
-      document.getElementById("statsDupList").innerHTML =
-        `<h4 style="margin:0 0 8px; color:#7d6608;">🟡 重複清單(同姓名+同組別,共 ${dupRows.length} 組)</h4>` +
-        (dupRows.length
-          ? `<table style="width:100%; border-collapse:collapse; font-size:13px;">` +
-            dupRows
-              .map(
-                (r) =>
-                  `<tr><td style="padding:4px 8px; border-bottom:1px solid #eee;">${r.name}</td><td style="padding:4px 8px; border-bottom:1px solid #eee;">${r.group}</td><td style="padding:4px 8px; border-bottom:1px solid #eee; text-align:right;">${r.count} 筆</td></tr>`
-              )
-              .join("") +
-            `</table>`
-          : `<div style="font-size:13px; color:#999;">目前沒有重複資料</div>`);
+function collectCol(tbody, nth) {
+  return Array.from(tbody.querySelectorAll(`tr:not(.cat-header) > td:nth-child(${nth})`));
+}
 
-      // 兼任清單(同姓名+不同組別)
-      const nameGroupMap = {};
-      allVolunteers.forEach((v) => {
-        const n = normalizeName(v.name);
-        if (!n) return;
-        if (!nameGroupMap[n]) nameGroupMap[n] = { display: (v.name || "").trim(), groups: new Set() };
-        nameGroupMap[n].groups.add(v.group);
-      });
-      const multiRows = Object.values(nameGroupMap).filter((x) => x.groups.size > 1);
-      document.getElementById("statsMultiRoleList").innerHTML =
-        `<h4 style="margin:0 0 8px; color:#2a5d8a;">🔵 兼任清單(同姓名+不同組別,共 ${multiRows.length} 人)</h4>` +
-        (multiRows.length
-          ? `<table style="width:100%; border-collapse:collapse; font-size:13px;">` +
-            multiRows
-              .map(
-                (r) =>
-                  `<tr><td style="padding:4px 8px; border-bottom:1px solid #eee;">${r.display}</td><td style="padding:4px 8px; border-bottom:1px solid #eee;">${Array.from(r.groups).join("、")}</td></tr>`
-              )
-              .join("") +
-            `</table>`
-          : `<div style="font-size:13px; color:#999;">目前沒有跨組別同名的人</div>`);
-    }
+function autoFitPhoneTable() {
+  // 「職稱」「姓名」「分機」合併成同一組，共用同一個字體大小。
+  // 「#」序號欄不常需要仔細看，獨立拉出來用「上面那組算出來的一半大小」，
+  // 且有自己的下限（避免縮到完全看不到）。
+  const ID_MIN = 6; // px，# 欄字體下限
+  const allMain = [], allId = [];
+  for (let i = 0; i < 6; i++) {
+    const tbody = document.getElementById(`phone-tbody-${i}`);
+    if (!tbody) continue;
+    allId.push(...collectCol(tbody, 1));   // # 欄
+    allMain.push(...collectCol(tbody, 2)); // 職稱欄
+    allMain.push(...collectCol(tbody, 3)); // 姓名欄
+    allMain.push(...collectCol(tbody, 4)); // 分機欄
+  }
+  const mainSize = autoFitColumnGroup(allMain, AUTOFIT_MIN, c => c.querySelector('.ext-text') || c);
+  const idSize = Math.max(ID_MIN, mainSize / 2 + 2);
+  allId.forEach(c => { c.style.fontSize = idSize + 'px'; });
+}
+window.autoFitPhoneTable = autoFitPhoneTable;
 
-    document.getElementById("toggleStatsBtn").addEventListener("click", () => {
-      const panel = document.getElementById("statsPanel");
-      const btn = document.getElementById("toggleStatsBtn");
-      const isOpen = panel.style.display !== "none";
-      panel.style.display = isOpen ? "none" : "block";
-      btn.textContent = isOpen ? "統計 / 核對清單" : "收合面板 ▲";
-      if (!isOpen) renderStatsPanel();
+// ─── Header 動態縮放 ──────────────────────────────────────
+// header-top 裡的校名／學年徽章／分頁按鈕／搜尋列全部都是固定 px 尺寸，
+// 只有到了 900px / 640px 斷點才會「跳一次」改版面，中間的寬度或瀏覽器
+// 縮放比例改變時不會跟著平滑縮小。這裡改用 CSS variable --hscale
+// （header 內大部份尺寸都已經改成 calc(基準值 * var(--hscale))），
+// 量測目前 header-top 的內容是否放得下，放不下就整體調降這個比例，
+// 讓文字、間距、按鈕大小同步平滑縮小，不用等到斷點才改版。
+const HEADER_SCALE_MIN = 0.72;
+const HEADER_SCALE_STEP = 0.05;
+function autoFitHeader() {
+  const header = document.querySelector('header');
+  const bar = document.querySelector('.header-top');
+  if (!header || !bar) return;
+  // 手機版（900px 以下）header-left 會自動換行，不需要這套水平縮放邏輯
+  if (window.innerWidth <= 900) {
+    header.style.setProperty('--hscale', 1);
+    return;
+  }
+  let scale = 1;
+  header.style.setProperty('--hscale', scale);
+  // scrollWidth 在下一個 frame 才會反映新的 --hscale，用同步量測＋逐步調整即可
+  let guard = 0;
+  while (bar.scrollWidth > bar.clientWidth + 1 && scale > HEADER_SCALE_MIN && guard < 20) {
+    scale = Math.max(HEADER_SCALE_MIN, scale - HEADER_SCALE_STEP);
+    header.style.setProperty('--hscale', scale);
+    guard++;
+  }
+}
+window.autoFitHeader = autoFitHeader;
+autoFitHeader();
+window.addEventListener('load', autoFitHeader);
+window.addEventListener('resize', () => {
+  clearTimeout(window._headerFitTimer);
+  window._headerFitTimer = setTimeout(autoFitHeader, 100);
+});
+if (document.fonts && document.fonts.ready) {
+  document.fonts.ready.then(autoFitHeader);
+}
+if (typeof ResizeObserver !== 'undefined') {
+  document.addEventListener('DOMContentLoaded', () => {
+    const bar = document.querySelector('.header-top');
+    if (!bar) return;
+    const ro = new ResizeObserver(() => {
+      clearTimeout(window._headerROTimer);
+      window._headerROTimer = setTimeout(autoFitHeader, 60);
     });
+    ro.observe(bar);
+  });
+}
 
-    document.getElementById("toggleImportBtn").addEventListener("click", () => {
-      const panel = document.getElementById("importPanel");
-      const btn = document.getElementById("toggleImportBtn");
-      const isOpen = panel.style.display !== "none";
-      panel.style.display = isOpen ? "none" : "block";
-      btn.textContent = isOpen ? "名單匯入/匯出" : "收合面板 ▲";
+// 視窗縮放或字型延遲載入完成時，重新量測一次（避免初次量測時字型還沒套用）
+window.addEventListener('resize', () => {
+  clearTimeout(window._phoneRowSyncTimer);
+  window._phoneRowSyncTimer = setTimeout(() => { autoFitPhoneTable(); syncPhoneRowHeights(); }, 150);
+});
+if (document.fonts && document.fonts.ready) {
+  document.fonts.ready.then(() => { autoFitPhoneTable(); syncPhoneRowHeights(); });
+}
+
+// ─── ResizeObserver：不管是縮放、捲軸出現、字型延遲套用…任何原因造成
+// 欄寬改變，都會被這裡抓到並重新量測，比只監聽 window resize 更可靠
+// （原本只在初次 renderPhone 當下量測一次，若那個當下版面還沒完全穩定
+// ── 例如稍後才出現垂直捲軸 ── 量到的寬度就會跟最終畫面對不起來）。
+if (typeof ResizeObserver !== 'undefined') {
+  let _phoneGridRO;
+  document.addEventListener('DOMContentLoaded', () => {
+    const grid = document.getElementById('phone-grid');
+    if (!grid) return;
+    _phoneGridRO = new ResizeObserver(() => {
+      clearTimeout(window._phoneGridROTimer);
+      window._phoneGridROTimer = setTimeout(() => { autoFitPhoneTable(); syncPhoneRowHeights(); }, 60);
     });
+    _phoneGridRO.observe(grid);
+  });
+}
 
-    // 產生 6 個工作表的 Excel 檔並觸發下載
-    // sheetsData 格式: { 行政: ["王大明","..."], 課輔: [...], ... }
-    function downloadWorkbook(filename, sheetsData) {
-      const wb = XLSX.utils.book_new();
-      groups.forEach((g) => {
-        const names = sheetsData[g] || [];
-        const rows = [["姓名"], ...names.map((n) => [n])];
-        const ws = XLSX.utils.aoa_to_sheet(rows);
-        ws["!cols"] = [{ wch: 16 }];
-        XLSX.utils.book_append_sheet(wb, ws, g);
-      });
-      XLSX.writeFile(wb, filename);
-    }
+// ─── Phone render ─────────────────────────────────────────
+window.renderPhone = function(filter = '') {
+  const data = APP.phoneData;
+  const q = filter.trim().toLowerCase();
+  const filtered = q ? data.filter(r =>
+    r.name.toLowerCase().includes(q) ||
+    r.title.toLowerCase().includes(q) ||
+    r.ext.includes(q)
+  ) : data;
 
-    document.getElementById("downloadTemplateBtn").addEventListener("click", () => {
-      downloadWorkbook("志工名單_空白範本.xlsx", {
-        "行政": ["王大明"],
-        "課輔": ["李小華"],
-        "導護": [],
-        "醫護": [],
-        "故事": [],
-        "圖書": [],
-      });
-    });
+  // Build ordered flat list with category headers
+  const groups = {};
+  filtered.forEach(r => {
+    const cat = getCategory(r.title);
+    if (!groups[cat.key]) groups[cat.key] = { label: cat.label, key: cat.key, rows: [] };
+    groups[cat.key].rows.push(r);
+  });
 
-    document.getElementById("exportCsvBtn").addEventListener("click", () => {
-      if (!allVolunteers.length) {
-        alert("目前沒有資料可以匯出");
-        return;
-      }
-      const sheetsData = {};
-      groups.forEach((g) => { sheetsData[g] = []; });
-      allVolunteers.forEach((v) => {
-        const g = groups.includes(v.group) ? v.group : groups[0];
-        sheetsData[g].push(v.name);
-      });
-      downloadWorkbook("志工名單_匯出.xlsx", sheetsData);
-    });
+  // Flatten: [{isCat, label, key, cssClass} | {row data}]
+  // The displayed "#" is a live, always-contiguous sequence number computed here
+  // (not the stored record id), so it always matches "how many people so far"
+  // and never has gaps no matter how records were added/deleted over time.
+  const flat = [];
+  let _seq = 0;
+  DISPLAY_ORDER.forEach(cat => {
+    const hasRows = groups[cat.key] && groups[cat.key].rows.length;
+    const count = hasRows ? groups[cat.key].rows.length : 0;
+    // 編輯模式下，即使類別目前沒有人也顯示標題列，這樣才有地方可以拖曳放入；
+    // 一般瀏覽模式仍然隱藏空類別，避免畫面出現空空的標題造成混亂。
+    if (!hasRows && !APP.editMode) return;
+    flat.push({ isCat: true, label: cat.label, key: cat.key, cssClass: cat.cssClass, count });
+    if (hasRows) groups[cat.key].rows.forEach(r => flat.push({ isCat: false, ...r, _seq: ++_seq }));
+  });
 
-    document.getElementById("importRunBtn").addEventListener("click", async () => {
-      const fileInput = document.getElementById("importFileInput");
-      const resultBox = document.getElementById("importResult");
-      resultBox.style.color = "#c0392b";
-      resultBox.textContent = "";
+  // Distribute evenly across 6 columns, without letting a lone category
+  // header at a column boundary balloon the next column's row count.
+  const cols = distributeIntoColumns(flat, 6);
 
-      const file = fileInput.files[0];
-      if (!file) {
-        resultBox.textContent = "請先選擇要匯入的 Excel 檔案";
-        return;
-      }
-
-      const mode = document.querySelector('input[name="importMode"]:checked').value;
-      if (mode === "overwrite") {
-        if (!confirm("覆蓋模式會先清空目前所有志工資料,再匯入這份名單,確定要繼續嗎?此動作無法復原!")) {
-          return;
-        }
-      }
-
-      const runBtn = document.getElementById("importRunBtn");
-      const originalText = runBtn.textContent;
-      runBtn.disabled = true;
-      runBtn.textContent = "匯入中...請稍候";
-
-      try {
-        const arrayBuffer = await file.arrayBuffer();
-        const wb = XLSX.read(arrayBuffer, { type: "array" });
-
-        const parsedEntries = [];
-        let emptyNameCount = 0;
-        let unmatchedSheetCount = 0;
-        const matchedSheets = [];
-
-        wb.SheetNames.forEach((sheetName) => {
-          const trimmedSheetName = sheetName.trim();
-          if (!groups.includes(trimmedSheetName)) {
-            unmatchedSheetCount++;
-            return; // 分頁名稱不是六個組別之一,跳過
-          }
-          matchedSheets.push(trimmedSheetName);
-          const sheet = wb.Sheets[sheetName];
-          const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-
-          rows.forEach((row, idx) => {
-            const cell = row && row[0] !== undefined ? String(row[0]).trim() : "";
-            if (idx === 0 && cell === "姓名") return; // 跳過標題列
-            if (!cell) { emptyNameCount++; return; }
-            parsedEntries.push({ name: cell, group: trimmedSheetName });
-          });
-        });
-
-        if (!matchedSheets.length) {
-          resultBox.textContent = "找不到符合的工作表,分頁名稱要是「行政、課輔、導護、醫護、故事、圖書」其中之一";
-          return;
-        }
-
-        if (!parsedEntries.length) {
-          resultBox.textContent = "沒有解析到任何有效姓名,請確認每個分頁的姓名欄有填資料";
-          return;
-        }
-
-        // 覆蓋模式:先把現有資料全部刪除
-        if (mode === "overwrite" && allVolunteers.length) {
-          await Promise.all(allVolunteers.map((v) => deleteDoc(doc(db, "volunteers", v.id)).catch(() => {})));
-        }
-
-        // 去除重複:同姓名+同組別視為同一人(姓名比對前會清掉空白,含中間多打的空白)。
-        const normalizeName = (n) => (n || "").replace(/\s+/g, "").replace(/\u3000/g, "");
-        const existingKeySet = new Set(
-          mode === "overwrite"
-            ? []
-            : allVolunteers.map((v) => `${v.group}||${normalizeName(v.name)}`)
-        );
-        let duplicateSkipCount = 0;
-        const entriesToInsert = [];
-        for (const entry of parsedEntries) {
-          const key = `${entry.group}||${normalizeName(entry.name)}`;
-          if (existingKeySet.has(key)) {
-            duplicateSkipCount++;
-            continue;
-          }
-          existingKeySet.add(key);
-          entriesToInsert.push(entry);
-        }
-
-        // 寫入新資料(平行處理,加快速度)
-        let successCount = 0;
-        let failCount = 0;
-        await Promise.all(
-          entriesToInsert.map((entry) => {
-            const docId = `${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
-            return setDoc(doc(db, "volunteers", docId), entry)
-              .then(() => { successCount++; })
-              .catch(() => { failCount++; });
-          })
-        );
-
-        let msg = `匯入完成:成功 ${successCount} 筆(共讀取 ${matchedSheets.length} 個分頁:${matchedSheets.join("、")})`;
-        if (failCount) msg += `,失敗 ${failCount} 筆`;
-        if (emptyNameCount) msg += `,略過 ${emptyNameCount} 列空白`;
-        if (duplicateSkipCount) msg += `,略過 ${duplicateSkipCount} 筆重複姓名(同組別已存在,避免重複建立)`;
-        if (unmatchedSheetCount) msg += `,有 ${unmatchedSheetCount} 個分頁名稱不符合組別已忽略`;
-
-        resultBox.style.color = failCount || unmatchedSheetCount ? "#c0392b" : "#2f6f4f";
-        resultBox.textContent = msg;
-        fileInput.value = "";
-        loadVolunteers();
-      } catch (err) {
-        console.error(err);
-        resultBox.textContent = "匯入失敗:" + err.message;
-      } finally {
-        runBtn.disabled = false;
-        runBtn.textContent = originalText;
-      }
-    });
-
-    function groupOptions(selected) {
-      return groups
-        .map((g) => `<option value="${g}" ${g === selected ? "selected" : ""}>${g}</option>`)
-        .join("");
-    }
-
-    function buildFilterBar() {
-      const bar = document.getElementById("filterBar");
-      const options = ["全部", ...groups];
-      bar.innerHTML = options
-        .map((g) => `<button class="filter-btn ${g === currentFilter ? "active" : ""}" data-group="${g}">${g}</button>`)
-        .join("");
-      bar.querySelectorAll(".filter-btn").forEach((btn) => {
-        btn.addEventListener("click", () => {
-          currentFilter = btn.dataset.group;
-          bar.querySelectorAll(".filter-btn").forEach((b) => b.classList.remove("active"));
-          btn.classList.add("active");
-          renderTable();
-        });
-      });
-    }
-
-    async function loadVolunteers() {
-      const tbody = document.getElementById("tableBody");
-      tbody.innerHTML = `<tr><td colspan="5"><div class="loading-box"><div class="spinner"></div><div>資料讀取中,請稍候...</div></div></td></tr>`;
-      const snap = await getDocs(collection(db, "volunteers"));
-      allVolunteers = [];
-      snap.forEach((docSnap) => {
-        allVolunteers.push({ id: docSnap.id, ...docSnap.data() });
-      });
-      renderTable();
-    }
-
-    function renderTable() {
-      const tbody = document.getElementById("tableBody");
-      tbody.innerHTML = "";
-
-      let list = allVolunteers.slice();
-      if (currentFilter !== "全部") {
-        list = list.filter((v) => v.group === currentFilter);
-      }
-      if (currentSearch) {
-        list = list.filter((v) => (v.name || "").toLowerCase().includes(currentSearch));
-      }
-      if (!list.length) {
-        tbody.innerHTML = "<tr><td colspan='5'>目前沒有符合的志工資料</td></tr>";
-        updateDupBanner([]);
-        return;
-      }
-
-      // 找出「同姓名+同組別」重複的人(以目前全部名單為準,不受篩選/搜尋影響)
-      // 姓名比對前先清掉所有空白(含中間多打的空白、全形空白),避免漏抓重複
-      const normalizeName = (n) => (n || "").replace(/\s+/g, "").replace(/\u3000/g, "");
-
-      // 同姓名+同組別 → 視為資料重複
-      const countMap = {};
-      allVolunteers.forEach((v) => {
-        const key = `${v.group}||${normalizeName(v.name)}`;
-        countMap[key] = (countMap[key] || 0) + 1;
-      });
-
-      // 同姓名+不同組別 → 可能是身兼多職,只提醒不算錯誤
-      const nameGroupMap = {};
-      allVolunteers.forEach((v) => {
-        const n = normalizeName(v.name);
-        if (!n) return;
-        if (!nameGroupMap[n]) nameGroupMap[n] = new Set();
-        nameGroupMap[n].add(v.group);
-      });
-
-      const dupNames = new Set();
-      const multiRoleNames = new Set();
-      allVolunteers.forEach((v) => {
-        const n = normalizeName(v.name);
-        const key = `${v.group}||${n}`;
-        if (countMap[key] > 1) {
-          dupNames.add((v.name || "").trim() + "(" + v.group + ")");
-        }
-        if (nameGroupMap[n] && nameGroupMap[n].size > 1) {
-          multiRoleNames.add((v.name || "").trim() + "(" + Array.from(nameGroupMap[n]).join("、") + ")");
-        }
-      });
-      updateDupBanner(Array.from(dupNames), Array.from(multiRoleNames));
-
-      const statsPanel = document.getElementById("statsPanel");
-      if (statsPanel && statsPanel.style.display !== "none") renderStatsPanel();
-
-      list.forEach((v, i) => {
-        const n = normalizeName(v.name);
-        const key = `${v.group}||${n}`;
-        const isDup = countMap[key] > 1;
-        const isMultiRole = nameGroupMap[n] && nameGroupMap[n].size > 1;
-        addRow(v.id, v, false, i + 1, isDup, isMultiRole);
-      });
-    }
-
-    function updateDupBanner(dupNames, multiRoleNames) {
-      const banner = document.getElementById("dupBanner");
-      if (banner) {
-        if (!dupNames.length) {
-          banner.style.display = "none";
-          banner.textContent = "";
-        } else {
-          banner.style.display = "block";
-          banner.textContent = `⚠️ 發現 ${dupNames.length} 位重複志工(同姓名+同組別,已用黃色標示,建議直接刪除多的):${dupNames.join("、")}`;
-        }
-      }
-
-      const multiBanner = document.getElementById("multiRoleBanner");
-      if (multiBanner) {
-        if (!multiRoleNames.length) {
-          multiBanner.style.display = "none";
-          multiBanner.textContent = "";
-        } else {
-          multiBanner.style.display = "block";
-          multiBanner.textContent = `ℹ️ 發現 ${multiRoleNames.length} 位同名但分在不同組別(已用藍色標示「兼任」,可能是身兼多職,也可能是誤植,請自行確認):${multiRoleNames.join("、")}`;
-        }
-      }
-    }
-
-    function addRow(id, data = {}, isNew = true, seq = null, isDup = false, isMultiRole = false) {
-      const tbody = document.getElementById("tableBody");
-      const tr = document.createElement("tr");
-      tr.dataset.id = id || "";
-      if (isDup) tr.classList.add("dup-row");
-      if (isMultiRole) tr.classList.add("multi-role-row");
-
-      const badge =
-        (isDup ? `<span class="dup-badge">重複</span>` : "") +
-        (isMultiRole ? `<span class="multi-role-badge">兼任</span>` : "");
-
-      tr.innerHTML = `
-        <td>${seq !== null ? seq : ""}</td>
-        <td>${!isNew ? `<input type="checkbox" class="rowCheck" />` : ""}</td>
-        <td><input type="text" class="nameInput" value="${data.name || ""}" placeholder="姓名" />${badge}</td>
-        <td><select class="groupInput">${groupOptions(data.group)}</select></td>
-        <td>
-          ${!isNew ? `<button class="del-btn">刪除</button>` : ""}
+  function rowHtml(item) {
+    if (item.isCat) {
+      return `<tr class="cat-header ${item.cssClass || ''}" ondragover="event.preventDefault()" ondrop="dropPersonOnCategory(event,'${item.key}')">
+        <td colspan="3">${item.label}<span class="cat-count">(${item.count})</span></td>
+        <td style="text-align:right;padding-right:6px">
+          <button class="cat-add-btn" onclick="addRowInCat('${item.key}')">＋</button>
         </td>
-      `;
-      tbody.appendChild(tr);
+      </tr>`;
+    }
+    const isStar = item.name.startsWith('★');
+    const rawName = isStar ? item.name.slice(1) : item.name;
+    // 姓名欄完整顯示，不再截斷字數（欄寬已加大並允許換行）
+    const displayName = isStar ?
+      `<span class="star">★</span>${rawName}` : rawName;
+    // # 欄改為即時計算的流水號（依畫面順序重新編號），不再顯示寫死的 id，
+    // 這樣就不會因為資料新增/刪除而跳號，且永遠等於「目前算到第幾位」。
+    const idDisplay = isStar ? '★' : item._seq;
+    // 星星要跟姓名欄的 ★ 同色（accent 橘黃色），非星星時維持原本淡灰色
+    const idStyle = isStar
+      ? 'color:var(--accent);line-height:1;'
+      : 'color:var(--text-light);line-height:1;';
+    const titleAttr = ` title="${String(item.title).replace(/"/g,'&quot;')}"`;
+    const extTitleAttr = ` title="${String(item.ext).replace(/"/g,'&quot;')}"`;
+    const draggableAttr = APP.editMode ? ' draggable="true" ondragstart="dragStartPerson(event,\'' + item.id + '\')" ondragover="event.preventDefault()" ondrop="dropPersonOnRow(event,\'' + item.id + '\')"' : '';
+    return `<tr data-id="${item.id}"${draggableAttr}>
+      <td class="id-col id-star-cell" onclick="toggleStar('${item.id}')" style="${idStyle}"${isStar ? titleAttr : ' title="編輯模式下可標記學年主任"'}>${idDisplay}</td>
+      <td class="editable copy-title" data-record-id="${item.id}"${titleAttr} onclick="handleFieldClick(event,this,'title')">${item.title}</td>
+      <td class="name-col editable copy-name" data-raw-name="${rawName.replace(/"/g,'&quot;')}" data-record-id="${item.id}" title="${rawName.replace(/"/g,'&quot;')}" onclick="handleNameClick(event,this)">${displayName}</td>
+      <td class="ext-col editable copy-ext" data-record-id="${item.id}"${extTitleAttr} onclick="handleFieldClick(event,this,'ext')"><span class="ext-text">${item.ext}</span><button class="person-del-btn" onclick="deletePerson(event,'${item.id}')" title="刪除此人">✕</button></td>
+    </tr>`;
+  }
 
-      const groupSelect = tr.querySelector(".groupInput");
-      const applyGroupColor = () => {
-        Object.values(groupColorClass).forEach((cls) => groupSelect.classList.remove(cls));
-        const cls = groupColorClass[groupSelect.value];
-        if (cls) groupSelect.classList.add(cls);
-      };
-      applyGroupColor();
-      groupSelect.addEventListener("change", applyGroupColor);
+  cols.forEach((col, i) => {
+    const el = document.getElementById(`phone-tbody-${i}`);
+    if (el) el.innerHTML = col.map(rowHtml).join('');
+  });
 
-      const delBtn = tr.querySelector(".del-btn");
-      if (delBtn) {
-        delBtn.addEventListener("click", async () => {
-          if (!confirm(`確定要刪除「${data.name}」的資料嗎?`)) return;
-          try {
-            await deleteDoc(doc(db, "volunteers", id));
-            tr.remove();
-          } catch (err) {
-            console.error(err);
-            alert("刪除失敗:" + err.message);
+  // 6 個欄位是各自獨立的 <table>，CSS 的 height:23px 只是「理想值」，
+  // 不同瀏覽器 / 字型渲染下實際列高可能有 1px 內的差異，導致視覺上不整齊。
+  // 這裡在渲染完成後，逐一比對「同一列序」在 6 個欄位中的實際高度，
+  // 取最大值統一設定，強制讓每一列在跨欄時都完全對齊。
+  autoFitPhoneTable();
+  syncPhoneRowHeights();
+
+  const total2 = filtered.length;
+  document.getElementById('phone-count').textContent = `共 ${total2} 筆${q ? '（篩選中）' : ''}`;
+  if (APP.phoneLastEdit) document.getElementById('last-edit-phone').textContent = '最後編輯：' + APP.phoneLastEdit;
+
+  // Extension→teacher lookup for the map tab depends on phoneData, so keep it fresh
+  window.renderMap && window.APP.mapData && window._mapNeedsRefresh !== false && null;
+};
+
+window.filterPhone = function() {
+  renderPhone(document.getElementById('phone-search').value);
+};
+
+// Click name: edit-mode → edit cell; view-mode → copy name
+window.handleNameClick = function(e, td) {
+  if (APP.editMode) {
+    editCell(td, 'name');
+  } else {
+    const name = td.dataset.rawName || td.textContent.replace('★','').trim();
+    navigator.clipboard.writeText(name).then(() => {
+      showToast(`✅ 已複製「${name}」`);
+    }).catch(() => {
+      const ta = document.createElement('textarea');
+      ta.value = name; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      showToast(`✅ 已複製「${name}」`);
+    });
+  }
+};
+
+// Click title/ext cell: edit-mode → edit cell; view-mode → copy value
+window.handleFieldClick = function(e, td, field) {
+  if (APP.editMode) {
+    editCell(td, field);
+  } else {
+    const text = field === 'ext' ? (td.querySelector('.ext-text')?.textContent || '') : td.textContent.trim();
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(() => {
+      showToast(`✅ 已複製「${text}」`);
+    }).catch(() => {
+      const ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      showToast(`✅ 已複製「${text}」`);
+    });
+  }
+};
+
+// Click room name / code in 場地配置 (map tab): view-mode → copy individually.
+// In edit-mode the click should still bubble up to open the room editor as before.
+window.copyRoomField = function(e, text) {
+  if (APP.editMode) return; // let it bubble to the card's onclick (openRoomEdit)
+  e.stopPropagation();
+  if (!text) return;
+  navigator.clipboard.writeText(text).then(() => {
+    showToast(`✅ 已複製「${text}」`);
+  }).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    showToast(`✅ 已複製「${text}」`);
+  });
+};
+
+window.toggleStar = function(id) {
+  if (!APP.editMode) return;
+  const record = APP.phoneData.find(r => String(r.id) === String(id));
+  if (!record) return;
+  if (record.name.startsWith('★')) {
+    record.name = record.name.slice(1);
+  } else {
+    record.name = '★' + record.name;
+  }
+  APP.pendingChanges = true;
+  renderPhone(document.getElementById('phone-search').value);
+};
+
+// ─── Inline cell edit ─────────────────────────────────────
+window.editCell = function(td, field) {
+  if (!APP.editMode) return;
+  if (td.querySelector('input')) return;
+  const row = td.closest('tr');
+  const id = row.dataset.id;
+  const record = APP.phoneData.find(r => String(r.id) === String(id));
+  if (!record) return;
+  const orig = record[field];
+  const val = field === 'name' && orig.startsWith('★') ? orig.slice(1) : orig;
+  td.innerHTML = `<input class="inline-edit" value="${val}" onblur="commitCell(this,'${id}','${field}')" onkeydown="if(event.key==='Enter')this.blur();if(event.key==='Escape'){this.value='${val}';this.blur();}">`;
+  td.querySelector('input').focus();
+  APP.pendingChanges = true;
+};
+
+window.commitCell = function(input, id, field) {
+  const record = APP.phoneData.find(r => String(r.id) === String(id));
+  if (record) record[field] = input.value.trim();
+  renderPhone(document.getElementById('phone-search').value);
+  // ext/name changes affect the map tab's teacher-name matching
+  if ((field === 'ext' || field === 'name') && document.getElementById('panel-map').classList.contains('active')) {
+    renderMap();
+  }
+};
+
+window.addRow = function() {
+  const newId = String(Math.max(...APP.phoneData.map(r => parseInt(r.id) || 0)) + 1);
+  APP.phoneData.push({ id: newId, title: '新職稱', name: '姓名', ext: '000' });
+  APP.pendingChanges = true;
+  renderPhone();
+};
+
+// ─── Drag a person row onto a category header to move them ────
+// 類別是由 title 欄位判斷的（例如 "科任教師"、"301"），所以搬移的做法
+// 是把該筆記錄的 title 改成目標類別的代表值。因為同一類別底下的 title
+// 常常不完全相同（例如各年級班級的房號不同），改之前會先跳出確認視窗，
+// 讓你可以調整成正確的職稱／班級代碼，而不是被亂猜的值蓋掉。
+window.dragStartPerson = function(e, id) {
+  if (!APP.editMode) { e.preventDefault(); return; }
+  e.dataTransfer.setData('text/plain', String(id));
+  e.dataTransfer.effectAllowed = 'move';
+};
+
+window.dropPersonOnCategory = function(e, catKey) {
+  e.preventDefault();
+  if (!APP.editMode) return;
+  const id = e.dataTransfer.getData('text/plain');
+  if (!id) return;
+  const record = APP.phoneData.find(r => String(r.id) === String(id));
+  const cat = CAT_ORDER.find(c => c.key === catKey);
+  if (!record || !cat) return;
+  if (cat.match(record.title)) return; // 已經在這個類別了
+
+  const suggestion = APP.phoneData.find(r => cat.match(r.title))?.title || cat.label;
+  const newTitle = prompt(`將「${record.name.replace('★','')}」搬移到「${cat.label}」\n請確認／調整職稱或班級代碼：`, suggestion);
+  if (newTitle === null || !newTitle.trim()) return;
+  record.title = newTitle.trim();
+  APP.pendingChanges = true;
+  renderPhone(document.getElementById('phone-search').value);
+};
+
+// ─── Drag a person row onto another person row：插入到該筆的位置排序 ────
+// 拖曳的這筆資料會被移到目標那筆的前面，原本卡在那個位置往後的人（含目標本人）
+// 全部自動往後遞補一位——這樣就能像你想的「把72移到65的位置，其他往後」。
+// 如果拖過去的目標剛好在不同類別，會先跳出確認視窗調整職稱／班級代碼，
+// 一次同時處理「搬類別」跟「排序位置」。
+window.dropPersonOnRow = function(e, targetId) {
+  e.preventDefault();
+  e.stopPropagation();
+  if (!APP.editMode) return;
+  const id = e.dataTransfer.getData('text/plain');
+  if (!id || String(id) === String(targetId)) return;
+  const fromIdx = APP.phoneData.findIndex(r => String(r.id) === String(id));
+  const toIdx = APP.phoneData.findIndex(r => String(r.id) === String(targetId));
+  if (fromIdx < 0 || toIdx < 0) return;
+  const dragged = APP.phoneData[fromIdx];
+  const target = APP.phoneData[toIdx];
+
+  const draggedCat = getCategory(dragged.title);
+  const targetCat = getCategory(target.title);
+  if (draggedCat.key !== targetCat.key) {
+    const newTitle = prompt(`將「${dragged.name.replace('★','')}」搬移到「${targetCat.label}」\n請確認／調整職稱或班級代碼：`, target.title);
+    if (newTitle === null || !newTitle.trim()) return;
+    dragged.title = newTitle.trim();
+  }
+
+  // 先移除拖曳的那筆，再插入到目標（重新找一次目標目前的位置，因為移除動作可能讓索引位移）前面
+  APP.phoneData.splice(fromIdx, 1);
+  let insertIdx = APP.phoneData.findIndex(r => String(r.id) === String(targetId));
+  if (insertIdx < 0) insertIdx = APP.phoneData.length;
+  APP.phoneData.splice(insertIdx, 0, dragged);
+
+  APP.pendingChanges = true;
+  renderPhone(document.getElementById('phone-search').value);
+};
+
+window.deletePerson = function(e, id) {
+  e.stopPropagation();
+  if (!APP.editMode) return;
+  const record = APP.phoneData.find(r => String(r.id) === String(id));
+  if (!record) return;
+  const displayName = record.name.startsWith('★') ? record.name.slice(1) : record.name;
+  if (!confirm(`確定刪除「${displayName}（${record.title}）」這筆資料？`)) return;
+  APP.phoneData = APP.phoneData.filter(r => String(r.id) !== String(id));
+  APP.pendingChanges = true;
+  renderPhone(document.getElementById('phone-search').value);
+};
+
+window.addRowInCat = function(catKey) {
+  if (!APP.editMode) return;
+  // Find the last row of this category to insert after it
+  const cat = CAT_ORDER.find(c => c.key === catKey);
+  if (!cat) return;
+  // Find insertion index: after last matching item
+  let insertAfter = -1;
+  APP.phoneData.forEach((r, i) => { if (cat.match(r.title)) insertAfter = i; });
+  const newId = String(Math.max(...APP.phoneData.map(r => parseInt(r.id) || 0)) + 1);
+  // Use the category's typical title as default
+  const defaultTitle = APP.phoneData.find(r => cat.match(r.title))?.title || cat.label;
+  const newRow = { id: newId, title: defaultTitle, name: '姓名', ext: '000' };
+  if (insertAfter >= 0) {
+    APP.phoneData.splice(insertAfter + 1, 0, newRow);
+  } else {
+    APP.phoneData.push(newRow);
+  }
+  APP.pendingChanges = true;
+  renderPhone();
+  // Focus on the new row's name cell after render
+  setTimeout(() => {
+    const row = document.querySelector(`tr[data-id="${newId}"] td.name-col`);
+    if (row) row.click();
+  }, 50);
+};
+
+// ─── Map render ───────────────────────────────────────────
+const BNAMES = { A: '新莊樓', B: '至美樓', F: '至誠樓', C: '至善樓', Z: '至真樓', X: '其他' };
+
+// Floor order storage: APP.floorOrder[b] = ['5F','4F','3F','2F','1F',...]
+function getFloorOrder(b) {
+  if (!APP.floorOrder) APP.floorOrder = {};
+  if (!APP.floorOrder[b]) {
+    // First time: just use the keys as-is from mapData (no auto-sort)
+    APP.floorOrder[b] = Object.keys(APP.mapData[b] || {});
+  }
+  // Always ensure all existing floors are included (in case new ones were added)
+  const existing = Object.keys(APP.mapData[b] || {});
+  existing.forEach(f => {
+    if (!APP.floorOrder[b].includes(f)) APP.floorOrder[b].push(f);
+  });
+  return APP.floorOrder[b];
+}
+
+// Build a lookup of extension number -> teacher/staff name(s) from the phone list.
+// Multiple staff can share one extension (e.g. an office line), so this maps to an array.
+function buildExtNameMap() {
+  const map = {};
+  (APP.phoneData || []).forEach(r => {
+    if (!r.ext) return;
+    const name = r.name.startsWith('★') ? r.name.slice(1) : r.name;
+    // A single record's ext field is normally one number, but split defensively
+    // in case it was entered like "213,214"
+    r.ext.split(/[\s,、\n]+/).filter(Boolean).forEach(num => {
+      if (!map[num]) map[num] = [];
+      if (!map[num].includes(name)) map[num].push(name);
+    });
+  });
+  return map;
+}
+
+window.renderMap = function() {
+  const b = APP.currentBuilding;
+  if (!APP.mapData[b]) APP.mapData[b] = {};
+  const isRotated = false;
+  const sortedFloors = getFloorOrder(b)
+    .filter(f => APP.mapData[b][f] !== undefined);
+
+  const extNameMap = buildExtNameMap();
+
+  function roomCardHtml(room, floor, idx, total) {
+    const typeClass = room.type === 'class' ? 'has-class' : room.type === 'office' ? 'has-office' : room.type === 'other' ? 'has-other' : 'has-special';
+    const dragAttrs = `draggable="true" ondragstart="dragStart(event,'${b}','${floor}',${idx})" ondragover="dragOver(event)" ondrop="dropRoom(event,'${b}','${floor}',${idx})" ondragend="dragEnd(event)"`;
+    const extNums = room.ext ? room.ext.split(/[\s,、\n]+/).filter(Boolean) : [];
+    const extHtml = extNums.length > 0
+      ? `<div class="room-ext-grid">${extNums.map(n => {
+          const names = extNameMap[n];
+          const joined = names && names.length ? names.join('／') : '';
+          const tooltipText = (joined ? `☎${n} ${joined}` : `☎${n}`) + '　點擊分機複製分機、點擊姓名複製姓名';
+          const nameHtml = names && names.length
+            ? names.map(nm => {
+                const nmEsc = nm.replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;');
+                return `<span class="ext-name" title="點擊複製姓名" onclick="copyRoomField(event,'${nmEsc}')">${nm}</span>`;
+              }).join('<span class="ext-name-sep">／</span>')
+            : '';
+          const nEsc = n.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+          return `<span class="room-ext-item" title="${tooltipText.replace(/"/g,'&quot;')}"><span class="ext-num" onclick="copyRoomField(event,'${nEsc}')">☎${n}</span>${nameHtml}</span>`;
+        }).join('')}</div>`
+      : '';
+    const roomRentals = room.code ? getRentalsForCode(room.code) : [];
+    const rentalDot = roomRentals.length
+      ? `<span class="room-rental-dot" title="${roomRentals.map(r => `${r.group}｜${formatDateRange(r.dateStart, r.dateEnd)}｜${formatDays(r.days)} ${r.start}-${r.end}`).join('\n').replace(/"/g,'&quot;')}"></span>`
+      : '';
+    const escAttr = s => (s || '').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;');
+    const nameEsc = escAttr(room.name || '（未命名）');
+    const codeEsc = escAttr(room.code || '');
+    // Room cards render left→right, but the physical room numbering runs the
+    // opposite way (rightmost card is "-1"), so count position from the end.
+    const posNum = (total || 1) - idx;
+    const locLabel = `${BNAMES[b] || ''}${floor}-${posNum}`;
+    const locEsc = escAttr(locLabel);
+    return `<div class="room-card ${typeClass}" ${dragAttrs} onclick="openRoomEdit('${b}','${floor}',${idx})">
+      ${rentalDot}
+      <div class="room-name" title="點擊複製教室名稱" onclick="copyRoomField(event,'${nameEsc}')">${room.name || '（未命名）'}</div>
+      ${room.code ? `<div class="room-code" title="點擊複製教室代碼" onclick="copyRoomField(event,'${codeEsc}')">${room.code}</div>` : ''}
+      <div class="room-loc" title="點擊複製位置代碼" onclick="copyRoomField(event,'${locEsc}')">${locLabel}</div>
+      ${extHtml}
+      <button class="room-del-btn" onclick="deleteRoom(event,'${b}','${floor}',${idx})" title="刪除">✕</button>
+    </div>`;
+  }
+
+  function floorSectionHtml(floor, rooms, floorIdx) {
+    const addBtn = `<button class="add-room-btn" onclick="addRoom('${b}','${floor}')">＋ 新增</button>`;
+    const delFloorBtn = `<button class="del-floor-btn" onclick="deleteFloor('${b}','${floor}')" title="刪除此樓層">🗑</button>`;
+    const renameBtn = `<button class="rename-floor-btn" onclick="renameFloor('${b}','${floor}')" title="重新命名樓層">✎</button>`;
+    const upBtn = floorIdx > 0
+      ? `<button class="move-floor-btn" onclick="moveFloor('${b}','${floor}',-1)" title="往上移">↑</button>` : '';
+    const downBtn = floorIdx < sortedFloors.length - 1
+      ? `<button class="move-floor-btn" onclick="moveFloor('${b}','${floor}',1)" title="往下移">↓</button>` : '';
+    return `<div class="floor-section" ondragover="dragOver(event)" ondrop="dropRoom(event,'${b}','${floor}',999)">
+      <div class="floor-label"><span class="floor-drag-handle">${floor}</span>
+        <span class="floor-actions">${upBtn}${downBtn} ${renameBtn} ${addBtn} ${delFloorBtn}</span>
+      </div>
+      <div class="rooms-grid">${rooms.map((r,i) => roomCardHtml(r,floor,i,rooms.length)).join('')}</div>
+    </div>`;
+  }
+
+  let html = `<div class="building-title">${BNAMES[b]}
+    <button class="add-floor-btn" onclick="addFloor('${b}')">＋ 新增樓層</button>
+  </div>`;
+
+  sortedFloors.forEach((floor, floorIdx) => {
+    html += floorSectionHtml(floor, APP.mapData[b][floor] || [], floorIdx);
+  });
+
+  document.getElementById('building-map').innerHTML = html;
+  if (APP.mapLastEdit) document.getElementById('last-edit-map').textContent = '最後編輯：' + APP.mapLastEdit;
+};
+
+window.switchBuilding = function(b, el) {
+  APP.currentBuilding = b;
+  if (!APP.mapData[b]) APP.mapData[b] = {};
+  document.querySelectorAll('.btab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  // Clear search when switching building
+  const si = document.getElementById('map-search-input');
+  if (si) si.value = '';
+  document.getElementById('map-search-count') && (document.getElementById('map-search-count').textContent = '');
+  renderMap();
+};
+
+// ─── Map search ───────────────────────────────────────────
+window.searchMap = function(q) {
+  q = q.trim().toLowerCase();
+  const cards = document.querySelectorAll('#building-map .room-card');
+  const countEl = document.getElementById('map-search-count');
+
+  if (!q) {
+    cards.forEach(c => { c.classList.remove('map-match','map-dim'); });
+    if (countEl) countEl.textContent = '';
+    return;
+  }
+
+  let matchCount = 0;
+  cards.forEach(c => {
+    const text = c.textContent.toLowerCase();
+    const isMatch = text.includes(q);
+    c.classList.toggle('map-match', isMatch);
+    c.classList.toggle('map-dim', !isMatch);
+    if (isMatch) matchCount++;
+  });
+
+  if (countEl) countEl.textContent = matchCount > 0 ? `找到 ${matchCount} 間` : '找不到';
+
+  // Auto-switch building if no match here but found elsewhere
+  if (matchCount === 0) {
+    const allBuildings = ['F','B','C','Z','A','X'];
+    for (const bkey of allBuildings) {
+      if (bkey === APP.currentBuilding) continue;
+      const bdata = APP.mapData[bkey] || {};
+      for (const floor of Object.keys(bdata)) {
+        for (const room of (bdata[floor] || [])) {
+          const text = [room.name, room.code, room.ext].join(' ').toLowerCase();
+          if (text.includes(q)) {
+            // Found in another building — switch to it
+            const btab = [...document.querySelectorAll('.btab')].find(t => t.onclick?.toString().includes(`'${bkey}'`));
+            if (btab) { btab.click(); }
+            else {
+              APP.currentBuilding = bkey;
+              renderMap();
+            }
+            // Re-run highlight after render
+            setTimeout(() => searchMap(q), 50);
+            return;
           }
-        });
+        }
       }
     }
+  }
+};
 
-    document.getElementById("addBtn").addEventListener("click", () => {
-      addRow(null, {}, true);
-    });
+// ─── Add floor ────────────────────────────────────────────
+window.addFloor = function(b) {
+  if (!APP.editMode) return;
+  const name = prompt('新樓層名稱（例：6F、地下室、屋頂）：');
+  if (!name || !name.trim()) return;
+  const key = name.trim();
+  if (APP.mapData[b][key]) { alert('此樓層已存在'); return; }
+  APP.mapData[b][key] = [];
+  getFloorOrder(b).push(key);
+  APP.pendingChanges = true;
+  renderMap();
+};
 
-    document.getElementById("saveAllBtn").addEventListener("click", async () => {
-      const saveBtn = document.getElementById("saveAllBtn");
-      const rows = document.querySelectorAll("#tableBody tr");
+// ─── Move floor up/down ───────────────────────────────────
+window.moveFloor = function(b, floor, dir) {
+  if (!APP.editMode) return;
+  const order = getFloorOrder(b);
+  const idx = order.indexOf(floor);
+  if (idx < 0) return;
+  const newIdx = idx + dir;
+  if (newIdx < 0 || newIdx >= order.length) return;
+  order.splice(idx, 1);
+  order.splice(newIdx, 0, floor);
+  APP.pendingChanges = true;
+  renderMap();
+};
 
-      // 進入儲存中狀態:按鈕變灰、文字改變、不能重複按
-      const originalText = saveBtn.textContent;
-      saveBtn.disabled = true;
-      saveBtn.textContent = "儲存中...請稍候";
-      saveBtn.style.opacity = "0.6";
-      saveBtn.style.cursor = "not-allowed";
+// ─── Rename floor ─────────────────────────────────────────
+window.renameFloor = function(b, floor) {
+  if (!APP.editMode) return;
+  const newName = prompt(`將「${floor}」重新命名為：`, floor);
+  if (!newName || !newName.trim() || newName.trim() === floor) return;
+  const key = newName.trim();
+  if (APP.mapData[b][key]) { alert(`「${key}」已存在，請用其他名稱`); return; }
+  APP.mapData[b][key] = APP.mapData[b][floor];
+  delete APP.mapData[b][floor];
+  const order = getFloorOrder(b);
+  const idx = order.indexOf(floor);
+  if (idx >= 0) order[idx] = key;
+  APP.pendingChanges = true;
+  renderMap();
+};
 
-      let successCount = 0;
-      let failCount = 0;
+// ─── Delete floor ─────────────────────────────────────────
+window.deleteFloor = function(b, floor) {
+  if (!APP.editMode) return;
+  const rooms = APP.mapData[b][floor] || [];
+  if (rooms.length > 0 && !confirm(`確定刪除「${floor}」及其 ${rooms.length} 間教室？`)) return;
+  delete APP.mapData[b][floor];
+  const order = getFloorOrder(b);
+  const idx = order.indexOf(floor);
+  if (idx >= 0) order.splice(idx, 1);
+  APP.pendingChanges = true;
+  renderMap();
+};
 
-      try {
-        const tasks = [];
-        for (const tr of rows) {
-          const nameInput = tr.querySelector(".nameInput");
-          const groupInput = tr.querySelector(".groupInput");
-          if (!nameInput || !groupInput) continue; // 空表格提示列,跳過
+// ─── Delete room ──────────────────────────────────────────
+window.deleteRoom = function(e, b, floor, idx) {
+  e.stopPropagation();
+  if (!APP.editMode) return;
+  const room = APP.mapData[b][floor][idx];
+  if (!confirm(`確定刪除「${room.name || '此教室'}」？`)) return;
+  APP.mapData[b][floor].splice(idx, 1);
+  APP.pendingChanges = true;
+  renderMap();
+};
 
-          const name = nameInput.value.trim();
-          if (!name) continue; // 空白列(還沒填姓名)就不存,不當錯誤
+// ─── Drag and drop ────────────────────────────────────────
+APP._drag = null;
 
-          const payload = { name, group: groupInput.value };
-          const docId = tr.dataset.id || `${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+window.dragStart = function(e, b, floor, idx) {
+  if (!APP.editMode) { e.preventDefault(); return; }
+  APP._drag = { b, floor, idx };
+  e.dataTransfer.effectAllowed = 'move';
+  e.currentTarget.style.opacity = '0.4';
+};
+window.dragEnd = function(e) {
+  e.currentTarget.style.opacity = '';
+};
+window.dragOver = function(e) {
+  if (!APP.editMode || !APP._drag) return;
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+};
+window.dropRoom = function(e, targetB, targetFloor, targetIdx) {
+  e.preventDefault();
+  e.stopPropagation();
+  if (!APP._drag) return;
+  const { b: srcB, floor: srcFloor, idx: srcIdx } = APP._drag;
+  APP._drag = null;
+  if (srcB === targetB && srcFloor === targetFloor && srcIdx === targetIdx) return;
 
-          tasks.push(
-            setDoc(doc(db, "volunteers", docId), payload)
-              .then(() => { successCount++; })
-              .catch((err) => { console.error(err); failCount++; })
-          );
-        }
+  // 一對一互換
+  if (!APP.mapData[targetB][targetFloor]) APP.mapData[targetB][targetFloor] = [];
 
-        await Promise.all(tasks);
+  if (targetIdx >= APP.mapData[targetB][targetFloor].length) {
+    // 拖到空白區域（＋按鈕上）→ 移到最後
+    const room = APP.mapData[srcB][srcFloor].splice(srcIdx, 1)[0];
+    APP.mapData[targetB][targetFloor].push(room);
+  } else {
+    // 互換兩個位置
+    const srcRoom = APP.mapData[srcB][srcFloor][srcIdx];
+    const tgtRoom = APP.mapData[targetB][targetFloor][targetIdx];
+    APP.mapData[targetB][targetFloor][targetIdx] = srcRoom;
+    APP.mapData[srcB][srcFloor][srcIdx] = tgtRoom;
+  }
 
-        if (failCount) {
-          alert(`儲存完成,成功 ${successCount} 筆,失敗 ${failCount} 筆`);
-        } else {
-          alert(`已儲存 ${successCount} 筆資料`);
-        }
-        loadVolunteers();
-      } finally {
-        // 還原按鈕狀態(loadVolunteers 會重畫表格,這裡是保險,避免例外時按鈕卡住)
-        saveBtn.disabled = false;
-        saveBtn.textContent = originalText;
-        saveBtn.style.opacity = "1";
-        saveBtn.style.cursor = "pointer";
+  APP.pendingChanges = true;
+  renderMap();
+};
+
+// ─── Print renderers ──────────────────────────────────────
+function buildPhonePrint() {
+  const data = APP.phoneData;
+  const year = APP.currentYear;
+  const lastEdit = APP.phoneLastEdit || '';
+
+  // Group into categories, ordered by DISPLAY_ORDER (same order as the on-screen view)
+  const groupsByKey = {};
+  data.forEach(r => {
+    const cat = getCategory(r.title);
+    if (!groupsByKey[cat.key]) groupsByKey[cat.key] = { label: cat.label, key: cat.key, cssClass: cat.cssClass, rows: [] };
+    groupsByKey[cat.key].rows.push(r);
+  });
+  const groups = DISPLAY_ORDER.map(cat => groupsByKey[cat.key]).filter(Boolean);
+
+  // Flatten into rows with category headers
+  const allRows = [];
+  groups.forEach(g => {
+    if (!g.rows.length) return;
+    allRows.push({ isCat: true, label: g.label, cssClass: g.cssClass, count: g.rows.length });
+    g.rows.forEach(r => allRows.push({ isCat: false, ...r }));
+  });
+
+  // Split into 6 columns as evenly as possible, same logic as the on-screen view
+  const cols = distributeIntoColumns(allRows, 6);
+
+  function colHtml(rows) {
+    if (!rows.length) return '';
+    let h = `<table><thead><tr><th>#</th><th>職稱</th><th>姓名</th><th>分機</th></tr></thead><tbody>`;
+    rows.forEach(r => {
+      if (r.isCat) {
+        h += `<tr class="p-cat ${r.cssClass || ''}"><td colspan="4">${r.label}(${r.count})</td></tr>`;
+      } else {
+        const isStar = r.name.startsWith('★');
+        const nameHtml = isStar ? `<span class="p-star">★</span>${r.name.slice(1)}` : r.name;
+        h += `<tr><td>${r.id}</td><td>${r.title}</td><td>${nameHtml}</td><td class="p-ext">${r.ext}</td></tr>`;
       }
     });
+    h += `</tbody></table>`;
+    return h;
+  }
 
-    document.getElementById("checkAll").addEventListener("change", (e) => {
-      document.querySelectorAll(".rowCheck").forEach((cb) => (cb.checked = e.target.checked));
+  return `
+    <div class="print-header">
+      <h1>新莊國小 ${year}學年度 教職員工分機一覽表</h1>
+      <p>★ 學年主任　　最後更新：${lastEdit || '—'}</p>
+    </div>
+    <div id="phone-print-grid">
+      <div>${colHtml(cols[0])}</div>
+      <div>${colHtml(cols[1])}</div>
+      <div>${colHtml(cols[2])}</div>
+      <div>${colHtml(cols[3])}</div>
+      <div>${colHtml(cols[4])}</div>
+      <div>${colHtml(cols[5])}</div>
+    </div>`;
+}
+
+function buildMapPrint() {
+  const year = APP.currentYear;
+  const lastEdit = APP.mapLastEdit || '';
+  const bnames = { A: '新莊樓', B: '至美樓', F: '至誠樓', C: '至善樓', Z: '至真樓', X: '其他' };
+  const extNameMap = buildExtNameMap();
+  let html = '';
+
+  ['F','B','C','Z','A','X'].forEach(bkey => {
+    const bdata = APP.mapData[bkey] || {};
+    if (!Object.keys(bdata).length) return; // skip empty buildings
+
+    // Use stored floor order
+    const floors = (APP.floorOrder && APP.floorOrder[bkey])
+      ? APP.floorOrder[bkey].filter(f => bdata[f] && bdata[f].length)
+      : Object.keys(bdata).filter(f => bdata[f] && bdata[f].length);
+    if (!floors.length) return;
+
+    html += `<div class="map-print-page">
+      <div class="map-print-title">新莊國小 ${year}學年度 場地配置圖 — ${bnames[bkey]}</div>`;
+
+    floors.forEach(floor => {
+      const rooms = bdata[floor];
+      html += `<div class="map-print-floor">
+        <div class="map-print-floor-label">${floor}</div>
+        <div class="map-print-rooms">`;
+      rooms.forEach(room => {
+        const tc = room.type === 'class' ? 'has-class'
+          : room.type === 'office' ? 'has-office'
+          : room.type === 'other' ? 'has-other'
+          : 'has-special';
+        const extNums = room.ext ? room.ext.split(/[\s,、\n]+/).filter(Boolean) : [];
+        const extDisplay = extNums.map(n => {
+          const names = extNameMap[n];
+          return names && names.length ? `${n}(${names.join('／')})` : n;
+        }).join('、');
+        html += `<div class="map-print-room ${tc}">
+          <div class="r-name">${room.name}</div>
+          ${room.code ? `<div class="r-code">${room.code}</div>` : ''}
+          ${extDisplay ? `<div class="r-ext">☎ ${extDisplay}</div>` : ''}
+        </div>`;
+      });
+      html += `</div></div>`;
     });
 
-    // 中文輸入法在「組字中」也會觸發 input 事件(此時文字還沒打完),
-    // 如果邊組字邊篩選,常常會篩出「找不到」讓人誤以為搜尋功能壞了。
-    // 這裡用 isComposing 判斷,組字結束(compositionend)或按 Enter / 按搜尋鈕時才真正篩選。
-    let isComposingName = false;
-    const nameSearchInput = document.getElementById("nameSearch");
-    const nameSearchClearBtn = document.getElementById("nameSearchClearBtn");
+    html += `<div style="font-size:9px;color:#999;margin-top:4mm;text-align:right">最後更新：${lastEdit || '—'}</div>
+    </div>`;
+  });
+  return html;
+}
 
-    function runNameSearch() {
-      currentSearch = nameSearchInput.value.trim().toLowerCase();
-      nameSearchClearBtn.style.display = currentSearch ? "inline-block" : "none";
-      renderTable();
+// Hook into browser print event to inject print layout
+window.addEventListener('beforeprint', () => {
+  document.getElementById('phone-print-root').innerHTML = buildPhonePrint();
+  document.getElementById('map-print-root').innerHTML = buildMapPrint();
+});
+window.addEventListener('afterprint', () => {
+  document.getElementById('phone-print-root').innerHTML = '';
+  document.getElementById('map-print-root').innerHTML = '';
+});
+
+// ─── Room modal ───────────────────────────────────────────
+window.openRoomEdit = function(building, floor, idx) {
+  if (!APP.editMode) return;
+  const room = APP.mapData[building][floor][idx];
+  APP.editingRoomKey = { building, floor, idx };
+  document.getElementById('modal-name').value = room.name;
+  document.getElementById('modal-code').value = room.code || '';
+  document.getElementById('modal-ext').value = room.ext || '';
+  document.getElementById('modal-type').value = room.type || 'special';
+  document.getElementById('room-modal').classList.add('visible');
+};
+
+window.closeModal = function() {
+  document.getElementById('room-modal').classList.remove('visible');
+};
+
+// Check whether a room code is already used by another room (returns the conflicting room, or null)
+function findDuplicateCode(code, excludeBuilding, excludeFloor, excludeIdx) {
+  if (!code) return null;
+  for (const b in APP.mapData) {
+    for (const floor in APP.mapData[b]) {
+      const rooms = APP.mapData[b][floor] || [];
+      for (let i = 0; i < rooms.length; i++) {
+        if (b === excludeBuilding && floor === excludeFloor && i === excludeIdx) continue;
+        if ((rooms[i].code || '').trim() === code) return { name: rooms[i].name, building: b, floor };
+      }
     }
+  }
+  return null;
+}
 
-    nameSearchInput.addEventListener("compositionstart", () => { isComposingName = true; });
-    nameSearchInput.addEventListener("compositionend", () => {
-      isComposingName = false;
-      runNameSearch();
-    });
-    nameSearchInput.addEventListener("input", () => {
-      if (isComposingName) return; // 組字中先不篩選,避免打到一半就顯示「找不到」
-      runNameSearch();
-    });
-    nameSearchInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") runNameSearch();
-    });
-    document.getElementById("nameSearchBtn").addEventListener("click", runNameSearch);
-    nameSearchClearBtn.addEventListener("click", () => {
-      nameSearchInput.value = "";
-      runNameSearch();
-    });
+window.saveRoom = function() {
+  const { building, floor, idx } = APP.editingRoomKey;
+  const roomData = {
+    name: document.getElementById('modal-name').value.trim(),
+    code: document.getElementById('modal-code').value.trim(),
+    ext: document.getElementById('modal-ext').value.trim(),
+    type: document.getElementById('modal-type').value
+  };
+  if (roomData.code) {
+    const dup = findDuplicateCode(roomData.code, building, floor, idx);
+    if (dup && !confirm(`教室代號「${roomData.code}」已被「${dup.name || '未命名'}」使用，確定要儲存重複的代號嗎？`)) {
+      return;
+    }
+  }
+  if (!APP.mapData[building][floor]) APP.mapData[building][floor] = [];
+  if (idx === -1) {
+    APP.mapData[building][floor].push(roomData);
+  } else {
+    APP.mapData[building][floor][idx] = { ...APP.mapData[building][floor][idx], ...roomData };
+  }
+  APP.pendingChanges = true;
+  closeModal();
+  renderMap();
+};
 
-    document.getElementById("deleteSelectedBtn").addEventListener("click", async () => {
-      const selectedTrs = Array.from(document.querySelectorAll("#tableBody tr")).filter((tr) => {
-        const cb = tr.querySelector(".rowCheck");
-        return cb && cb.checked && tr.dataset.id;
+window.addRoom = function(building, floor) {
+  if (!APP.editMode) return;
+  // Open modal; room is created on save
+  APP.editingRoomKey = { building, floor, idx: -1 }; // -1 = new room
+  document.getElementById('modal-name').value = '';
+  document.getElementById('modal-code').value = '';
+  document.getElementById('modal-ext').value = '';
+  document.getElementById('modal-type').value = 'special';
+  document.getElementById('room-modal').classList.add('visible');
+  setTimeout(() => document.getElementById('modal-name').focus(), 100);
+};
+
+// Close modal only when clicking directly on overlay background (not bubbled)
+document.getElementById('room-modal').addEventListener('mousedown', function(e) {
+  if (e.target === this) closeModal();
+});
+
+// ─── Rental panel ───────────────────────────────────────────
+const DAY_LABELS = { 1: '一', 2: '二', 3: '三', 4: '四', 5: '五', 6: '六', 7: '日' };
+
+// ── Quick-entry parsing for date / time fields ──────────────
+// Accepts ROC-style digits like "1150927" (民國115年09月27日), or already-typed
+// "115/09/27", "2026-09-27", etc. Returns "YYYY-MM-DD" (Gregorian) or null.
+function parseRocDate(raw) {
+  if (!raw) return null;
+  const digits = raw.replace(/\D/g, '');
+  if (digits.length === 7) {
+    // ROC year (3 digits) + month (2) + day (2)
+    const rocYear = Number(digits.slice(0, 3));
+    const month = Number(digits.slice(3, 5));
+    const day = Number(digits.slice(5, 7));
+    const adYear = rocYear + 1911;
+    return isValidYMD(adYear, month, day) ? toISO(adYear, month, day) : null;
+  }
+  if (digits.length === 8) {
+    // Assume already Gregorian YYYYMMDD
+    const y = Number(digits.slice(0, 4));
+    const month = Number(digits.slice(4, 6));
+    const day = Number(digits.slice(6, 8));
+    return isValidYMD(y, month, day) ? toISO(y, month, day) : null;
+  }
+  // Already formatted with separators, e.g. "115/09/27" or "2026-09-27"
+  const m = raw.match(/(\d{2,4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})/);
+  if (m) {
+    let y = Number(m[1]);
+    if (y < 1000) y += 1911; // ROC year with separators
+    const month = Number(m[2]), day = Number(m[3]);
+    return isValidYMD(y, month, day) ? toISO(y, month, day) : null;
+  }
+  return null;
+}
+function isValidYMD(y, m, d) { return y > 1900 && y < 2100 && m >= 1 && m <= 12 && d >= 1 && d <= 31; }
+function toISO(y, m, d) { return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`; }
+
+window.normalizeDateField = function(el) {
+  const val = el.value.trim();
+  if (!val) return;
+  const iso = parseRocDate(val);
+  if (!iso) { alert('日期格式無法辨識，請用類似 1150927（民國年月日）的格式輸入'); el.focus(); return; }
+  const parts = iso.split('-');
+  const rocYear = Number(parts[0]) - 1911;
+  el.value = `${rocYear}/${parts[1]}/${parts[2]}`;
+  el.dataset.iso = iso;
+};
+
+// Accepts "1600", "16:00", or a range "1600-1730" (range only meaningful on the
+// start field — auto-fills the paired end field when present).
+window.normalizeTimeField = function(el, isStart) {
+  const val = el.value.trim();
+  if (!val) return;
+  const rangeMatch = val.match(/^(\d{3,4}|\d{1,2}:\d{2})\s*[-~至]\s*(\d{3,4}|\d{1,2}:\d{2})$/);
+  if (rangeMatch && isStart) {
+    const startT = parseQuickTime(rangeMatch[1]);
+    const endT = parseQuickTime(rangeMatch[2]);
+    if (startT) el.value = startT;
+    if (endT) {
+      const endEl = document.getElementById('rental-form-end');
+      if (endEl) endEl.value = endT;
+    }
+    return;
+  }
+  const t = parseQuickTime(val);
+  if (!t) { alert('時間格式無法辨識，請用類似 1600 或 16:00 的格式輸入'); el.focus(); return; }
+  el.value = t;
+};
+
+function parseQuickTime(raw) {
+  raw = raw.trim();
+  if (/^\d{1,2}:\d{2}$/.test(raw)) {
+    const [h, m] = raw.split(':').map(Number);
+    if (h <= 23 && m <= 59) return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+    return null;
+  }
+  const digits = raw.replace(/\D/g, '');
+  if (digits.length === 3 || digits.length === 4) {
+    const padded = digits.padStart(4, '0');
+    const h = Number(padded.slice(0, 2)), m = Number(padded.slice(2, 4));
+    if (h <= 23 && m <= 59) return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+  }
+  return null;
+}
+
+// Convert a normalized display value ("115/09/27") back to ISO "YYYY-MM-DD"
+function dateFieldToISO(el) {
+  if (el.dataset.iso) return el.dataset.iso;
+  return parseRocDate(el.value.trim());
+}
+
+function formatDays(days) {
+  if (!days || !days.length) return '';
+  return days.slice().sort((a, b) => a - b).map(d => DAY_LABELS[d] || '').join('');
+}
+
+// "2026-08-25" -> "115/8/25" (ROC year / month / day, no leading zeros)
+function formatDateShort(d) {
+  if (!d) return '';
+  const parts = d.split('-');
+  if (parts.length !== 3) return d;
+  const rocYear = Number(parts[0]) - 1911;
+  return `${rocYear}/${Number(parts[1])}/${Number(parts[2])}`;
+}
+
+// Actual calendar weekday (一~日) for a given "YYYY-MM-DD" date string
+function weekdayOf(d) {
+  if (!d) return '';
+  const parts = d.split('-').map(Number);
+  const dt = new Date(parts[0], parts[1] - 1, parts[2]);
+  const dow = dt.getDay(); // 0=Sun..6=Sat
+  return DAY_LABELS[dow === 0 ? 7 : dow] || '';
+}
+
+function formatDateRange(dateStart, dateEnd) {
+  if (!dateStart || !dateEnd) return '';
+  return `${formatDateShort(dateStart)}(${weekdayOf(dateStart)}) ~ ${formatDateShort(dateEnd)}(${weekdayOf(dateEnd)})`;
+}
+
+function getRentalsForCode(code) {
+  if (!code) return [];
+  return APP.rentalData.filter(r => r.code === code);
+}
+
+window.switchRentalBuilding = function(b, el) {
+  APP.currentRentalBuilding = b;
+  document.querySelectorAll('#rental-sidebar .btab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  const si = document.getElementById('rental-search-input');
+  if (si) si.value = '';
+  document.getElementById('rental-search-count') && (document.getElementById('rental-search-count').textContent = '');
+  renderRentalMap();
+};
+
+window.renderRentalMap = function() {
+  const b = APP.currentRentalBuilding;
+  if (!APP.mapData[b]) APP.mapData[b] = {};
+  const sortedFloors = getFloorOrder(b).filter(f => APP.mapData[b][f] !== undefined);
+  const extNameMap = buildExtNameMap();
+
+  function rentalCardHtml(room, floor, idx) {
+    const rentals = room.code ? getRentalsForCode(room.code) : [];
+    const hasRental = rentals.length > 0;
+    const entriesHtml = hasRental
+      ? `<div class="rental-entries">${rentals.map(r =>
+          `<div class="rental-entry-line">${r.group}<br><span class="re-days">${formatDays(r.days)}</span> <span class="re-time">${r.start}-${r.end}</span><br><span class="re-date">${formatDateRange(r.dateStart, r.dateEnd)}</span></div>`
+        ).join('')}</div>`
+      : (room.code ? '' : `<div class="rental-nocode">未設定教室代號</div>`);
+    const firstExt = room.ext ? room.ext.split(/[\s,、\n]+/).filter(Boolean)[0] : '';
+    const names = firstExt ? extNameMap[firstExt] : null;
+    const nameSuffix = names && names.length ? ' ／ ' + names.join('、') : '';
+    return `<div class="room-card rental-card ${hasRental ? 'has-rental' : ''}" ondblclick="openRentalRoomModal('${b}','${floor}',${idx})">
+      <div class="room-name">${room.name || '（未命名）'}</div>
+      ${room.code ? `<div class="rental-code">${room.code}${firstExt ? ' ／ ☎' + firstExt : ''}${nameSuffix}</div>` : ''}
+      ${entriesHtml}
+    </div>`;
+  }
+
+  function floorSectionHtml(floor, rooms) {
+    return `<div class="floor-section">
+      <div class="floor-label"><span>${floor}</span></div>
+      <div class="rooms-grid">${rooms.map((r, i) => rentalCardHtml(r, floor, i)).join('')}</div>
+    </div>`;
+  }
+
+  let html = `<div class="building-title">${BNAMES[b]}</div>`;
+  sortedFloors.forEach(floor => {
+    html += floorSectionHtml(floor, APP.mapData[b][floor] || []);
+  });
+  document.getElementById('rental-map').innerHTML = html;
+  if (APP.rentalLastEdit) document.getElementById('last-edit-rental').textContent = '最後編輯：' + APP.rentalLastEdit;
+};
+
+window.searchRentalMap = function(q) {
+  q = q.trim().toLowerCase();
+  const cards = document.querySelectorAll('#rental-map .room-card');
+  const countEl = document.getElementById('rental-search-count');
+  if (!q) {
+    cards.forEach(c => c.classList.remove('map-match', 'map-dim'));
+    if (countEl) countEl.textContent = '';
+    return;
+  }
+  let count = 0;
+  cards.forEach(c => {
+    const text = c.textContent.toLowerCase();
+    if (text.includes(q)) { c.classList.add('map-match'); c.classList.remove('map-dim'); count++; }
+    else { c.classList.add('map-dim'); c.classList.remove('map-match'); }
+  });
+  if (countEl) countEl.textContent = `符合 ${count} 筆`;
+};
+
+window.openRentalRoomModal = function(building, floor, idx) {
+  if (!APP.editMode) return;
+  const room = APP.mapData[building][floor][idx];
+  if (!room.code || !room.code.trim()) {
+    alert('請先在場地配置設定教室代號');
+    return;
+  }
+  APP.editingRentalRoom = { code: room.code.trim(), name: room.name || '（未命名）' };
+  document.getElementById('rental-modal-title').textContent = `教室租借設定 — ${room.name || ''}`;
+  document.getElementById('rental-modal-room-info').textContent =
+    `代號：${room.code}${room.ext ? '　分機：' + room.ext : ''}`;
+  cancelRentalEntryForm();
+  renderRentalEntryList();
+  document.getElementById('rental-modal').classList.add('visible');
+};
+
+window.closeRentalModal = function() {
+  document.getElementById('rental-modal').classList.remove('visible');
+  APP.editingRentalRoom = null;
+};
+
+function renderRentalEntryList() {
+  const code = APP.editingRentalRoom.code;
+  const entries = getRentalsForCode(code);
+  const listEl = document.getElementById('rental-entry-list');
+  if (!entries.length) {
+    listEl.innerHTML = `<div class="rental-empty-hint">目前尚無租借紀錄</div>`;
+    return;
+  }
+  listEl.innerHTML = entries.map(r => `
+    <div class="rental-entry-row">
+      <div class="re-info"><b>${r.group}</b><br>${formatDateRange(r.dateStart, r.dateEnd)}　${formatDays(r.days)}　${r.start}–${r.end}</div>
+      <div class="re-actions">
+        <button onclick="editRentalEntry('${r.id}')">編輯</button>
+        <button onclick="openRentalCopyModal('${r.id}')">複製</button>
+        <button class="del" onclick="deleteRentalEntry('${r.id}')">刪除</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+window.showRentalEntryForm = function() {
+  APP.editingRentalId = null;
+  document.getElementById('rental-form-group').value = '';
+  document.getElementById('rental-form-date-start').value = '';
+  document.getElementById('rental-form-date-end').value = '';
+  document.querySelectorAll('#rental-form-days input[type=checkbox]').forEach(cb => cb.checked = false);
+  document.getElementById('rental-form-start').value = '16:00';
+  document.getElementById('rental-form-end').value = '18:00';
+  document.getElementById('rental-entry-form').style.display = 'block';
+  document.getElementById('rental-modal-add-row').style.display = 'none';
+  setTimeout(() => document.getElementById('rental-form-group').focus(), 50);
+};
+
+window.editRentalEntry = function(id) {
+  const entry = APP.rentalData.find(r => r.id === id);
+  if (!entry) return;
+  APP.editingRentalId = id;
+  document.getElementById('rental-form-group').value = entry.group;
+  const dsEl = document.getElementById('rental-form-date-start');
+  const deEl = document.getElementById('rental-form-date-end');
+  dsEl.value = entry.dateStart || '';
+  deEl.value = entry.dateEnd || '';
+  if (entry.dateStart) normalizeDateField(dsEl);
+  if (entry.dateEnd) normalizeDateField(deEl);
+  document.querySelectorAll('#rental-form-days input[type=checkbox]').forEach(cb => {
+    cb.checked = entry.days.includes(Number(cb.value));
+  });
+  document.getElementById('rental-form-start').value = entry.start;
+  document.getElementById('rental-form-end').value = entry.end;
+  document.getElementById('rental-entry-form').style.display = 'block';
+  document.getElementById('rental-modal-add-row').style.display = 'none';
+};
+
+window.cancelRentalEntryForm = function() {
+  APP.editingRentalId = null;
+  document.getElementById('rental-entry-form').style.display = 'none';
+  document.getElementById('rental-modal-add-row').style.display = 'flex';
+};
+
+window.deleteRentalEntry = function(id) {
+  if (!confirm('確定要刪除這筆租借紀錄？')) return;
+  APP.rentalData = APP.rentalData.filter(r => r.id !== id);
+  APP.pendingChanges = true;
+  renderRentalEntryList();
+  renderRentalMap();
+};
+
+// Check whether two time ranges (HH:MM strings) overlap
+function timeRangesOverlap(startA, endA, startB, endB) {
+  return startA < endB && startB < endA;
+}
+
+// Date ranges (YYYY-MM-DD strings) overlap check
+function dateRangesOverlap(startA, endA, startB, endB) {
+  return startA <= endB && startB <= endA;
+}
+
+// Check for overlapping rentals in the SAME room (same code), excluding one entry id.
+// Overlap requires: shared weekday AND overlapping date range AND overlapping time range.
+function findOverlap(code, days, start, end, dateStart, dateEnd, excludeId) {
+  return APP.rentalData.find(r => {
+    if (r.code !== code || r.id === excludeId) return false;
+    const shareDay = r.days.some(d => days.includes(d));
+    if (!shareDay) return false;
+    if (!dateRangesOverlap(dateStart, dateEnd, r.dateStart, r.dateEnd)) return false;
+    return timeRangesOverlap(start, end, r.start, r.end);
+  });
+}
+
+window.saveRentalEntry = function() {
+  const group = document.getElementById('rental-form-group').value.trim();
+  const dsEl = document.getElementById('rental-form-date-start');
+  const deEl = document.getElementById('rental-form-date-end');
+  const startEl = document.getElementById('rental-form-start');
+  const endEl = document.getElementById('rental-form-end');
+  // Normalize in case the person clicked Save without leaving the field (no blur fired)
+  if (dsEl.value.trim()) normalizeDateField(dsEl);
+  if (deEl.value.trim()) normalizeDateField(deEl);
+  if (startEl.value.trim()) normalizeTimeField(startEl, true);
+  if (endEl.value.trim()) normalizeTimeField(endEl, false);
+
+  const dateStart = dateFieldToISO(dsEl);
+  const dateEnd = dateFieldToISO(deEl);
+  const days = Array.from(document.querySelectorAll('#rental-form-days input[type=checkbox]:checked')).map(cb => Number(cb.value));
+  const start = startEl.value.trim();
+  const end = endEl.value.trim();
+
+  if (!group) { alert('請填寫租借團體／原因'); return; }
+  if (!dateStart || !dateEnd) { alert('請填寫租借的開始日期與結束日期'); return; }
+  if (dateStart > dateEnd) { alert('請確認開始日期早於（或等於）結束日期'); return; }
+  if (!days.length) { alert('請至少選擇一個星期幾'); return; }
+  if (!/^\d{2}:\d{2}$/.test(start) || !/^\d{2}:\d{2}$/.test(end) || start >= end) { alert('請確認開始時間早於結束時間'); return; }
+
+  const code = APP.editingRentalRoom.code;
+  const overlap = findOverlap(code, days, start, end, dateStart, dateEnd, APP.editingRentalId);
+  if (overlap) {
+    alert(`⚠️ 提醒：與「${overlap.group}」的租借時段重疊（${formatDateRange(overlap.dateStart, overlap.dateEnd)}　${formatDays(overlap.days)} ${overlap.start}-${overlap.end}），但仍會儲存此筆。`);
+  }
+
+  if (APP.editingRentalId) {
+    const entry = APP.rentalData.find(r => r.id === APP.editingRentalId);
+    Object.assign(entry, { group, days, start, end, dateStart, dateEnd });
+  } else {
+    APP.rentalData.push({
+      id: 'r' + Date.now() + Math.random().toString(36).slice(2, 7),
+      code, group, days, start, end, dateStart, dateEnd
+    });
+  }
+  APP.pendingChanges = true;
+  cancelRentalEntryForm();
+  renderRentalEntryList();
+  renderRentalMap();
+  renderMap();
+};
+
+document.getElementById('rental-modal').addEventListener('mousedown', function(e) {
+  if (e.target === this) closeRentalModal();
+});
+
+// ─── Copy rental entry to other rooms ───────────────────────
+window.openRentalCopyModal = function(entryId) {
+  const entry = APP.rentalData.find(r => r.id === entryId);
+  if (!entry) return;
+  APP.copyingRentalId = entryId;
+
+  // Build a flat list of all rooms that have a code, grouped by building
+  let html = '';
+  Object.keys(BNAMES).forEach(b => {
+    if (!APP.mapData[b]) return;
+    const rooms = [];
+    Object.keys(APP.mapData[b]).forEach(floor => {
+      (APP.mapData[b][floor] || []).forEach(room => {
+        if (room.code && room.code.trim()) rooms.push(room);
       });
+    });
+    if (!rooms.length) return;
+    html += `<div class="copy-building-group"><div class="copy-building-title">${BNAMES[b]}</div>`;
+    rooms.forEach(room => {
+      const isSelf = room.code.trim() === entry.code;
+      html += `<label class="copy-room-item ${isSelf ? 'self' : ''}">
+        <input type="checkbox" value="${room.code.trim()}" ${isSelf ? 'disabled' : ''}>
+        ${room.name || '（未命名）'}（${room.code}）${isSelf ? '　— 本教室' : ''}
+      </label>`;
+    });
+    html += `</div>`;
+  });
+  document.getElementById('rental-copy-room-list').innerHTML = html || '<div class="rental-empty-hint">找不到其他有設定代號的教室</div>';
+  document.getElementById('rental-copy-modal').classList.add('visible');
+};
 
-      if (!selectedTrs.length) {
-        alert("請先勾選要刪除的志工");
+window.closeRentalCopyModal = function() {
+  document.getElementById('rental-copy-modal').classList.remove('visible');
+  APP.copyingRentalId = null;
+};
+
+window.confirmRentalCopy = function() {
+  const entry = APP.rentalData.find(r => r.id === APP.copyingRentalId);
+  if (!entry) { closeRentalCopyModal(); return; }
+  const targetCodes = Array.from(document.querySelectorAll('#rental-copy-room-list input[type=checkbox]:checked')).map(cb => cb.value);
+  if (!targetCodes.length) { alert('請至少勾選一間教室'); return; }
+
+  const overlapNotes = [];
+  targetCodes.forEach(code => {
+    const overlap = findOverlap(code, entry.days, entry.start, entry.end, entry.dateStart, entry.dateEnd, null);
+    if (overlap) overlapNotes.push(`${code}（與「${overlap.group}」重疊）`);
+    APP.rentalData.push({
+      id: 'r' + Date.now() + Math.random().toString(36).slice(2, 7),
+      code, group: entry.group, days: entry.days.slice(),
+      start: entry.start, end: entry.end,
+      dateStart: entry.dateStart, dateEnd: entry.dateEnd
+    });
+  });
+  APP.pendingChanges = true;
+  closeRentalCopyModal();
+  renderRentalEntryList();
+  renderRentalMap();
+  renderMap();
+  showToast(`✅ 已複製到 ${targetCodes.length} 間教室` + (overlapNotes.length ? `（注意重疊：${overlapNotes.join('、')}）` : ''));
+};
+
+document.getElementById('rental-copy-modal').addEventListener('mousedown', function(e) {
+  if (e.target === this) closeRentalCopyModal();
+});
+
+// ─── Edit mode ────────────────────────────────────────────
+const EDIT_PASSWORD = '073411373';
+
+window.toggleEdit = function() {
+  if (!APP.editMode) {
+    _openPwModal(_enterEditMode);
+  } else {
+    _exitEditMode();
+  }
+};
+
+function _enterEditMode() {
+  APP.editMode = true;
+  document.body.classList.add('edit-mode');
+  document.getElementById('edit-btn').classList.add('active');
+  document.getElementById('edit-label').textContent = '編輯中';
+  document.getElementById('edit-bar').classList.add('visible');
+  renderPhone(document.getElementById('phone-search').value);
+}
+
+function _exitEditMode() {
+  APP.editMode = false;
+  document.body.classList.remove('edit-mode');
+  document.getElementById('edit-btn').classList.remove('active');
+  document.getElementById('edit-label').textContent = '編輯';
+  document.getElementById('edit-bar').classList.remove('visible');
+  renderPhone(document.getElementById('phone-search').value);
+}
+
+// Generic password gate: opens the shared password modal, then runs `onSuccess`
+// once the correct password is entered. Used by edit mode, 新增學年, 刪除學年.
+function _openPwModal(onSuccess) {
+  window._pwCallback = onSuccess;
+  document.getElementById('pw-input').value = '';
+  document.getElementById('pw-error').style.display = 'none';
+  document.getElementById('pw-modal').classList.add('visible');
+  setTimeout(() => document.getElementById('pw-input').focus(), 100);
+}
+
+window.checkPassword = function() {
+  const val = document.getElementById('pw-input').value;
+  if (val === EDIT_PASSWORD) {
+    document.getElementById('pw-modal').classList.remove('visible');
+    const cb = window._pwCallback || _enterEditMode;
+    window._pwCallback = null;
+    cb();
+  } else {
+    const err = document.getElementById('pw-error');
+    err.style.display = 'block';
+    document.getElementById('pw-input').value = '';
+    document.getElementById('pw-input').focus();
+  }
+};
+
+window.closePwModal = function() {
+  document.getElementById('pw-modal').classList.remove('visible');
+  window._pwCallback = null;
+};
+
+window.discardEdit = function() {
+  if (APP.pendingChanges && !confirm('確定要放棄所有未儲存的變更？')) return;
+  APP.pendingChanges = false;
+  _exitEditMode();
+  // Reload from Firebase
+  if (window._loadYear) window._loadYear(APP.currentYear);
+};
+
+window.saveAll = async function() {
+  const btn = document.querySelector('#edit-bar .save-btn');
+  btn.textContent = '儲存中…'; btn.disabled = true;
+  const ok = await window._saveToFirebase(APP.currentYear);
+  btn.textContent = '💾 儲存'; btn.disabled = false;
+  if (ok) {
+    APP.pendingChanges = false;
+    _exitEditMode();
+    showToast('✅ 已儲存');
+  }
+};
+
+function showToast(msg) {
+  let t = document.getElementById('toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'toast';
+    t.style = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1a2332;color:#fff;padding:10px 20px;border-radius:20px;font-size:14px;z-index:300;opacity:0;transition:opacity 0.3s';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.opacity = '1';
+  setTimeout(() => t.style.opacity = '0', 2500);
+}
+
+// ─── Tab switch ───────────────────────────────────────────
+window.switchTab = function(name, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('panel-' + name).classList.add('active');
+  // Toggle search area (only on phone tab)
+  const searchArea = document.getElementById('header-search-area');
+  if (searchArea) searchArea.style.display = name === 'phone' ? 'flex' : 'none';
+  // Toggle legend
+  const legendPhone = document.getElementById('tab-legend-phone');
+  const legendMap = document.getElementById('tab-legend-map');
+  const legendRental = document.getElementById('tab-legend-rental');
+  if (legendPhone) legendPhone.style.display = name === 'phone' ? 'flex' : 'none';
+  if (legendMap) legendMap.style.display = name === 'map' ? 'flex' : 'none';
+  if (legendRental) legendRental.style.display = name === 'rental' ? 'flex' : 'none';
+  // Ext→name matching depends on the latest phone data, so refresh on entering the map tab
+  if (name === 'map') renderMap();
+  if (name === 'rental') renderRentalMap();
+};
+
+// ─── Year picker ──────────────────────────────────────────
+window.toggleYearPicker = function() {
+  const dd = document.getElementById('year-dropdown');
+  dd.classList.toggle('visible');
+  if (dd.classList.contains('visible')) renderYearList();
+  document.addEventListener('click', closeYearPickerOutside, { once: true });
+}
+
+function closeYearPickerOutside(e) {
+  const dd = document.getElementById('year-dropdown');
+  const toggle = document.getElementById('year-toggle');
+  if (!dd.contains(e.target) && !toggle.contains(e.target)) dd.classList.remove('visible');
+}
+
+function renderYearList() {
+  const list = document.getElementById('year-list');
+  list.innerHTML = APP.years.map(y =>
+    `<div class="year-option ${y === APP.currentYear ? 'active' : ''}">
+      <span onclick="selectYear(${y})" style="flex:1">${y}學年度 ${y === APP.currentYear ? '<span class="check">✓</span>' : ''}</span>
+      ${APP.years.length > 1 ? `<span class="year-del-btn" onclick="event.stopPropagation(); deleteYear(${y})" title="刪除此學年度">🗑</span>` : ''}
+    </div>`
+  ).join('');
+}
+
+window.selectYear = function(y) {
+  APP.currentYear = y;
+  document.getElementById('current-year-label').textContent = y + '學年度';
+  document.getElementById('year-dropdown').classList.remove('visible');
+  if (window._loadYear) window._loadYear(y);
+};
+
+window.newYear = function() {
+  document.getElementById('year-dropdown').classList.remove('visible');
+  _openPwModal(_doNewYear);
+};
+
+async function _doNewYear() {
+  const next = Math.max(...APP.years) + 1;
+  const confirmed = confirm(`建立 ${next}學年度？\n將複製 ${APP.currentYear}學年度的資料做為起點。`);
+  if (!confirmed) return;
+
+  const prevYears = APP.years.slice();
+  APP.years.push(next);
+  const fromYear = APP.currentYear;
+  APP.currentYear = next;
+  document.getElementById('current-year-label').textContent = next + '學年度';
+  document.getElementById('year-dropdown').classList.remove('visible');
+
+  // Data already loaded in memory from the year we're branching off — save it under
+  // the new year's docs, AND persist the years list itself so it survives a refresh.
+  const [dataOk, listOk] = await Promise.all([
+    window._saveToFirebase(next),
+    window._saveYearsList()
+  ]);
+
+  if (dataOk && listOk) {
+    showToast(`✅ ${next}學年度已建立（複製自 ${fromYear}學年度）`);
+  } else {
+    // Roll back so the UI doesn't show a year that didn't actually save
+    APP.years = prevYears;
+    APP.currentYear = fromYear;
+    document.getElementById('current-year-label').textContent = fromYear + '學年度';
+  }
+}
+
+// ─── Delete year (password + typed-confirmation, since this is irreversible) ──
+window.deleteYear = function(y) {
+  document.getElementById('year-dropdown').classList.remove('visible');
+  _openPwModal(() => _confirmDeleteYear(y));
+};
+
+async function _confirmDeleteYear(y) {
+  if (APP.years.length <= 1) {
+    alert('至少要保留一個學年度，無法刪除。');
+    return;
+  }
+  // Extra step beyond the password: must type the exact year number to proceed,
+  // so a slip of the finger can't wipe out a year's data.
+  const typed = prompt(`此操作無法復原！\n將永久刪除「${y}學年度」的所有分機、場地、租借資料。\n\n請輸入「${y}」以確認刪除：`);
+  if (typed === null) return; // cancelled
+  if (typed.trim() !== String(y)) {
+    alert('輸入不符，已取消刪除。');
+    return;
+  }
+
+  const wasCurrent = (APP.currentYear === y);
+  const prevYears = APP.years.slice();
+  const prevCurrent = APP.currentYear;
+
+  const dataOk = await window._deleteYearData(y);
+  if (!dataOk) return; // error already alerted inside deleteYearData
+
+  APP.years = APP.years.filter(yr => yr !== y);
+  const listOk = await window._saveYearsList();
+  if (!listOk) {
+    // Roll back the in-memory years list if we couldn't persist it, so the UI
+    // doesn't disagree with Firebase.
+    APP.years = prevYears;
+    return;
+  }
+
+  if (wasCurrent) {
+    APP.currentYear = Math.max(...APP.years);
+    document.getElementById('current-year-label').textContent = APP.currentYear + '學年度';
+    window._loadYear(APP.currentYear);
+  }
+  showToast(`🗑 已刪除 ${y}學年度`);
+}
+
+// ─── Export Excel ─────────────────────────────────────────
+window.exportExcel = function() {
+  if (typeof XLSX === 'undefined') { alert('Excel 套件載入中，請稍後再試'); return; }
+  const data = [['編號','職稱','姓名','分機號碼']];
+  APP.phoneData.forEach(r => data.push([r.id, r.title, r.name, r.ext]));
+  const ws = XLSX.utils.aoa_to_sheet(data);
+  ws['!cols'] = [{wch:6},{wch:16},{wch:10},{wch:14}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, `${APP.currentYear}學年度分機`);
+  XLSX.writeFile(wb, `新莊國小${APP.currentYear}學年度分機一覽表.xlsx`);
+};
+
+// ─── Export / Import JSON ─────────────────────────────────
+window.exportJSON = function() {
+  const payload = {
+    year: APP.currentYear,
+    exportedAt: new Date().toLocaleString('zh-TW', {timeZone:'Asia/Taipei'}),
+    phone: APP.phoneData,
+    map: APP.mapData,
+    floorOrder: APP.floorOrder || {},
+    rental: APP.rentalData || []
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type: 'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `sjps_${APP.currentYear}_data.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast(`✅ 已匯出 sjps_${APP.currentYear}_data.json`);
+};
+
+window.importJSON = function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    try {
+      const data = JSON.parse(ev.target.result);
+      // Validate structure
+      if (!data.phone || !data.map) {
+        alert('JSON 格式錯誤：缺少 phone 或 map 欄位');
         return;
       }
-
-      const names = selectedTrs.map((tr) => tr.querySelector(".nameInput")?.value || "").join("、");
-      if (!confirm(`確定要刪除以下 ${selectedTrs.length} 位志工嗎?\n${names}\n此動作無法復原!`)) return;
-
-      const btn = document.getElementById("deleteSelectedBtn");
-      const originalText = btn.textContent;
-      btn.disabled = true;
-      btn.textContent = "刪除中...";
-
-      let successCount = 0;
-      let failCount = 0;
-      try {
-        await Promise.all(
-          selectedTrs.map((tr) =>
-            deleteDoc(doc(db, "volunteers", tr.dataset.id))
-              .then(() => { successCount++; })
-              .catch((err) => { console.error(err); failCount++; })
-          )
-        );
-        if (failCount) {
-          alert(`刪除完成,成功 ${successCount} 筆,失敗 ${failCount} 筆`);
-        } else {
-          alert(`已刪除 ${successCount} 筆資料`);
-        }
-        document.getElementById("checkAll").checked = false;
-        loadVolunteers();
-      } finally {
-        btn.disabled = false;
-        btn.textContent = originalText;
+      const importYear = data.year || APP.currentYear;
+      if (!confirm(`確定要用此 JSON 覆蓋 ${importYear}學年度的所有資料？\n（分機：${data.phone.length} 筆，場地：${Object.keys(data.map).length} 棟）`)) {
+        e.target.value = ''; return;
       }
-    });
-
-    document.getElementById("printSelectedBtn").addEventListener("click", () => {
-      const ids = [];
-      document.querySelectorAll("#tableBody tr").forEach((tr) => {
-        const cb = tr.querySelector(".rowCheck");
-        if (cb && cb.checked && tr.dataset.id) ids.push(tr.dataset.id);
-      });
-      if (!ids.length) {
-        alert("請先勾選要列印的志工");
-        return;
+      APP.phoneData = data.phone;
+      APP.mapData = data.map;
+      APP.floorOrder = data.floorOrder || {};
+      APP.rentalData = data.rental || [];
+      if (data.year && !APP.years.includes(data.year)) {
+        APP.years.push(data.year);
       }
-      window.location.href = `print.html?ids=${encodeURIComponent(ids.join(","))}`;
-    });
+      APP.currentYear = importYear;
+      document.getElementById('current-year-label').textContent = importYear + '學年度';
+      APP.pendingChanges = true;
+      renderPhone();
+      renderMap();
+      renderRentalMap();
+      showToast(`✅ 匯入完成（${importYear}學年度），請記得儲存到 Firebase`);
+    } catch(err) {
+      alert('JSON 解析失敗：' + err.message);
+    }
+    e.target.value = ''; // reset file input
+  };
+  reader.readAsText(file);
+};
 
-    document.getElementById("printAllBtn").addEventListener("click", () => {
-      const ids = allVolunteers.map((v) => v.id);
-      if (!ids.length) {
-        alert("目前沒有志工資料");
-        return;
-      }
-      window.location.href = `print.html?ids=${encodeURIComponent(ids.join(","))}`;
-    });
-  </script>
+// ─── Init ─────────────────────────────────────────────────
+// Firebase module will call renderPhone + renderMap after loading
+// Fallback if Firebase not available yet
+setTimeout(() => {
+  if (!APP.phoneData.length) {
+    APP.phoneData = JSON.parse(JSON.stringify(APP.defaultPhone));
+    APP.mapData = JSON.parse(JSON.stringify(APP.defaultMap));
+    APP.rentalData = APP.rentalData || [];
+    renderPhone();
+    renderMap();
+    renderRentalMap();
+  }
+}, 1500);
+</script>
 </body>
 </html>
