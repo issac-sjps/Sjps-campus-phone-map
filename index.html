@@ -99,6 +99,7 @@
   }
   .header-search-btn:hover { background: rgba(255,255,255,0.22); }
   .header-search-btn svg { width: 13px; height: 13px; }
+  .tab-legend.legend-hidden { display: none !important; }
   .header-more { position: relative; flex-shrink: 0; }
   .more-dropdown {
     display: none; position: absolute;
@@ -830,7 +831,7 @@
   #map-print-root { display: none; }
 
   /* ══════════════════════ Responsive (tablet / mobile) ══════════════════════ */
-  @media (max-width: 1100px) {
+  @media (max-width: 900px) {
     header { padding: 8px 10px; }
     .header-top {
       height: auto;
@@ -1639,7 +1640,7 @@ window.autoFitPhoneTable = autoFitPhoneTable;
 
 // ─── Header 動態縮放 ──────────────────────────────────────
 // header-top 裡的校名／學年徽章／分頁按鈕／搜尋列全部都是固定 px 尺寸，
-// 只有到了 1100px / 640px 斷點才會「跳一次」改版面，中間的寬度或瀏覽器
+// 只有到了 900px / 640px 斷點才會「跳一次」改版面，中間的寬度或瀏覽器
 // 縮放比例改變時不會跟著平滑縮小。這裡改用 CSS variable --hscale
 // （header 內大部份尺寸都已經改成 calc(基準值 * var(--hscale))），
 // 量測目前 header-top 的內容是否放得下，放不下就整體調降這個比例，
@@ -1650,13 +1651,20 @@ function autoFitHeader() {
   const header = document.querySelector('header');
   const bar = document.querySelector('.header-top');
   if (!header || !bar) return;
-  // 手機版（1100px 以下）header-left 會自動換行，不需要這套水平縮放邏輯
-  if (window.innerWidth <= 1100) {
+  // 手機版（900px 以下）header-left 會自動換行，不需要這套水平縮放邏輯
+  if (window.innerWidth <= 900) {
     header.style.setProperty('--hscale', 1);
+    document.querySelectorAll('.tab-legend').forEach(el => el.classList.remove('legend-hidden'));
     return;
   }
+  // 空間吃緊時，優先把「說明文字」（tab-legend）先藏起來讓分頁／搜尋／編輯維持原尺寸，
+  // 而不是整排字級一起縮小；真的還是放不下，才進到下面的整體縮放。
+  document.querySelectorAll('.tab-legend').forEach(el => el.classList.remove('legend-hidden'));
   let scale = 1;
   header.style.setProperty('--hscale', scale);
+  if (bar.scrollWidth > bar.clientWidth + 1) {
+    document.querySelectorAll('.tab-legend').forEach(el => el.classList.add('legend-hidden'));
+  }
   // scrollWidth 在下一個 frame 才會反映新的 --hscale，用同步量測＋逐步調整即可
   let guard = 0;
   while (bar.scrollWidth > bar.clientWidth + 1 && scale > HEADER_SCALE_MIN && guard < 20) {
@@ -3015,6 +3023,7 @@ window.switchTab = function(name, el) {
   if (name === 'map') renderMap();
   if (name === 'rental') renderRentalMap();
   if (name === 'meeting') renderMeeting();
+  if (window.autoFitHeader) autoFitHeader();
 };
 
 // ─── 學年會議代表 (Meeting Reps) — 一頁表格，橫向對應一～六年級 ──────────
