@@ -830,7 +830,7 @@
   #map-print-root { display: none; }
 
   /* ══════════════════════ Responsive (tablet / mobile) ══════════════════════ */
-  @media (max-width: 900px) {
+  @media (max-width: 1100px) {
     header { padding: 8px 10px; }
     .header-top {
       height: auto;
@@ -1639,7 +1639,7 @@ window.autoFitPhoneTable = autoFitPhoneTable;
 
 // ─── Header 動態縮放 ──────────────────────────────────────
 // header-top 裡的校名／學年徽章／分頁按鈕／搜尋列全部都是固定 px 尺寸，
-// 只有到了 900px / 640px 斷點才會「跳一次」改版面，中間的寬度或瀏覽器
+// 只有到了 1100px / 640px 斷點才會「跳一次」改版面，中間的寬度或瀏覽器
 // 縮放比例改變時不會跟著平滑縮小。這裡改用 CSS variable --hscale
 // （header 內大部份尺寸都已經改成 calc(基準值 * var(--hscale))），
 // 量測目前 header-top 的內容是否放得下，放不下就整體調降這個比例，
@@ -1650,8 +1650,8 @@ function autoFitHeader() {
   const header = document.querySelector('header');
   const bar = document.querySelector('.header-top');
   if (!header || !bar) return;
-  // 手機版（900px 以下）header-left 會自動換行，不需要這套水平縮放邏輯
-  if (window.innerWidth <= 900) {
+  // 手機版（1100px 以下）header-left 會自動換行，不需要這套水平縮放邏輯
+  if (window.innerWidth <= 1100) {
     header.style.setProperty('--hscale', 1);
     return;
   }
