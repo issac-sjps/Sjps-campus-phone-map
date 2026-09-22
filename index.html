@@ -39,14 +39,18 @@
     --hscale: 1; /* JS 動態調整：header 內容放不下時整體縮小這個比例 */
   }
   .header-top {
-    height: calc(36px * var(--hscale));
+    height: 36px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: calc(12px * var(--hscale));
+    gap: 12px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; -ms-overflow-style: none;
   }
-  .header-left { display: flex; align-items: center; gap: calc(12px * var(--hscale)); flex-shrink: 1; min-width: 0; }
-  .school-name { font-size: calc(15px * var(--hscale)); font-weight: 600; letter-spacing: 0.02em; white-space: nowrap; flex-shrink: 0; }
+  .header-top::-webkit-scrollbar { display: none; }
+  .header-left { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+  .school-name { font-size: 15px; font-weight: 600; letter-spacing: 0.02em; white-space: nowrap; flex-shrink: 0; }
   .year-badge {
     background: rgba(255,255,255,0.18);
     border: 1px solid rgba(255,255,255,0.3);
@@ -65,13 +69,14 @@
 
   /* Search bar embedded in header */
   .header-search {
-    flex: 0 1 240px;
+    flex: 1 1 160px;
     display: flex;
     align-items: center;
     gap: 8px;
+    min-width: 90px;
     max-width: 240px;
   }
-  .header-search-wrap { position: relative; flex: 1; }
+  .header-search-wrap { position: relative; flex: 1; min-width: 0; }
   .header-search-wrap svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: rgba(255,255,255,0.6); width: 14px; height: 14px; }
   .header-search-input {
     width: 100%; padding: 4px 12px 4px 32px;
@@ -835,18 +840,8 @@
      編輯按鈕絕對不會被擠到第二行；只有搜尋框（僅分機一覽分頁才會顯示）放不下時，才會自己獨立換到第二行。 */
   @media (max-width: 900px) {
     header { padding: 8px 10px; }
-    .header-top { height: auto; flex-wrap: wrap; row-gap: 8px; padding: 4px 0; }
-    .header-left {
-      order: 1; flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch;
-      scrollbar-width: none; -ms-overflow-style: none;
-    }
-    .header-left::-webkit-scrollbar { display: none; }
     .school-name { font-size: 13px; }
     .tab-legend { display: none !important; }
-    .header-right { order: 2; flex-shrink: 0; }
-    .header-search {
-      order: 3; flex-basis: 100%; width: 100%; max-width: none;
-    }
 
     main { padding: 10px 10px 24px; }
 
@@ -951,7 +946,6 @@
         <span style="color:var(--text-light)">｜編輯模式下雙擊教室可設定租借</span>
       </div>
       </div>
-    </div>
     <div class="header-search" id="header-search-area">
       <div class="header-search-wrap">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M10 10l3 3"/></svg>
@@ -1634,62 +1628,10 @@ function autoFitPhoneTable() {
 }
 window.autoFitPhoneTable = autoFitPhoneTable;
 
-// ─── Header 動態縮放 ──────────────────────────────────────
-// header-top 裡的校名／學年徽章／分頁按鈕／搜尋列全部都是固定 px 尺寸，
-// 只有到了 900px / 640px 斷點才會「跳一次」改版面，中間的寬度或瀏覽器
-// 縮放比例改變時不會跟著平滑縮小。這裡改用 CSS variable --hscale
-// （header 內大部份尺寸都已經改成 calc(基準值 * var(--hscale))），
-// 量測目前 header-top 的內容是否放得下，放不下就整體調降這個比例，
-// 讓文字、間距、按鈕大小同步平滑縮小，不用等到斷點才改版。
-const HEADER_SCALE_MIN = 0.72;
-const HEADER_SCALE_STEP = 0.05;
-function autoFitHeader() {
-  const header = document.querySelector('header');
-  const bar = document.querySelector('.header-top');
-  if (!header || !bar) return;
-  // 手機版（900px 以下）header-left 會自動換行，不需要這套水平縮放邏輯
-  if (window.innerWidth <= 900) {
-    header.style.setProperty('--hscale', 1);
-    document.querySelectorAll('.tab-legend').forEach(el => el.classList.remove('legend-hidden'));
-    return;
-  }
-  // 空間吃緊時，優先把「說明文字」（tab-legend）先藏起來讓分頁／搜尋／編輯維持原尺寸，
-  // 而不是整排字級一起縮小；真的還是放不下，才進到下面的整體縮放。
-  document.querySelectorAll('.tab-legend').forEach(el => el.classList.remove('legend-hidden'));
-  let scale = 1;
-  header.style.setProperty('--hscale', scale);
-  if (bar.scrollWidth > bar.clientWidth + 1) {
-    document.querySelectorAll('.tab-legend').forEach(el => el.classList.add('legend-hidden'));
-  }
-  // scrollWidth 在下一個 frame 才會反映新的 --hscale，用同步量測＋逐步調整即可
-  let guard = 0;
-  while (bar.scrollWidth > bar.clientWidth + 1 && scale > HEADER_SCALE_MIN && guard < 20) {
-    scale = Math.max(HEADER_SCALE_MIN, scale - HEADER_SCALE_STEP);
-    header.style.setProperty('--hscale', scale);
-    guard++;
-  }
-}
+// ─── Header：不做任何縮放／換行，單純讓內容往右一直排，
+// 放不下就讓 header-top 自己橫向捲動（overflow-x:auto），編輯按鈕永遠在最後面。
+function autoFitHeader() { /* 不再需要動態縮放或隱藏說明文字，保留空函式避免其他呼叫點出錯 */ }
 window.autoFitHeader = autoFitHeader;
-autoFitHeader();
-window.addEventListener('load', autoFitHeader);
-window.addEventListener('resize', () => {
-  clearTimeout(window._headerFitTimer);
-  window._headerFitTimer = setTimeout(autoFitHeader, 100);
-});
-if (document.fonts && document.fonts.ready) {
-  document.fonts.ready.then(autoFitHeader);
-}
-if (typeof ResizeObserver !== 'undefined') {
-  document.addEventListener('DOMContentLoaded', () => {
-    const bar = document.querySelector('.header-top');
-    if (!bar) return;
-    const ro = new ResizeObserver(() => {
-      clearTimeout(window._headerROTimer);
-      window._headerROTimer = setTimeout(autoFitHeader, 60);
-    });
-    ro.observe(bar);
-  });
-}
 
 // 視窗縮放或字型延遲載入完成時，重新量測一次（避免初次量測時字型還沒套用）
 window.addEventListener('resize', () => {
