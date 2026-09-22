@@ -940,9 +940,6 @@
         <svg width="13" height="13" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M1.5 3h12M1.5 7.5h12M1.5 12h7"/></svg>
         會議代表
       </div>
-      <div class="tab-legend" id="tab-legend-phone">
-        <span>編輯模式下點擊 # 欄位可標記／取消 ★ 學年主任</span>
-      </div>
       <div class="tab-legend" id="tab-legend-map" style="display:none">
         <span><span class="dot" style="background:#f0f5fa;border:1.5px solid #1a5c8a"></span>班級</span>
         <span><span class="dot" style="background:#fdf3ec;border:1.5px solid #e07b39"></span>辦公室</span>
@@ -3013,10 +3010,8 @@ window.switchTab = function(name, el) {
   const searchArea = document.getElementById('header-search-area');
   if (searchArea) searchArea.style.display = name === 'phone' ? 'flex' : 'none';
   // Toggle legend
-  const legendPhone = document.getElementById('tab-legend-phone');
   const legendMap = document.getElementById('tab-legend-map');
   const legendRental = document.getElementById('tab-legend-rental');
-  if (legendPhone) legendPhone.style.display = name === 'phone' ? 'flex' : 'none';
   if (legendMap) legendMap.style.display = name === 'map' ? 'flex' : 'none';
   if (legendRental) legendRental.style.display = name === 'rental' ? 'flex' : 'none';
   // Ext→name matching depends on the latest phone data, so refresh on entering the map tab
