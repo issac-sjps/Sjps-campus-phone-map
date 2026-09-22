@@ -366,6 +366,38 @@
   .cat-header.cat-foreign td { background: #cfe6f0; color: #0d5c73; }
   .cat-header.cat-intern  td { background: #f0d9ea; color: #8a2d6e; }
   .cat-header.cat-adminsupport td { background: #ede4d0; color: #6b4f1e; }
+
+  /* ── Meeting reps tab (學年會議代表) — spreadsheet-style grid, all grades in one table ── */
+  .mtg-wrap { display: flex; flex-direction: column; }
+  .mtg-table-scroll { overflow-x: auto; background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow); border: 1px solid var(--border); }
+  table.mtg-grid { width: 100%; min-width: 720px; border-collapse: collapse; font-size: 12.5px; }
+  table.mtg-grid thead th { position: sticky; top: 0; z-index: 2; background: var(--primary); color: #fff; font-size: 12.5px; font-weight: 700; padding: 8px 6px; text-align: center; white-space: nowrap; }
+  table.mtg-grid thead th.mtg-grid-namecol { text-align: left; padding-left: 12px; min-width: 200px; }
+  table.mtg-grid td { border: 1px solid var(--border); padding: 0; vertical-align: middle; }
+  tr.mtg-grid-grouphead td { border: none; padding: 6px 12px; font-size: 13px; font-weight: 700; }
+  tr.mtg-grid-grouphead[data-dept="jw"] td { background: #dbe8f2; color: #12496e; }
+  tr.mtg-grid-grouphead[data-dept="xw"] td { background: #fdf0e6; color: #a2531b; }
+  tr.mtg-grid-grouphead[data-dept="fd"] td { background: #e8f5ee; color: #1f6b45; }
+  tr.mtg-grid-grouphead[data-dept="other"] td { background: #e6e6e9; color: #4d4d55; }
+  tr[data-dept="jw"]:not(.mtg-grid-grouphead) { background: #eef4fa; }
+  tr[data-dept="xw"]:not(.mtg-grid-grouphead) { background: #fdf6ef; }
+  tr[data-dept="fd"]:not(.mtg-grid-grouphead) { background: #f0f8f3; }
+  tr[data-dept="other"]:not(.mtg-grid-grouphead) { background: #f2f2f4; }
+  .mtg-group-add { display: none; float: right; background: rgba(255,255,255,0.6); border: 1px solid currentColor; border-radius: 4px; padding: 2px 8px; font-size: 11px; cursor: pointer; color: inherit; font-weight: 500; }
+  body.edit-mode .mtg-group-add { display: inline-block; }
+  .mtg-grid-namecol { padding: 7px 10px !important; font-size: 12.5px; line-height: 1.4; white-space: normal; position: relative; }
+  .mtg-seq { color: var(--text-light); font-weight: 700; font-size: 11px; margin-right: 3px; }
+  .mtg-grid-cell { text-align: center; min-width: 78px; }
+  .mtg-code-line { padding: 4px 4px 2px; font-size: 12px; font-weight: 700; color: var(--primary); border-bottom: 1px dashed var(--border); }
+  .mtg-name-line { padding: 2px 4px 4px; font-size: 13px; font-weight: 700; color: var(--text); }
+  .mtg-code-empty { color: var(--text-light); font-weight: 400; }
+  .mtg-name-empty { color: var(--text-light); font-weight: 400; font-style: italic; font-size: 11.5px; }
+  body.edit-mode .mtg-code-line, body.edit-mode .mtg-name-line { cursor: pointer; }
+  body.edit-mode .mtg-code-line:hover, body.edit-mode .mtg-name-line:hover { background: #fff8e1; }
+  .mtg-count-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 14px; height: 14px; padding: 0 3px; margin-left: 3px; border-radius: 7px; background: var(--primary); color: #fff; font-size: 9px; font-weight: 700; vertical-align: 1px; }
+  .mtg-del-btn { display: none; position: absolute; right: 4px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #c0392b; font-size: 12px; cursor: pointer; padding: 0 4px; }
+  body.edit-mode .mtg-del-btn { display: inline; }
+  .mtg-legend-hint { color: var(--text-light); }
   .cat-add-btn {
     display: none;
     background: var(--primary);
@@ -885,6 +917,10 @@
         <svg width="13" height="13" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="1" y="2" width="13" height="11" rx="1.5"/><path d="M1 5.5h13M4 1v2.5M11 1v2.5"/></svg>
         租借
       </div>
+      <div class="tab" onclick="switchTab('meeting', this)" id="tab-meeting">
+        <svg width="13" height="13" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M1.5 3h12M1.5 7.5h12M1.5 12h7"/></svg>
+        會議代表
+      </div>
       <div class="tab-legend" id="tab-legend-phone">
         <span>編輯模式下點擊 # 欄位可標記／取消 ★ 學年主任</span>
       </div>
@@ -898,6 +934,10 @@
         <span><span class="dot" style="background:#fff;border:1.5px solid var(--border)"></span>無租借</span>
         <span><span class="dot" style="background:#fdf0e6;border:1.5px solid var(--accent)"></span>有租借</span>
         <span style="color:var(--text-light)">｜編輯模式下雙擊教室可設定租借</span>
+      </div>
+      <div class="tab-legend" id="tab-legend-meeting" style="display:none">
+        <span class="mtg-legend-hint">一張表看完所有年級：橫向對應一～六年級，每格上面是班級代碼、下面是代表姓名；輸入班級代碼會自動帶出分機一覽表中的老師姓名，姓名旁的數字＝該老師全校總共擔任幾次代表</span>
+      </div>
       </div>
     </div>
     <div class="header-search" id="header-search-area">
@@ -1035,6 +1075,15 @@
     <div class="meta-bar">
       <span></span>
       <span id="last-edit-rental"></span>
+    </div>
+  </div>
+
+  <!-- ── Meeting Reps Panel (學年會議代表 — 一頁顯示全部年級) ── -->
+  <div class="tab-panel" id="panel-meeting">
+    <div class="mtg-wrap" id="mtg-wrap"></div>
+    <div class="meta-bar">
+      <span id="mtg-count"></span>
+      <span id="last-edit-meeting"></span>
     </div>
   </div>
 </main>
@@ -1194,7 +1243,8 @@ async function loadYear(year) {
     const phoneRef = doc(db, 'extensions', String(year));
     const mapRef = doc(db, 'rooms', String(year));
     const rentalRef = doc(db, 'rentals', String(year));
-    const [phoneSnap, mapSnap, rentalSnap] = await Promise.all([getDoc(phoneRef), getDoc(mapRef), getDoc(rentalRef)]);
+    const meetingRef = doc(db, 'meetings', String(year));
+    const [phoneSnap, mapSnap, rentalSnap, meetingSnap] = await Promise.all([getDoc(phoneRef), getDoc(mapRef), getDoc(rentalRef), getDoc(meetingRef)]);
 
     if (phoneSnap.exists()) {
       window.APP.phoneData = phoneSnap.data().staff || window.APP.defaultPhone;
@@ -1218,15 +1268,24 @@ async function loadYear(year) {
       window.APP.rentalData = [];
       window.APP.rentalLastEdit = '';
     }
+    if (meetingSnap.exists()) {
+      window.APP.meetingData = meetingSnap.data().list || [];
+      window.APP.meetingLastEdit = meetingSnap.data().last_edited || '';
+    } else {
+      window.APP.meetingData = [];
+      window.APP.meetingLastEdit = '';
+    }
   } catch(e) {
     console.warn('Firebase load failed, using local data:', e);
     window.APP.phoneData = JSON.parse(JSON.stringify(window.APP.defaultPhone));
     window.APP.mapData = JSON.parse(JSON.stringify(window.APP.defaultMap));
     window.APP.rentalData = [];
+    window.APP.meetingData = [];
   }
   window.renderPhone();
   window.renderMap();
   if (window.renderRentalMap) window.renderRentalMap();
+  if (window.renderMeeting) window.renderMeeting();
 }
 
 async function saveToFirebase(year) {
@@ -1247,13 +1306,20 @@ async function saveToFirebase(year) {
       list: window.APP.rentalData || [],
       last_edited: now
     });
+    await window._setDoc(window._doc(window._db, 'meetings', String(year)), {
+      list: window.APP.meetingData || [],
+      last_edited: now
+    });
     window.APP.phoneLastEdit = now;
     window.APP.mapLastEdit = now;
     window.APP.rentalLastEdit = now;
+    window.APP.meetingLastEdit = now;
     document.getElementById('last-edit-phone').textContent = '最後編輯：' + now;
     document.getElementById('last-edit-map').textContent = '最後編輯：' + now;
     const rentalEditEl = document.getElementById('last-edit-rental');
     if (rentalEditEl) rentalEditEl.textContent = '最後編輯：' + now;
+    const meetingEditEl = document.getElementById('last-edit-meeting');
+    if (meetingEditEl) meetingEditEl.textContent = '最後編輯：' + now;
     return true;
   } catch(e) {
     alert('儲存失敗，請確認網路連線。\n' + e.message);
@@ -1293,7 +1359,8 @@ async function deleteYearData(year) {
     await Promise.all([
       window._deleteDoc(window._doc(window._db, 'extensions', String(year))),
       window._deleteDoc(window._doc(window._db, 'rooms', String(year))),
-      window._deleteDoc(window._doc(window._db, 'rentals', String(year)))
+      window._deleteDoc(window._doc(window._db, 'rentals', String(year))),
+      window._deleteDoc(window._doc(window._db, 'meetings', String(year)))
     ]);
     return true;
   } catch (e) {
@@ -1326,9 +1393,11 @@ window.APP = {
   phoneData: [],
   mapData: {},
   rentalData: [],
+  meetingData: [],
   phoneLastEdit: '',
   mapLastEdit: '',
   rentalLastEdit: '',
+  meetingLastEdit: '',
   currentBuilding: 'F',
   currentRentalBuilding: 'F',
   editingRoomKey: null,
@@ -1342,8 +1411,43 @@ window.APP = {
   defaultPhone: [],
 
   // ── Default map data (載入自 Firebase) ──
-  defaultMap: {}
+  defaultMap: {},
+
+  // ── Default 學年會議代表 data（每一列＝一個會議，橫向對應一～六年級各自的班級代碼／代表，種子資料，之後改由 Firebase 儲存）──
+  // codes: 依年級存放班級代碼（例如 codes['5'] = '501'），會自動帶出分機一覽表中的老師姓名
+  // overrides: 找不到對應班級代碼、或非導師角色（如學年主任）時，該年級手動指定的代表姓名
+  defaultMeeting: [
+    { id: 'm01', dept: 'jw', name: '編班委員會（教務處）', codes: { '5': '501' }, overrides: {} },
+    { id: 'm02', dept: 'jw', name: '學習扶助小組委員會（教務處）', codes: { '5': '501' }, overrides: {} },
+    { id: 'm03', dept: 'jw', name: '課務編排小組（教務處）', codes: { '5': '502' }, overrides: {} },
+    { id: 'm04', dept: 'jw', name: '圖書小組（教務處）', codes: { '5': '502' }, overrides: {} },
+    { id: 'm05', dept: 'jw', name: '校務會議（教務處）', codes: { '5': '503' }, overrides: {} },
+    { id: 'm06', dept: 'jw', name: '教科書評選委員會（教務處）', codes: { '5': '504' }, overrides: {} },
+    { id: 'm07', dept: 'jw', name: '課程發展核心小組（教務處）', codes: { '5': '505' }, overrides: {} },
+    { id: 'm08', dept: 'jw', name: '擴大行政會議（教務處）', codes: {}, overrides: { '5': '毓潔師' } },
+    { id: 'm09', dept: 'jw', name: '課發會（教務處）', codes: {}, overrides: { '5': '毓潔師' } },
+    { id: 'm10', dept: 'xw', name: '午餐執行會議（學務處）', codes: { '5': '504' }, overrides: {} },
+    { id: 'm11', dept: 'xw', name: '校園安全會議（學務處）', codes: { '5': '505' }, overrides: {} },
+    { id: 'm12', dept: 'xw', name: '運動會籌備會議（學務處）', codes: {}, overrides: { '5': '毓潔師' } },
+    { id: 'm13', dept: 'xw', name: '防治霸凌因應小組會議（學務處）', codes: {}, overrides: { '5': '毓潔師' } },
+    { id: 'm14', dept: 'xw', name: '防疫會議（學務處）', codes: {}, overrides: { '5': '毓潔師' } },
+    { id: 'm15', dept: 'fd', name: '特教推行委員會（輔導處）', codes: { '5': '507' }, overrides: {} },
+    { id: 'm16', dept: 'fd', name: '學生自我傷害三級預防推動小組（輔導處）', codes: { '5': '507' }, overrides: {} },
+    { id: 'm17', dept: 'other', name: '教師會學年開會代表', codes: { '5': '503' }, overrides: {} },
+    { id: 'm18', dept: 'other', name: '性別平等教育委員會（學務處、輔導處）', codes: { '5': '508' }, overrides: {} },
+    { id: 'm19', dept: 'other', name: '主持學年會議', codes: {}, overrides: { '5': '毓潔師' } }
+  ]
 };
+
+// 各處室分組的顯示標籤與順序（單一處室歸該處室；沒有處室或雙處室權責一律歸「其他」）
+const MTG_DEPTS = [
+  { key: 'jw',   label: '教務處' },
+  { key: 'xw',   label: '學務處' },
+  { key: 'fd',   label: '輔導處' },
+  { key: 'other', label: '其他（無單一處室／跨處室）' }
+];
+const MTG_GRADES = ['1', '2', '3', '4', '5', '6'];
+const MTG_GRADE_LABELS = { '1': '一年級', '2': '二年級', '3': '三年級', '4': '四年級', '5': '五年級', '6': '六年級' };
 
 // ─── Category mapping ─────────────────────────────────────
 const CAT_ORDER = [
@@ -2880,13 +2984,154 @@ window.switchTab = function(name, el) {
   const legendPhone = document.getElementById('tab-legend-phone');
   const legendMap = document.getElementById('tab-legend-map');
   const legendRental = document.getElementById('tab-legend-rental');
+  const legendMeeting = document.getElementById('tab-legend-meeting');
   if (legendPhone) legendPhone.style.display = name === 'phone' ? 'flex' : 'none';
   if (legendMap) legendMap.style.display = name === 'map' ? 'flex' : 'none';
   if (legendRental) legendRental.style.display = name === 'rental' ? 'flex' : 'none';
+  if (legendMeeting) legendMeeting.style.display = name === 'meeting' ? 'flex' : 'none';
   // Ext→name matching depends on the latest phone data, so refresh on entering the map tab
   if (name === 'map') renderMap();
   if (name === 'rental') renderRentalMap();
+  if (name === 'meeting') renderMeeting();
 };
+
+// ─── 學年會議代表 (Meeting Reps) — 一頁表格，橫向對應一～六年級 ──────────
+// 依班級代碼（例如 "501"）自動從分機一覽表（APP.phoneData）帶出老師姓名。
+// 找不到對應代碼時，就顯示該年級手動填入的 override（例如「學年主任」這類非導師角色）。
+function mtgResolveName(rec, grade) {
+  const code = ((rec.codes && rec.codes[grade]) || '').trim();
+  if (code) {
+    const hit = APP.phoneData.find(r => String(r.title).trim() === code);
+    if (hit) return { name: hit.name, source: 'code' };
+  }
+  const ov = (rec.overrides && rec.overrides[grade]) || '';
+  if (ov.trim()) return { name: ov.trim(), source: 'manual' };
+  return { name: '', source: 'none' };
+}
+
+window.renderMeeting = function() {
+  const wrap = document.getElementById('mtg-wrap');
+  if (!wrap) return;
+
+  if (!APP.meetingData || !APP.meetingData.length) {
+    APP.meetingData = JSON.parse(JSON.stringify(APP.defaultMeeting || []));
+  }
+  // 相容舊資料：把已刪除的分組（xwfd／head）併入「其他」；補齊缺少的 codes/overrides 物件
+  APP.meetingData.forEach(r => {
+    if (r.dept === 'xwfd' || r.dept === 'head') r.dept = 'other';
+    if (!r.codes) r.codes = {};
+    if (!r.overrides) r.overrides = {};
+  });
+
+  // 全校（所有年級合併）統計每位老師總共擔任幾次代表，方便整體均衡分配
+  const tally = {};
+  APP.meetingData.forEach(r => {
+    MTG_GRADES.forEach(g => {
+      const nm = mtgResolveName(r, g).name;
+      if (nm) tally[nm] = (tally[nm] || 0) + 1;
+    });
+  });
+
+  let html = `<div class="mtg-table-scroll"><table class="mtg-grid">
+    <thead><tr>
+      <th class="mtg-grid-namecol">會議名稱</th>
+      ${MTG_GRADES.map(g => `<th>${MTG_GRADE_LABELS[g]}</th>`).join('')}
+    </tr></thead><tbody>`;
+
+  let seq = 0; // 序號由上到下跨處室連續編號
+  MTG_DEPTS.forEach(dept => {
+    const rows = APP.meetingData.filter(r => (r.dept || 'other') === dept.key);
+    if (!rows.length && dept.key !== 'jw') return; // 沒有資料的分組就不顯示（教務處固定顯示方便新增）
+    html += `<tr class="mtg-grid-grouphead" data-dept="${dept.key}">
+      <td colspan="${MTG_GRADES.length + 1}">
+        <span>${dept.label}${rows.length ? `（${rows.length}）` : ''}</span>
+        <button class="mtg-group-add" onclick="addMeetingRow('${dept.key}')">＋ 新增會議</button>
+      </td>
+    </tr>`;
+    rows.forEach(r => {
+      seq += 1;
+      html += `<tr data-dept="${dept.key}">
+        <td class="mtg-grid-namecol"><span class="mtg-seq">${String(seq).padStart(2, '0')}</span> ${r.name}<button class="mtg-del-btn" onclick="deleteMeetingRow(event,'${r.id}')" title="刪除此列">✕</button></td>`;
+      MTG_GRADES.forEach(g => {
+        const resolved = mtgResolveName(r, g);
+        const count = resolved.name ? tally[resolved.name] : 0;
+        const countBadge = resolved.name
+          ? `<span class="mtg-count-badge" title="${resolved.name} 全校總共擔任 ${count} 次代表">${count}</span>`
+          : '';
+        const code = (r.codes && r.codes[g]) || '';
+        const codeLine = code ? code : `<span class="mtg-code-empty">－</span>`;
+        const nameLine = resolved.name
+          ? `${resolved.name}${countBadge}`
+          : `<span class="mtg-name-empty">未設定</span>`;
+        html += `<td class="mtg-grid-cell">
+          <div class="mtg-code-line" onclick="editMeetingCode('${r.id}','${g}')" title="點擊輸入${MTG_GRADE_LABELS[g]}的班級代碼（例如 501），會自動帶出分機一覽表中的老師姓名">${codeLine}</div>
+          <div class="mtg-name-line" onclick="editMeetingRep('${r.id}','${g}')" title="找不到班級代碼對應的老師時，可在此手動輸入代表姓名">${nameLine}</div>
+        </td>`;
+      });
+      html += `</tr>`;
+    });
+  });
+
+  html += `</tbody></table></div>`;
+  wrap.innerHTML = html;
+
+  const countEl = document.getElementById('mtg-count');
+  if (countEl) countEl.textContent = `共 ${seq} 項會議`;
+  const editEl = document.getElementById('last-edit-meeting');
+  if (editEl) editEl.textContent = APP.meetingLastEdit ? '最後編輯：' + APP.meetingLastEdit : '';
+};
+
+window.editMeetingCode = function(id, grade) {
+  if (!APP.editMode) return;
+  const rec = APP.meetingData.find(r => r.id === id);
+  if (!rec) return;
+  const val = prompt(`請輸入「${MTG_GRADE_LABELS[grade]}」的班級代碼（例如 501），會自動帶出分機一覽表中的老師姓名；留空則清除：`, (rec.codes && rec.codes[grade]) || '');
+  if (val === null) return;
+  if (!rec.codes) rec.codes = {};
+  rec.codes[grade] = val.trim();
+  APP.pendingChanges = true;
+  renderMeeting();
+};
+
+window.editMeetingRep = function(id, grade) {
+  if (!APP.editMode) return;
+  const rec = APP.meetingData.find(r => r.id === id);
+  if (!rec) return;
+  const current = mtgResolveName(rec, grade).name;
+  const val = prompt(`手動指定「${MTG_GRADE_LABELS[grade]}」的代表姓名（若已設定班級代碼且找得到老師，此欄會被班級代碼帶出的姓名覆蓋；適合用於「學年主任」等非導師角色）：`, (rec.overrides && rec.overrides[grade]) || current || '');
+  if (val === null) return;
+  if (!rec.overrides) rec.overrides = {};
+  rec.overrides[grade] = val.trim();
+  APP.pendingChanges = true;
+  renderMeeting();
+};
+
+window.addMeetingRow = function(deptKey) {
+  if (!APP.editMode) return;
+  const name = prompt('請輸入新會議名稱：', '');
+  if (!name || !name.trim()) return;
+  APP.meetingData.push({
+    id: 'm' + Date.now() + Math.floor(Math.random() * 1000),
+    dept: deptKey,
+    name: name.trim(),
+    codes: {},
+    overrides: {}
+  });
+  APP.pendingChanges = true;
+  renderMeeting();
+};
+
+window.deleteMeetingRow = function(e, id) {
+  e.stopPropagation();
+  if (!APP.editMode) return;
+  const rec = APP.meetingData.find(r => r.id === id);
+  if (!rec) return;
+  if (!confirm(`確定刪除「${rec.name}」這筆會議代表資料？`)) return;
+  APP.meetingData = APP.meetingData.filter(r => r.id !== id);
+  APP.pendingChanges = true;
+  renderMeeting();
+};
+
 
 // ─── Year picker ──────────────────────────────────────────
 window.toggleYearPicker = function() {
@@ -3017,7 +3262,8 @@ window.exportJSON = function() {
     phone: APP.phoneData,
     map: APP.mapData,
     floorOrder: APP.floorOrder || {},
-    rental: APP.rentalData || []
+    rental: APP.rentalData || [],
+    meeting: APP.meetingData || []
   };
   const blob = new Blob([JSON.stringify(payload, null, 2)], {type: 'application/json'});
   const url = URL.createObjectURL(blob);
@@ -3049,6 +3295,7 @@ window.importJSON = function(e) {
       APP.mapData = data.map;
       APP.floorOrder = data.floorOrder || {};
       APP.rentalData = data.rental || [];
+      APP.meetingData = data.meeting || [];
       if (data.year && !APP.years.includes(data.year)) {
         APP.years.push(data.year);
       }
@@ -3058,6 +3305,7 @@ window.importJSON = function(e) {
       renderPhone();
       renderMap();
       renderRentalMap();
+      renderMeeting();
       showToast(`✅ 匯入完成（${importYear}學年度），請記得儲存到 Firebase`);
     } catch(err) {
       alert('JSON 解析失敗：' + err.message);
@@ -3075,9 +3323,11 @@ setTimeout(() => {
     APP.phoneData = JSON.parse(JSON.stringify(APP.defaultPhone));
     APP.mapData = JSON.parse(JSON.stringify(APP.defaultMap));
     APP.rentalData = APP.rentalData || [];
+    APP.meetingData = APP.meetingData || [];
     renderPhone();
     renderMap();
     renderRentalMap();
+    renderMeeting();
   }
 }, 1500);
 </script>
