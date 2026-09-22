@@ -107,8 +107,7 @@
   .tab-legend.legend-hidden { display: none !important; }
   .header-more { position: relative; flex-shrink: 0; }
   .more-dropdown {
-    display: none; position: absolute;
-    top: calc(100% + 6px); right: 0;
+    display: none; position: fixed;
     background: var(--surface); border: 1px solid var(--border);
     border-radius: var(--radius-lg); padding: 6px;
     box-shadow: var(--shadow-md); z-index: 150; min-width: 150px;
@@ -429,6 +428,11 @@
   .mtg-name-empty { color: var(--text-light); font-weight: 400; font-style: italic; font-size: 11.5px; }
   body.edit-mode .mtg-code-line, body.edit-mode .mtg-name-line { cursor: pointer; }
   body.edit-mode .mtg-code-line:hover, body.edit-mode .mtg-name-line:hover { background: #fff8e1; }
+  body:not(.edit-mode) .mtg-code-line, body:not(.edit-mode) .mtg-name-line { cursor: copy; }
+  body:not(.edit-mode) .mtg-code-line:hover, body:not(.edit-mode) .mtg-name-line:hover { background: var(--primary-light); }
+  .mtg-name-text { cursor: copy; border-radius: 4px; padding: 1px 3px; margin: -1px -3px; }
+  body:not(.edit-mode) .mtg-name-text:hover { background: var(--primary-light); }
+  body.edit-mode .mtg-name-text { cursor: default; }
   .mtg-count-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 14px; height: 14px; padding: 0 3px; margin-left: 3px; border-radius: 7px; background: var(--primary); color: #fff; font-size: 9px; font-weight: 700; vertical-align: 1px; }
   .mtg-del-btn { display: none; position: absolute; right: 4px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #c0392b; font-size: 12px; cursor: pointer; padding: 0 4px; }
   body.edit-mode .mtg-del-btn { display: inline; }
@@ -708,8 +712,7 @@
 
   /* Year picker dropdown */
   .year-dropdown {
-    display: none; position: absolute;
-    top: calc(100% + 6px); left: 0;
+    display: none; position: fixed;
     background: var(--surface); border: 1px solid var(--border);
     border-radius: var(--radius-lg); padding: 8px;
     box-shadow: var(--shadow-md); z-index: 150; min-width: 140px;
@@ -1147,7 +1150,7 @@
         全部列印（給各處室參考）
       </button>
       <span class="mtg-toolbar-sep"></span>
-      <span class="mtg-toolbar-label">各年級獨自列印（學年主任確認後貼於會議紀錄簿）：</span>
+      <span class="mtg-toolbar-label">各年級獨自列印（學年主任確認後可貼於會議紀錄簿，如有原始格式，可沿用學年習慣的格式即可）：</span>
       <div class="mtg-grade-print-group">
         <button class="mtg-grade-print-btn" onclick="printMeetingGrade('1')">一年級</button>
         <button class="mtg-grade-print-btn" onclick="printMeetingGrade('2')">二年級</button>
@@ -3091,6 +3094,27 @@ function showToast(msg) {
   setTimeout(() => t.style.opacity = '0', 2500);
 }
 
+// ─── 複製到剪貼簿（非編輯模式下，點格子直接複製班級代碼／代表姓名／會議名稱）───
+function copyTextFallback(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand('copy'); } catch (e) {}
+  document.body.removeChild(ta);
+}
+function copyToClipboard(text, label) {
+  if (!text) return;
+  const onDone = () => showToast(`已複製${label ? label + '：' : ''}${text}`);
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(onDone).catch(() => { copyTextFallback(text); onDone(); });
+  } else {
+    copyTextFallback(text);
+    onDone();
+  }
+}
+
 // ─── Tab switch ───────────────────────────────────────────
 window.switchTab = function(name, el) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -3168,7 +3192,7 @@ window.renderMeeting = function() {
     rows.forEach(r => {
       seq += 1;
       html += `<tr data-dept="${dept.key}">
-        <td class="mtg-grid-namecol"><span class="mtg-seq">${String(seq).padStart(2, '0')}</span> ${r.name}<button class="mtg-del-btn" onclick="deleteMeetingRow(event,'${r.id}')" title="刪除此列">✕</button></td>`;
+        <td class="mtg-grid-namecol"><span class="mtg-seq">${String(seq).padStart(2, '0')}</span> <span class="mtg-name-text" onclick="copyMeetingName('${r.id}')" title="點擊複製會議名稱">${r.name}</span><button class="mtg-del-btn" onclick="deleteMeetingRow(event,'${r.id}')" title="刪除此列">✕</button></td>`;
       MTG_GRADES.forEach(g => {
         const resolved = mtgResolveName(r, g);
         const count = resolved.name ? tally[resolved.name] : 0;
@@ -3180,9 +3204,15 @@ window.renderMeeting = function() {
         const nameLine = resolved.name
           ? `${resolved.name}${countBadge}`
           : `<span class="mtg-name-empty">未設定</span>`;
+        const codeTitle = APP.editMode
+          ? `點擊輸入${MTG_GRADE_LABELS[g]}的班級代碼（例如 501），會自動帶出分機一覽表中的老師姓名`
+          : (code ? '點擊複製班級代碼' : '尚未設定班級代碼');
+        const nameTitle = APP.editMode
+          ? '找不到班級代碼對應的老師時，可在此手動輸入代表姓名'
+          : (resolved.name ? '點擊複製代表姓名' : '尚未設定代表姓名');
         html += `<td class="mtg-grid-cell">
-          <div class="mtg-code-line" onclick="editMeetingCode('${r.id}','${g}')" title="點擊輸入${MTG_GRADE_LABELS[g]}的班級代碼（例如 501），會自動帶出分機一覽表中的老師姓名">${codeLine}</div>
-          <div class="mtg-name-line" onclick="editMeetingRep('${r.id}','${g}')" title="找不到班級代碼對應的老師時，可在此手動輸入代表姓名">${nameLine}</div>
+          <div class="mtg-code-line" onclick="editMeetingCode('${r.id}','${g}')" title="${codeTitle}">${codeLine}</div>
+          <div class="mtg-name-line" onclick="editMeetingRep('${r.id}','${g}')" title="${nameTitle}">${nameLine}</div>
         </td>`;
       });
       html += `</tr>`;
@@ -3199,9 +3229,13 @@ window.renderMeeting = function() {
 };
 
 window.editMeetingCode = function(id, grade) {
-  if (!APP.editMode) return;
   const rec = APP.meetingData.find(r => r.id === id);
   if (!rec) return;
+  if (!APP.editMode) {
+    const code = (rec.codes && rec.codes[grade]) || '';
+    if (code) copyToClipboard(code, '班級代碼');
+    return;
+  }
   const val = prompt(`請輸入「${MTG_GRADE_LABELS[grade]}」的班級代碼（例如 501），會自動帶出分機一覽表中的老師姓名；留空則清除：`, (rec.codes && rec.codes[grade]) || '');
   if (val === null) return;
   if (!rec.codes) rec.codes = {};
@@ -3211,9 +3245,13 @@ window.editMeetingCode = function(id, grade) {
 };
 
 window.editMeetingRep = function(id, grade) {
-  if (!APP.editMode) return;
   const rec = APP.meetingData.find(r => r.id === id);
   if (!rec) return;
+  if (!APP.editMode) {
+    const nm = mtgResolveName(rec, grade).name;
+    if (nm) copyToClipboard(nm, '代表姓名');
+    return;
+  }
   const current = mtgResolveName(rec, grade).name;
   const val = prompt(`手動指定「${MTG_GRADE_LABELS[grade]}」的代表姓名（若已設定班級代碼且找得到老師，此欄會被班級代碼帶出的姓名覆蓋；適合用於「學年主任」等非導師角色）：`, (rec.overrides && rec.overrides[grade]) || current || '');
   if (val === null) return;
@@ -3221,6 +3259,13 @@ window.editMeetingRep = function(id, grade) {
   rec.overrides[grade] = val.trim();
   APP.pendingChanges = true;
   renderMeeting();
+};
+
+window.copyMeetingName = function(id) {
+  if (APP.editMode) return; // 編輯模式下這裡保留給未來重新命名功能，避免跟複製混淆
+  const rec = APP.meetingData.find(r => r.id === id);
+  if (!rec) return;
+  copyToClipboard(rec.name, '會議名稱');
 };
 
 window.addMeetingRow = function(deptKey) {
@@ -3253,8 +3298,16 @@ window.deleteMeetingRow = function(e, id) {
 // ─── 「其他功能」下拉選單（列印／下載 Excel／匯出匯入 JSON）─────────
 window.toggleMoreMenu = function() {
   const dd = document.getElementById('more-dropdown');
-  dd.classList.toggle('visible');
-  if (dd.classList.contains('visible')) document.addEventListener('click', closeMoreMenuOutside, { once: true });
+  const willShow = !dd.classList.contains('visible');
+  dd.classList.toggle('visible', willShow);
+  if (willShow) {
+    const toggle = document.getElementById('header-more-toggle');
+    const r = toggle.getBoundingClientRect();
+    dd.style.top = (r.bottom + 6) + 'px';
+    dd.style.left = 'auto';
+    dd.style.right = (window.innerWidth - r.right) + 'px';
+    document.addEventListener('click', closeMoreMenuOutside, { once: true });
+  }
 };
 
 window.closeMoreMenu = function() {
@@ -3271,9 +3324,16 @@ function closeMoreMenuOutside(e) {
 // ─── Year picker ──────────────────────────────────────────
 window.toggleYearPicker = function() {
   const dd = document.getElementById('year-dropdown');
-  dd.classList.toggle('visible');
-  if (dd.classList.contains('visible')) renderYearList();
-  document.addEventListener('click', closeYearPickerOutside, { once: true });
+  const willShow = !dd.classList.contains('visible');
+  dd.classList.toggle('visible', willShow);
+  if (willShow) {
+    renderYearList();
+    const toggle = document.getElementById('year-toggle');
+    const r = toggle.getBoundingClientRect();
+    dd.style.top = (r.bottom + 6) + 'px';
+    dd.style.left = r.left + 'px';
+    document.addEventListener('click', closeYearPickerOutside, { once: true });
+  }
 }
 
 function closeYearPickerOutside(e) {
