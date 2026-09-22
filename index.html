@@ -65,11 +65,11 @@
 
   /* Search bar embedded in header */
   .header-search {
-    flex: 1;
+    flex: 0 1 240px;
     display: flex;
     align-items: center;
     gap: 8px;
-    max-width: 680px;
+    max-width: 240px;
   }
   .header-search-wrap { position: relative; flex: 1; }
   .header-search-wrap svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: rgba(255,255,255,0.6); width: 14px; height: 14px; }
@@ -99,6 +99,23 @@
   }
   .header-search-btn:hover { background: rgba(255,255,255,0.22); }
   .header-search-btn svg { width: 13px; height: 13px; }
+  .header-more { position: relative; flex-shrink: 0; }
+  .more-dropdown {
+    display: none; position: absolute;
+    top: calc(100% + 6px); right: 0;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 6px;
+    box-shadow: var(--shadow-md); z-index: 150; min-width: 150px;
+    color: var(--text);
+  }
+  .more-dropdown.visible { display: block; }
+  .more-option {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 10px; border-radius: 6px; font-size: 13px;
+    cursor: pointer; transition: background 0.1s; white-space: nowrap;
+  }
+  .more-option:hover { background: var(--primary-light); color: var(--primary); }
+  .more-option svg { width: 14px; height: 14px; flex-shrink: 0; }
 
   .header-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 
@@ -369,6 +386,7 @@
 
   /* ── Meeting reps tab (學年會議代表) — spreadsheet-style grid, all grades in one table ── */
   .mtg-wrap { display: flex; flex-direction: column; }
+  .mtg-page-hint { font-size: 12.5px; color: var(--text-light); margin-bottom: 10px; line-height: 1.5; }
   .mtg-table-scroll { overflow-x: auto; background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow); border: 1px solid var(--border); }
   table.mtg-grid { width: 100%; min-width: 720px; border-collapse: collapse; font-size: 12.5px; }
   table.mtg-grid thead th { position: sticky; top: 0; z-index: 2; background: var(--primary); color: #fff; font-size: 12.5px; font-weight: 700; padding: 8px 6px; text-align: center; white-space: nowrap; }
@@ -935,9 +953,6 @@
         <span><span class="dot" style="background:#fdf0e6;border:1.5px solid var(--accent)"></span>有租借</span>
         <span style="color:var(--text-light)">｜編輯模式下雙擊教室可設定租借</span>
       </div>
-      <div class="tab-legend" id="tab-legend-meeting" style="display:none">
-        <span class="mtg-legend-hint">一張表看完所有年級：橫向對應一～六年級，每格上面是班級代碼、下面是代表姓名；輸入班級代碼會自動帶出分機一覽表中的老師姓名，姓名旁的數字＝該老師全校總共擔任幾次代表</span>
-      </div>
       </div>
     </div>
     <div class="header-search" id="header-search-area">
@@ -945,23 +960,31 @@
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M10 10l3 3"/></svg>
         <input class="header-search-input" type="text" placeholder="搜尋姓名、職稱或分機號碼…" id="phone-search" name="phone-search-q" autocomplete="off" data-lpignore="true" data-1p-ignore data-bwignore oninput="filterPhone()">
       </div>
-      <button class="header-search-btn" onclick="window.print()">
-        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="5" width="12" height="8" rx="1"/><path d="M5 5V2h6v3M5 12h6"/></svg>
-        <span class="btn-label">列印</span>
-      </button>
-      <button class="header-search-btn" onclick="exportExcel()">
-        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M9 2H4a1 1 0 00-1 1v10a1 1 0 001 1h8a1 1 0 001-1V6L9 2z"/><path d="M9 2v4h4M6 9l4 4M10 9l-4 4"/></svg>
-        <span class="btn-label">下載 Excel</span>
-      </button>
-      <button class="header-search-btn" onclick="exportJSON()" title="匯出資料為 JSON">
-        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M9 2H4a1 1 0 00-1 1v10a1 1 0 001 1h8a1 1 0 001-1V6L9 2z"/><path d="M9 2v4h4"/><path d="M5 10h6M5 12.5h4"/></svg>
-        <span class="btn-label">匯出 JSON</span>
-      </button>
-      <label class="header-search-btn" style="cursor:pointer" title="匯入 JSON 覆蓋資料">
-        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M9 2H4a1 1 0 00-1 1v10a1 1 0 001 1h8a1 1 0 001-1V6L9 2z"/><path d="M9 2v4h4"/><path d="M8 14V8m-2.5 3.5L8 14l2.5-2.5"/></svg>
-        <span class="btn-label">匯入 JSON</span>
-        <input type="file" accept=".json" onchange="importJSON(event)" style="display:none">
-      </label>
+      <div class="header-more" id="header-more-toggle" onclick="toggleMoreMenu()">
+        <button class="header-search-btn" type="button">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="3" cy="8" r="1.2" fill="currentColor" stroke="none"/><circle cx="8" cy="8" r="1.2" fill="currentColor" stroke="none"/><circle cx="13" cy="8" r="1.2" fill="currentColor" stroke="none"/></svg>
+          <span class="btn-label">其他功能</span>
+        </button>
+        <div class="more-dropdown" id="more-dropdown" onclick="event.stopPropagation()">
+          <div class="more-option" onclick="window.print(); closeMoreMenu()">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="5" width="12" height="8" rx="1"/><path d="M5 5V2h6v3M5 12h6"/></svg>
+            列印
+          </div>
+          <div class="more-option" onclick="exportExcel(); closeMoreMenu()">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M9 2H4a1 1 0 00-1 1v10a1 1 0 001 1h8a1 1 0 001-1V6L9 2z"/><path d="M9 2v4h4M6 9l4 4M10 9l-4 4"/></svg>
+            下載 Excel
+          </div>
+          <div class="more-option" onclick="exportJSON(); closeMoreMenu()">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M9 2H4a1 1 0 00-1 1v10a1 1 0 001 1h8a1 1 0 001-1V6L9 2z"/><path d="M9 2v4h4"/><path d="M5 10h6M5 12.5h4"/></svg>
+            匯出 JSON
+          </div>
+          <label class="more-option" style="cursor:pointer">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M9 2H4a1 1 0 00-1 1v10a1 1 0 001 1h8a1 1 0 001-1V6L9 2z"/><path d="M9 2v4h4"/><path d="M8 14V8m-2.5 3.5L8 14l2.5-2.5"/></svg>
+            匯入 JSON
+            <input type="file" accept=".json" onchange="importJSON(event); closeMoreMenu()" style="display:none">
+          </label>
+        </div>
+      </div>
     </div>
     <div class="header-right">
       <button id="edit-btn" onclick="toggleEdit()">
@@ -1080,6 +1103,7 @@
 
   <!-- ── Meeting Reps Panel (學年會議代表 — 一頁顯示全部年級) ── -->
   <div class="tab-panel" id="panel-meeting">
+    <div class="mtg-page-hint">一張表看完所有年級：橫向對應一～六年級，每格上面是班級代碼、下面是代表姓名；輸入班級代碼會自動帶出分機一覽表中的老師姓名，姓名旁的數字＝該老師全校總共擔任幾次代表</div>
     <div class="mtg-wrap" id="mtg-wrap"></div>
     <div class="meta-bar">
       <span id="mtg-count"></span>
@@ -2984,11 +3008,9 @@ window.switchTab = function(name, el) {
   const legendPhone = document.getElementById('tab-legend-phone');
   const legendMap = document.getElementById('tab-legend-map');
   const legendRental = document.getElementById('tab-legend-rental');
-  const legendMeeting = document.getElementById('tab-legend-meeting');
   if (legendPhone) legendPhone.style.display = name === 'phone' ? 'flex' : 'none';
   if (legendMap) legendMap.style.display = name === 'map' ? 'flex' : 'none';
   if (legendRental) legendRental.style.display = name === 'rental' ? 'flex' : 'none';
-  if (legendMeeting) legendMeeting.style.display = name === 'meeting' ? 'flex' : 'none';
   // Ext→name matching depends on the latest phone data, so refresh on entering the map tab
   if (name === 'map') renderMap();
   if (name === 'rental') renderRentalMap();
@@ -3132,6 +3154,24 @@ window.deleteMeetingRow = function(e, id) {
   renderMeeting();
 };
 
+
+// ─── 「其他功能」下拉選單（列印／下載 Excel／匯出匯入 JSON）─────────
+window.toggleMoreMenu = function() {
+  const dd = document.getElementById('more-dropdown');
+  dd.classList.toggle('visible');
+  if (dd.classList.contains('visible')) document.addEventListener('click', closeMoreMenuOutside, { once: true });
+};
+
+window.closeMoreMenu = function() {
+  const dd = document.getElementById('more-dropdown');
+  if (dd) dd.classList.remove('visible');
+};
+
+function closeMoreMenuOutside(e) {
+  const dd = document.getElementById('more-dropdown');
+  const toggle = document.getElementById('header-more-toggle');
+  if (!dd.contains(e.target) && !toggle.contains(e.target)) dd.classList.remove('visible');
+}
 
 // ─── Year picker ──────────────────────────────────────────
 window.toggleYearPicker = function() {
