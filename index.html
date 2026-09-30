@@ -410,6 +410,32 @@
   body:not(.edit-mode) .exam-subj-text:hover { background: var(--primary-light); }
   body.edit-mode .exam-subj-text { cursor: pointer; }
   body.edit-mode .exam-subj-text:hover { background: #fff8e1; }
+
+  .exam-term-sub { font-size: 12px; font-weight: 500; letter-spacing: 0.05em; margin-left: 6px; opacity: 0.92; }
+  .exam-sched { display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 12px; margin-bottom: 14px; }
+  .exam-sched-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow); overflow: hidden; }
+  .exam-sched-title { padding: 6px 12px; font-size: 13px; font-weight: 700; color: #fff; background: var(--primary); display: flex; align-items: center; justify-content: space-between; }
+  .exam-sched-card.fin .exam-sched-title { background: #a2531b; }
+  .exam-sched-title .order { font-weight: 500; font-size: 12px; opacity: 0.92; }
+  table.exam-sched-tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table.exam-sched-tbl th, table.exam-sched-tbl td { border: 1px solid var(--border); padding: 6px 8px; text-align: center; }
+  table.exam-sched-tbl th { background: var(--primary-light); color: var(--primary); font-weight: 700; }
+  .exam-sched-card.fin table.exam-sched-tbl th { background: var(--accent-light); color: #a2531b; }
+  table.exam-sched-tbl td.per { background: #f7fafd; font-size: 12px; color: var(--text-muted); white-space: nowrap; min-width: 92px; }
+  table.exam-sched-tbl td.per b { display: block; color: var(--text); font-size: 13px; }
+  table.exam-sched-tbl td.subj { font-weight: 700; font-size: 14px; }
+  .exam-date-copy { cursor: copy; border-radius: 4px; padding: 1px 4px; }
+  body:not(.edit-mode) .exam-date-copy:hover { background: rgba(255,255,255,0.6); }
+  .exam-sched input, .exam-sched select { font: inherit; font-size: 13px; padding: 3px 4px; border: 1px solid var(--border); border-radius: 5px; background: #fff; color: var(--text); max-width: 100%; }
+  .exam-sched input.date-in { width: 100px; text-align: center; font-weight: 700; }
+  .exam-sched input.per-time { width: 96px; text-align: center; margin-top: 3px; font-size: 12px; }
+  .exam-sched input.per-label { width: 60px; text-align: center; font-weight: 700; }
+  .exam-day-del { display: none; margin-left: 4px; background: none; border: none; color: #c0392b; cursor: pointer; font-size: 12px; }
+  body.edit-mode .exam-day-del { display: inline; }
+  .exam-day-add { display: none; margin: 8px 10px 10px; padding: 4px 12px; border: 1px dashed var(--primary-mid); background: var(--primary-light); color: var(--primary); border-radius: var(--radius); font-size: 12px; cursor: pointer; }
+  body.edit-mode .exam-day-add { display: inline-block; }
+  .exam-wd { color: var(--accent); font-weight: 700; }
+  .exam-hint-empty { color: var(--text-light); font-weight: 400; font-style: italic; }
   .exam-add-subj { display: none; margin: 10px 0 0; padding: 7px 14px; border: 1px dashed var(--primary-mid); background: var(--primary-light); color: var(--primary); border-radius: var(--radius); font-size: 13px; cursor: pointer; }
   body.edit-mode .exam-add-subj { display: inline-block; }
 
@@ -920,6 +946,17 @@
     #exam-print-root .ep-name { font-size: 13px; font-weight: 600; }
     #exam-print-root td.ep-fin-first, #exam-print-root th.ep-fin-first { border-left: 2.5px solid #1a5c8a; }
     #exam-print-root .ep-page + .ep-page { page-break-before: always; }
+
+    #panel-exam .exam-sched { display: none !important; }
+    #exam-print-root .ep-sched { display: flex; gap: 6mm; margin-bottom: 4mm; }
+    #exam-print-root .ep-sched > div { flex: 1; }
+    #exam-print-root .ep-sched-title { background: #1a5c8a !important; color: #fff !important; font-size: 11px; font-weight: 700; padding: 3px 6px; }
+    #exam-print-root .ep-sched-title.fin { background: #a2531b !important; }
+    #exam-print-root .ep-sched table th, #exam-print-root .ep-sched table td { padding: 3px 4px; text-align: center; font-size: 11px; background: #fff !important; color: #000 !important; }
+    #exam-print-root .ep-sched table th { background: #eef4fa !important; font-weight: 700; }
+    #exam-print-root .ep-sched td.per { font-size: 10px; width: 22%; }
+    #exam-print-root .ep-sched td.subj { font-weight: 700; font-size: 12px; }
+    #exam-print-root .ep-term-sub { font-size: 9.5px; font-weight: 500; margin-left: 4px; }
   }
   /* Hidden on screen, shown on print */
   #phone-print-root { display: none; }
@@ -1218,7 +1255,7 @@
 
   <!-- ── Exam Teachers Panel (出題教師) ── -->
   <div class="tab-panel" id="panel-exam">
-    <div class="mtg-page-hint">快速查閱各科命題老師：橫向為期中考／期末考各年級，每格上面是班級代碼、下面是出題老師；輸入班級代碼會自動帶出分機一覽表中的老師姓名（科任或找不到代碼時，可在姓名欄手動輸入）。點一下格子即可複製。</div>
+    <div class="mtg-page-hint">快速查閱各科命題老師：上方是考試日期與節次科目（日期輸入 1151105 會自動顯示星期），下方橫向為期中考／期末考各年級，每格上面是班級代碼、下面是出題老師；輸入班級代碼會自動帶出分機一覽表中的老師姓名（科任或找不到代碼時，可在姓名欄手動輸入）。點一下格子即可複製。</div>
     <div class="mtg-toolbar">
       <div class="exam-sem-group">
         <button class="exam-sem-btn" id="exam-sem-s1" onclick="setExamSem('s1')">上學期</button>
@@ -1231,6 +1268,7 @@
       </button>
       <button class="mtg-grade-print-btn" onclick="printExam('both')">列印整學年（上＋下學期）</button>
     </div>
+    <div class="exam-sched" id="exam-schedule"></div>
     <div class="mtg-wrap" id="exam-wrap"></div>
     <button class="exam-add-subj" onclick="addExamSubject()">＋ 新增科目</button>
     <div class="meta-bar">
@@ -3412,6 +3450,11 @@ function examEnsure() {
     const d = APP.examData[k];
     if (!Array.isArray(d.subjects) || !d.subjects.length) d.subjects = EXAM_DEFAULT_SUBJECTS.map(([id, name]) => ({ id, name }));
     if (!d.cells) d.cells = {};
+    if (!d.schedule) d.schedule = {};
+    const sc = d.schedule;
+    if (!Array.isArray(sc.periods) || sc.periods.length < 2) sc.periods = [{ label: '第一節', time: '8:40~9:20' }, { label: '第二節', time: '9:30~10:20' }];
+    if (!Array.isArray(sc.mid)) sc.mid = [{ date: '', s: ['chi', 'sci'] }, { date: '', s: ['math', 'soc'] }];
+    if (!Array.isArray(sc.fin)) sc.fin = [{ date: '', s: ['sci', 'soc'] }, { date: '', s: ['chi', 'math'] }];
   });
 }
 function examCell(sem, sid, term, g) {
@@ -3434,6 +3477,115 @@ function examResolve(sem, sid, term, g) {
   return { code, name: ov, source: ov ? 'manual' : 'none' };
 }
 
+
+// 民國日期 1151105 → 星期幾（四）。接受 1151105 / 115/11/05 / 115-11-05；不合法回傳空字串
+function examWeekday(str) {
+  let d = String(str || '').replace(/\D/g, '');
+  if (d.length === 6) d = '0' + d;
+  if (d.length !== 7) return '';
+  const y = +d.slice(0, 3) + 1911, m = +d.slice(3, 5), day = +d.slice(5, 7);
+  const dt = new Date(y, m - 1, day);
+  if (dt.getFullYear() !== y || dt.getMonth() !== m - 1 || dt.getDate() !== day) return '';
+  return '日一二三四五六'[dt.getDay()];
+}
+function examDateNorm(str) {
+  let d = String(str || '').replace(/\D/g, '');
+  if (d.length === 6) d = '0' + d;
+  return d.slice(0, 7);
+}
+function examDateText(str) {
+  const d = examDateNorm(str);
+  if (!d) return '';
+  const w = examWeekday(d);
+  return d + (w ? `(${w})` : '');
+}
+// 依「日期由左到右、節次由上到下」組出科目順序，例如 國自數社
+function examOrderText(sem, term) {
+  const sc = APP.examData[sem].schedule;
+  const subs = APP.examData[sem].subjects;
+  let out = '';
+  (sc[term] || []).forEach(day => {
+    for (let i = 0; i < sc.periods.length; i++) {
+      const sub = subs.find(x => x.id === (day.s || [])[i]);
+      if (sub && sub.name) out += sub.name.charAt(0);
+    }
+  });
+  return out;
+}
+
+window.setExamDate = function(term, idx, val) {
+  APP.examData[APP.examSem].schedule[term][idx].date = examDateNorm(val);
+  APP.pendingChanges = true; renderExam();
+};
+window.setExamSubj = function(term, idx, pi, sid) {
+  const day = APP.examData[APP.examSem].schedule[term][idx];
+  if (!day.s) day.s = [];
+  day.s[pi] = sid;
+  APP.pendingChanges = true; renderExam();
+};
+window.setExamPeriod = function(pi, field, val) {
+  APP.examData[APP.examSem].schedule.periods[pi][field] = val.trim();
+  APP.pendingChanges = true; renderExam();
+};
+window.addExamDay = function(term) {
+  if (!APP.editMode) return;
+  APP.examData[APP.examSem].schedule[term].push({ date: '', s: [] });
+  APP.pendingChanges = true; renderExam();
+};
+window.delExamDay = function(term, idx) {
+  if (!APP.editMode) return;
+  if (!confirm('確定刪除這一天的考試安排？')) return;
+  APP.examData[APP.examSem].schedule[term].splice(idx, 1);
+  APP.pendingChanges = true; renderExam();
+};
+window.copyExamDate = function(term, idx) {
+  if (APP.editMode) return;
+  const t = examDateText(APP.examData[APP.examSem].schedule[term][idx].date);
+  if (t) copyToClipboard(t, '考試日期');
+};
+
+function renderExamSchedule(sem) {
+  const box = document.getElementById('exam-schedule');
+  if (!box) return;
+  const d = APP.examData[sem], sc = d.schedule, edit = APP.editMode;
+  box.innerHTML = EXAM_TERMS.map(t => {
+    const days = sc[t.key];
+    const order = examOrderText(sem, t.key);
+    let h = `<div class="exam-sched-card ${t.key}"><div class="exam-sched-title"><span>${t.label}日程</span><span class="order">${order ? '科目順序：' + examEsc(order) : ''}</span></div>`;
+    h += `<div style="overflow-x:auto"><table class="exam-sched-tbl"><thead><tr><th></th>`;
+    days.forEach((day, i) => {
+      const w = examWeekday(day.date);
+      if (edit) {
+        h += `<th><input class="date-in" type="text" maxlength="10" placeholder="1151105" value="${examEsc(day.date)}" onchange="setExamDate('${t.key}',${i},this.value)"> <span class="exam-wd">${w ? '(' + w + ')' : ''}</span><button class="exam-day-del" onclick="delExamDay('${t.key}',${i})" title="刪除這一天">✕</button></th>`;
+      } else {
+        const txt = examDateText(day.date);
+        h += `<th>${txt ? `<span class="exam-date-copy" onclick="copyExamDate('${t.key}',${i})" title="點擊複製日期">${examEsc(day.date)}<span class="exam-wd">${w ? '(' + w + ')' : ''}</span></span>` : '<span class="exam-hint-empty">未設定日期</span>'}</th>`;
+      }
+    });
+    h += `</tr></thead><tbody>`;
+    sc.periods.forEach((per, pi) => {
+      h += `<tr><td class="per">`;
+      h += edit
+        ? `<input class="per-label" value="${examEsc(per.label)}" onchange="setExamPeriod(${pi},'label',this.value)"><br><input class="per-time" value="${examEsc(per.time)}" onchange="setExamPeriod(${pi},'time',this.value)">`
+        : `<b>${examEsc(per.label)}</b>${examEsc(per.time)}`;
+      h += `</td>`;
+      days.forEach((day, i) => {
+        const cur = (day.s || [])[pi] || '';
+        if (edit) {
+          h += `<td class="subj"><select onchange="setExamSubj('${t.key}',${i},${pi},this.value)"><option value="">－</option>${d.subjects.map(sb => `<option value="${sb.id}"${sb.id === cur ? ' selected' : ''}>${examEsc(sb.name)}</option>`).join('')}</select></td>`;
+        } else {
+          const sub = d.subjects.find(x => x.id === cur);
+          h += `<td class="subj">${sub ? examEsc(sub.name) : '<span class="exam-hint-empty">－</span>'}</td>`;
+        }
+      });
+      h += `</tr>`;
+    });
+    h += `</tbody></table></div>`;
+    h += `<button class="exam-day-add" onclick="addExamDay('${t.key}')">＋ 新增考試日</button></div>`;
+    return h;
+  }).join('');
+}
+
 window.setExamSem = function(sem) { APP.examSem = sem; renderExam(); };
 
 window.renderExam = function() {
@@ -3444,10 +3596,11 @@ window.renderExam = function() {
   const d = APP.examData[sem];
   ['s1', 's2'].forEach(k => { const b = document.getElementById('exam-sem-' + k); if (b) b.classList.toggle('active', k === sem); });
   const lbl = document.getElementById('exam-print-sem-label'); if (lbl) lbl.textContent = EXAM_SEMS[sem];
+  renderExamSchedule(sem);
 
   let html = `<div class="mtg-table-scroll"><table class="exam-grid"><thead>
     <tr class="exam-term-row"><th rowspan="2">科目</th>
-      ${EXAM_TERMS.map(t => `<th colspan="${MTG_GRADES.length}" class="${t.key === 'fin' ? 'term-fin exam-fin-first' : ''}">${t.label}</th>`).join('')}
+      ${EXAM_TERMS.map(t => `<th colspan="${MTG_GRADES.length}" class="${t.key === 'fin' ? 'term-fin exam-fin-first' : ''}">${t.label}${examOrderText(sem, t.key) ? `<span class="exam-term-sub">(${examEsc(examOrderText(sem, t.key))})</span>` : ''}</th>`).join('')}
     </tr>
     <tr class="exam-grade-row">
       ${EXAM_TERMS.map(t => MTG_GRADES.map((g, i) => `<th class="${t.key === 'fin' ? 'term-fin' : ''}${t.key === 'fin' && i === 0 ? ' exam-fin-first' : ''}">${MTG_GRADE_LABELS[g]}</th>`).join('')).join('')}
@@ -3543,8 +3696,18 @@ window.printExam = function(mode) { APP.examPrintMode = mode; window.print(); };
 function buildExamPrintOne(sem) {
   examEnsure();
   const d = APP.examData[sem];
-  const head1 = `<tr><th class="ep-subj" rowspan="2">科目</th>${EXAM_TERMS.map(t => `<th colspan="${MTG_GRADES.length}" class="${t.key === 'fin' ? 'term-fin ep-fin-first' : ''}">${t.label}</th>`).join('')}</tr>`;
+  const head1 = `<tr><th class="ep-subj" rowspan="2">科目</th>${EXAM_TERMS.map(t => `<th colspan="${MTG_GRADES.length}" class="${t.key === 'fin' ? 'term-fin ep-fin-first' : ''}">${t.label}${examOrderText(sem, t.key) ? `<span class="ep-term-sub">(${examEsc(examOrderText(sem, t.key))})</span>` : ''}</th>`).join('')}</tr>`;
   const head2 = `<tr>${EXAM_TERMS.map(t => MTG_GRADES.map((g, i) => `<th class="${t.key === 'fin' ? 'term-fin' : ''}${t.key === 'fin' && i === 0 ? ' ep-fin-first' : ''}">${MTG_GRADE_LABELS[g]}</th>`).join('')).join('')}</tr>`;
+
+  const sc = d.schedule;
+  const schedHtml = `<div class="ep-sched">` + EXAM_TERMS.map(t => {
+    const days = sc[t.key];
+    let h = `<div><div class="ep-sched-title ${t.key}">${t.label}日程</div><table><thead><tr><th></th>${days.map(day => { const tx = examDateText(day.date); return `<th>${tx || '未設定'}</th>`; }).join('')}</tr></thead><tbody>`;
+    sc.periods.forEach((per, pi) => {
+      h += `<tr><td class="per">${examEsc(per.label)}<br>${examEsc(per.time)}</td>` + days.map(day => { const sub = d.subjects.find(x => x.id === (day.s || [])[pi]); return `<td class="subj">${sub ? examEsc(sub.name) : '－'}</td>`; }).join('') + `</tr>`;
+    });
+    return h + `</tbody></table></div>`;
+  }).join('') + `</div>`;
   let rows = '';
   d.subjects.forEach(sub => {
     rows += `<tr><td class="ep-subj">${examEsc(sub.name)}</td>`;
@@ -3557,6 +3720,7 @@ function buildExamPrintOne(sem) {
   return `<div class="ep-page">
     <div class="print-header"><h1>新莊國小 ${APP.currentYear}學年度 ${EXAM_SEMS[sem]} 出題教師一覽表</h1>
     <p>最後更新：${APP.examLastEdit || '—'}</p></div>
+    ${schedHtml}
     <table><thead>${head1}${head2}</thead><tbody>${rows}</tbody></table></div>`;
 }
 function buildExamPrint() {
