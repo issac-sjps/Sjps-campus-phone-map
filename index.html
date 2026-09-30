@@ -777,10 +777,24 @@
   .rental-entry-row .re-actions button:hover { border-color: var(--primary-mid); color: var(--primary); }
   .rental-entry-row .re-actions button.del:hover { border-color: #c0392b; color: #c0392b; }
   .rental-empty-hint { font-size: 12.5px; color: var(--text-light); padding: 6px 0 10px; }
-  .copy-building-group { margin-bottom: 10px; }
-  .copy-building-title { font-size: 12px; font-weight: 600; color: var(--primary); margin-bottom: 4px; }
-  .copy-room-item { display: flex; align-items: center; gap: 6px; font-size: 13px; padding: 3px 0; }
-  .copy-room-item.self { opacity: 0.4; }
+  .modal.copy-modal { width: 1120px; max-width: 96vw; }
+  .copy-cols { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; max-height: 62vh; overflow-y: auto; align-items: start; }
+  .copy-cols.n5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .copy-cols.n4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .copy-cols.n3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .copy-cols.n2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .copy-cols.n1 { grid-template-columns: minmax(0, 1fr); }
+  .copy-building-group { background: #f7fafd; border: 1px solid var(--border); border-radius: var(--radius); padding: 8px 8px 6px; }
+  .copy-building-title { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: var(--primary); margin-bottom: 6px; padding-bottom: 5px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: #f7fafd; }
+  .copy-building-title label { display: flex; align-items: center; gap: 6px; cursor: pointer; flex: 1; }
+  .copy-building-title .cnt { font-size: 11px; font-weight: 500; color: var(--text-light); }
+  .copy-room-item { display: flex; align-items: flex-start; gap: 6px; font-size: 12.5px; padding: 3px 2px; border-radius: 4px; cursor: pointer; line-height: 1.35; }
+  .copy-room-item:hover:not(.self) { background: var(--primary-light); }
+  .copy-room-item input { margin-top: 2px; flex-shrink: 0; }
+  .copy-room-item .ci-code { color: var(--text-light); font-size: 11px; white-space: nowrap; }
+  .copy-room-item.self { opacity: 0.4; cursor: default; }
+  @media (max-width: 1000px) { .copy-cols, .copy-cols.n5, .copy-cols.n4, .copy-cols.n3 { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  @media (max-width: 640px) { .copy-cols, .copy-cols.n5, .copy-cols.n4, .copy-cols.n3, .copy-cols.n2 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
   /* Room edit modal */
   .modal-overlay {
@@ -1400,10 +1414,10 @@
 
 <!-- Rental copy-to-rooms modal -->
 <div class="modal-overlay" id="rental-copy-modal" style="z-index:220">
-  <div class="modal" style="width:360px">
+  <div class="modal copy-modal">
     <h3>複製這筆租借到其他教室</h3>
-    <div style="font-size:12px;color:var(--text-muted);margin:-8px 0 12px">勾選要複製到的教室，會建立相同的團體／日期／星期／時段設定</div>
-    <div id="rental-copy-room-list" style="max-height:320px;overflow-y:auto"></div>
+    <div style="font-size:12px;color:var(--text-muted);margin:-8px 0 12px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><span>勾選要複製到的教室，會建立相同的團體／日期／星期／時段設定（點棟別標題旁的方塊可整棟全選）</span><b id="rental-copy-count" style="color:var(--primary)">已選 0 間</b></div>
+    <div id="rental-copy-room-list" class="copy-cols"></div>
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeRentalCopyModal()">取消</button>
       <button class="btn-save" onclick="confirmRentalCopy()">複製</button>
@@ -3191,8 +3205,9 @@ window.openRentalCopyModal = function(entryId) {
   if (!entry) return;
   APP.copyingRentalId = entryId;
 
-  // Build a flat list of all rooms that have a code, grouped by building
+  // 各棟並排成欄：每棟一欄，可整棟全選
   let html = '';
+  let nCols = 0;
   Object.keys(BNAMES).forEach(b => {
     if (!APP.mapData[b]) return;
     const rooms = [];
@@ -3202,19 +3217,46 @@ window.openRentalCopyModal = function(entryId) {
       });
     });
     if (!rooms.length) return;
-    html += `<div class="copy-building-group"><div class="copy-building-title">${BNAMES[b]}</div>`;
+    nCols++;
+    const selectable = rooms.filter(r => r.code.trim() !== entry.code).length;
+    html += `<div class="copy-building-group"><div class="copy-building-title"><label><input type="checkbox" class="copy-bld-all" ${selectable ? '' : 'disabled'}>${BNAMES[b]} <span class="cnt">${rooms.length} 間</span></label></div>`;
     rooms.forEach(room => {
       const isSelf = room.code.trim() === entry.code;
       html += `<label class="copy-room-item ${isSelf ? 'self' : ''}">
-        <input type="checkbox" value="${room.code.trim()}" ${isSelf ? 'disabled' : ''}>
-        ${room.name || '（未命名）'}（${room.code}）${isSelf ? '　— 本教室' : ''}
+        <input type="checkbox" class="copy-room-cb" value="${room.code.trim()}" ${isSelf ? 'disabled' : ''}>
+        <span>${room.name || '（未命名）'} <span class="ci-code">${room.code}</span>${isSelf ? ' — 本教室' : ''}</span>
       </label>`;
     });
     html += `</div>`;
   });
-  document.getElementById('rental-copy-room-list').innerHTML = html || '<div class="rental-empty-hint">找不到其他有設定代號的教室</div>';
+  const list = document.getElementById('rental-copy-room-list');
+  list.className = 'copy-cols' + (nCols && nCols < 6 ? ' n' + nCols : '');
+  list.innerHTML = html || '<div class="rental-empty-hint">找不到其他有設定代號的教室</div>';
+  updateRentalCopyCount();
   document.getElementById('rental-copy-modal').classList.add('visible');
 };
+
+function updateRentalCopyCount() {
+  const n = document.querySelectorAll('#rental-copy-room-list input.copy-room-cb:checked').length;
+  const el = document.getElementById('rental-copy-count');
+  if (el) el.textContent = `已選 ${n} 間`;
+  // 同步各棟「全選」方塊的狀態（全部勾選＝勾、部分＝半選）
+  document.querySelectorAll('#rental-copy-room-list .copy-building-group').forEach(g => {
+    const all = g.querySelector('.copy-bld-all');
+    const cbs = Array.from(g.querySelectorAll('input.copy-room-cb:not(:disabled)'));
+    if (!all || !cbs.length) return;
+    const c = cbs.filter(x => x.checked).length;
+    all.checked = c === cbs.length;
+    all.indeterminate = c > 0 && c < cbs.length;
+  });
+}
+document.getElementById('rental-copy-room-list').addEventListener('change', function(e) {
+  const t = e.target;
+  if (t.classList.contains('copy-bld-all')) {
+    t.closest('.copy-building-group').querySelectorAll('input.copy-room-cb:not(:disabled)').forEach(cb => { cb.checked = t.checked; });
+  }
+  updateRentalCopyCount();
+});
 
 window.closeRentalCopyModal = function() {
   document.getElementById('rental-copy-modal').classList.remove('visible');
@@ -3224,7 +3266,7 @@ window.closeRentalCopyModal = function() {
 window.confirmRentalCopy = function() {
   const entry = APP.rentalData.find(r => r.id === APP.copyingRentalId);
   if (!entry) { closeRentalCopyModal(); return; }
-  const targetCodes = Array.from(document.querySelectorAll('#rental-copy-room-list input[type=checkbox]:checked')).map(cb => cb.value);
+  const targetCodes = Array.from(document.querySelectorAll('#rental-copy-room-list input.copy-room-cb:checked')).map(cb => cb.value);
   if (!targetCodes.length) { alert('請至少勾選一間教室'); return; }
 
   const overlapNotes = [];
