@@ -438,11 +438,13 @@
   .exam-hint-empty { color: var(--text-light); font-weight: 400; font-style: italic; }
 
   /* ── Header semester switch ── */
-  .sem-switch { display: inline-flex; align-items: center; flex-shrink: 0; border: 1px solid rgba(255,255,255,0.45); border-radius: 20px; overflow: hidden; background: rgba(255,255,255,0.12); }
-  .sem-switch button { border: none; background: transparent; color: rgba(255,255,255,0.85); font-size: calc(12px * var(--hscale)); font-weight: 600; padding: calc(3px * var(--hscale)) calc(12px * var(--hscale)); cursor: pointer; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px; transition: all 0.15s; }
-  .sem-switch button:hover:not(.active) { background: rgba(255,255,255,0.22); color: #fff; }
-  .sem-switch button.active { background: #fff; color: var(--primary); }
-  .sem-switch button#sem-btn-s2.active { color: #c4621d; }
+  .exam-title-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .sem-switch { display: inline-flex; align-items: center; flex-shrink: 0; border: 1px solid var(--border); border-radius: 20px; overflow: hidden; background: var(--surface); box-shadow: var(--shadow); margin-bottom: 10px; }
+  .sem-switch button { border: none; background: transparent; color: var(--text-muted); font-size: 13px; font-weight: 600; padding: 6px 16px; cursor: pointer; white-space: nowrap; display: inline-flex; align-items: center; gap: 5px; transition: all 0.15s; }
+  .sem-switch button + button { border-left: 1px solid var(--border); }
+  .sem-switch button:hover:not(.active) { background: var(--primary-light); color: var(--primary); }
+  .sem-switch button.active { background: var(--primary); color: #fff; }
+  .sem-switch button#sem-btn-s2.active { background: #c4621d; }
   .sem-now { font-size: 9px; font-weight: 700; background: var(--success); color: #fff; border-radius: 8px; padding: 0 5px; line-height: 14px; }
   .sem-title { font-size: 16px; font-weight: 700; margin: 0 0 10px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   .sem-name { padding: 2px 12px; border-radius: 16px; color: #fff; background: var(--primary); }
@@ -1110,10 +1112,6 @@
           </div>
         </div>
       </div>
-      <div class="sem-switch" id="sem-switch" style="display:none" title="切換上／下學期">
-        <button id="sem-btn-s1" onclick="setSem('s1')">上學期<span class="sem-now" style="display:none">現在</span></button>
-        <button id="sem-btn-s2" onclick="setSem('s2')">下學期<span class="sem-now" style="display:none">現在</span></button>
-      </div>
       <div class="tab active" onclick="switchTab('phone', this)" id="tab-phone">
         <svg width="13" height="13" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 2h3l1.5 3-2 1.5a9 9 0 003 3L10 8l3 1.5V13a1 1 0 01-1 1C5 14 1 10 1 4a1 1 0 011-1z"/></svg>
         分機一覽
@@ -1326,7 +1324,13 @@
 
   <!-- ── Exam Teachers Panel (出題教師) ── -->
   <div class="tab-panel" id="panel-exam">
-    <div class="sem-title" id="exam-title"></div>
+    <div class="exam-title-row">
+      <div class="sem-title" id="exam-title"></div>
+      <div class="sem-switch" id="sem-switch" title="切換上／下學期">
+        <button id="sem-btn-s1" onclick="setSem('s1')">上學期<span class="sem-now" style="display:none">現在</span></button>
+        <button id="sem-btn-s2" onclick="setSem('s2')">下學期<span class="sem-now" style="display:none">現在</span></button>
+      </div>
+    </div>
     <div class="mtg-page-hint">快速查閱各科命題老師：上方是考試日期與節次科目（日期由「學期日程」分頁帶入，星期自動顯示；學期請用最上方的切換鈕），下方橫向為期中考／期末考各年級，每格上面是班級代碼、下面是出題老師；輸入班級代碼會自動帶出分機一覽表中的老師姓名（科任或找不到代碼時，可在姓名欄手動輸入）。點一下格子即可複製。</div>
     <div class="mtg-toolbar">
             <button class="toolbar-btn primary" onclick="printExam('sem')">
@@ -3384,8 +3388,6 @@ window.switchTab = function(name, el) {
   if (name === 'meeting') renderMeeting();
   if (name === 'exam') renderExam();
   if (name === 'cal') renderCal();
-  const semSw = document.getElementById('sem-switch');
-  if (semSw) semSw.style.display = name === 'exam' ? 'inline-flex' : 'none';
   if (window.autoFitHeader) autoFitHeader();
 };
 
