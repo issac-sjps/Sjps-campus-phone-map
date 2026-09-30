@@ -454,7 +454,9 @@
   /* ── 學期日程 ── */
   table.cal-tbl { width: 100%; border-collapse: collapse; font-size: 14px; }
   table.cal-tbl thead th { background: var(--primary); color: #fff; padding: 8px 12px; text-align: left; font-size: 13px; }
-  body.sem-s2 table.cal-tbl thead th { background: #c4621d; }
+  .cal-sec.s2 table.cal-tbl thead th { background: #c4621d; }
+  .cal-sec { margin-bottom: 22px; }
+  .cal-sec .sem-title { margin-bottom: 8px; }
   table.cal-tbl td { border-bottom: 1px solid var(--border); padding: 9px 12px; vertical-align: middle; }
   table.cal-tbl td.cal-name { font-weight: 700; white-space: nowrap; width: 200px; position: relative; }
   table.cal-tbl td.cal-left { color: var(--text-muted); font-size: 12.5px; white-space: nowrap; width: 110px; }
@@ -1108,7 +1110,7 @@
           </div>
         </div>
       </div>
-      <div class="sem-switch" id="sem-switch" style="display:none" title="切換上／下學期（出題教師、學期日程共用）">
+      <div class="sem-switch" id="sem-switch" style="display:none" title="切換上／下學期">
         <button id="sem-btn-s1" onclick="setSem('s1')">上學期<span class="sem-now" style="display:none">現在</span></button>
         <button id="sem-btn-s2" onclick="setSem('s2')">下學期<span class="sem-now" style="display:none">現在</span></button>
       </div>
@@ -1347,7 +1349,7 @@
   <div class="tab-panel" id="panel-cal">
     <div class="cal-screen">
       <div class="sem-title" id="cal-title"></div>
-      <div class="mtg-page-hint">輸入 1151105 會自動顯示星期；同一項目有多天時用「.」或「、」分開，例如 1151105.1151106。<b>「期中考」「期末考」的日期會自動帶到「出題教師」分頁</b>，不用重複輸入。點日期可複製。</div>
+      <div class="mtg-page-hint">輸入 1151105 會自動顯示星期；同一項目有多天時用「.」或「、」分開，例如 1151105.1151106。上、下學期在同一頁往下看。<b>「期中考」「期末考」的日期會自動帶到「出題教師」分頁</b>，不用重複輸入。點日期可複製。</div>
       <div class="mtg-toolbar">
         <button class="toolbar-btn primary" onclick="window.print()">
           <svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="5" width="12" height="8" rx="1"/><path d="M5 5V2h6v3M5 12h6"/></svg>
@@ -1355,7 +1357,6 @@
         </button>
       </div>
       <div class="mtg-wrap" id="cal-wrap"></div>
-      <button class="exam-add-subj" onclick="addCalItem()">＋ 新增日程</button>
       <div class="meta-bar"><span id="cal-count"></span><span id="last-edit-cal"></span></div>
     </div>
     <div id="cal-print-root"></div>
@@ -3384,7 +3385,7 @@ window.switchTab = function(name, el) {
   if (name === 'exam') renderExam();
   if (name === 'cal') renderCal();
   const semSw = document.getElementById('sem-switch');
-  if (semSw) semSw.style.display = (name === 'exam' || name === 'cal') ? 'inline-flex' : 'none';
+  if (semSw) semSw.style.display = name === 'exam' ? 'inline-flex' : 'none';
   if (window.autoFitHeader) autoFitHeader();
 };
 
@@ -3683,7 +3684,7 @@ function updateSemUI() {
   const chip = info.now === sem ? '<span class="sem-chip now">本學期</span>' : (info.now ? '<span class="sem-chip other">非本學期</span>' : '');
   const head = `<span class="sem-name ${sem}">${APP.currentYear}學年度 ${EXAM_SEMS[sem]}</span>${chip}`;
   const a = document.getElementById('exam-title'); if (a) a.innerHTML = head + '<span class="sem-sub">出題教師</span>';
-  const b2 = document.getElementById('cal-title'); if (b2) b2.innerHTML = head + '<span class="sem-sub">學期日程</span>';
+  const b2 = document.getElementById('cal-title'); if (b2) b2.innerHTML = `<span class="sem-name">${APP.currentYear}學年度</span><span class="sem-sub">學期日程（上、下學期一次看）</span>`;
   const lbl = document.getElementById('exam-print-sem-label'); if (lbl) lbl.textContent = EXAM_SEMS[sem];
 }
 window.setSem = function(sem) {
@@ -3696,55 +3697,64 @@ window.renderCal = function() {
   const wrap = document.getElementById('cal-wrap');
   if (!wrap) return;
   calEnsure(); updateSemUI();
-  const sem = APP.examSem, edit = APP.editMode, items = calSorted(sem);
+  const edit = APP.editMode, info = calSemInfo();
   const t = new Date(); const today = new Date(t.getFullYear(), t.getMonth(), t.getDate());
-  let nextId = null, best = Infinity;
-  items.forEach(it => { const d = calFirstDate(it); if (d && d >= today && d < best) { best = d; nextId = it.id; } });
-  let h = `<div class="mtg-table-scroll"><table class="cal-tbl"><thead><tr><th>項目</th><th>日期</th><th>距今</th></tr></thead><tbody>`;
-  items.forEach(it => {
-    const toks = calTokens(it.date);
-    const last = toks.length ? calDateObj(toks[toks.length - 1]) : null;
-    const first = toks.length ? calDateObj(toks[0]) : null;
-    let left = '';
-    if (first) {
-      const diff = Math.round((first - today) / 86400000);
-      if (diff > 0) left = `還有 ${diff} 天`;
-      else if (last >= today) left = '進行中／今天';
-      else left = '已過';
-    }
-    const past = last && last < today;
-    const locked = ['mid', 'fin', 'open', 'end'].includes(it.role);
-    h += `<tr class="${past ? 'cal-past' : ''}${it.id === nextId ? ' cal-next' : ''}">`;
-    if (edit) {
-      h += `<td class="cal-name">${['mid', 'fin'].includes(it.role) ? examEsc(it.name) + '<span class="cal-link">連動出題教師</span>' : `<input class="cal-in name" value="${examEsc(it.name)}" onchange="setCalName('${it.id}',this.value)">`}${locked ? '' : `<button class="mtg-del-btn" onclick="delCalItem('${it.id}')" title="刪除">✕</button>`}</td>`;
-      h += `<td><input class="cal-in" value="${examEsc(it.date)}" placeholder="1151105 或 1151105.1151106" onchange="setCalDate('${it.id}',this.value)"> <span style="font-size:12px">${it.date ? calDateHtml(it.date) : ''}</span></td>`;
-    } else {
-      h += `<td class="cal-name">${examEsc(it.name)}${['mid', 'fin'].includes(it.role) ? '<span class="cal-link">連動出題教師</span>' : ''}</td>`;
-      h += `<td>${it.date ? calDateHtml(it.date) : '<span class="exam-hint-empty">未設定</span>'}</td>`;
-    }
-    h += `<td class="cal-left">${left}</td></tr>`;
-  });
-  h += `</tbody></table></div>`;
-  wrap.innerHTML = h;
+  // 整學年（上＋下學期）中，離今天最近的下一個日程
+  let nextKey = null, best = Infinity;
+  ['s1', 's2'].forEach(k => APP.calData[k].items.forEach(it => { const d = calFirstDate(it); if (d && d >= today && d < best) { best = d; nextKey = k + ':' + it.id; } }));
+
+  const section = sem => {
+    const items = calSorted(sem);
+    const chip = info.now === sem ? '<span class="sem-chip now">本學期</span>' : '';
+    let h = `<div class="cal-sec ${sem}"><div class="sem-title"><span class="sem-name ${sem}">${EXAM_SEMS[sem]}</span>${chip}</div>`;
+    h += `<div class="mtg-table-scroll"><table class="cal-tbl"><thead><tr><th>項目</th><th>日期</th><th>距今</th></tr></thead><tbody>`;
+    items.forEach(it => {
+      const toks = calTokens(it.date);
+      const last = toks.length ? calDateObj(toks[toks.length - 1]) : null;
+      const first = toks.length ? calDateObj(toks[0]) : null;
+      let left = '';
+      if (first) {
+        const diff = Math.round((first - today) / 86400000);
+        if (diff > 0) left = `還有 ${diff} 天`;
+        else if (last >= today) left = '進行中／今天';
+        else left = '已過';
+      }
+      const past = last && last < today;
+      const locked = ['mid', 'fin', 'open', 'end'].includes(it.role);
+      const linked = ['mid', 'fin'].includes(it.role) ? '<span class="cal-link">連動出題教師</span>' : '';
+      h += `<tr class="${past ? 'cal-past' : ''}${(sem + ':' + it.id) === nextKey ? ' cal-next' : ''}">`;
+      if (edit) {
+        h += `<td class="cal-name">${linked ? examEsc(it.name) + linked : `<input class="cal-in name" value="${examEsc(it.name)}" onchange="setCalName('${sem}','${it.id}',this.value)">`}${locked ? '' : `<button class="mtg-del-btn" onclick="delCalItem('${sem}','${it.id}')" title="刪除">✕</button>`}</td>`;
+        h += `<td><input class="cal-in" value="${examEsc(it.date)}" placeholder="1151105 或 1151105.1151106" onchange="setCalDate('${sem}','${it.id}',this.value)"> <span style="font-size:12px">${it.date ? calDateHtml(it.date) : ''}</span></td>`;
+      } else {
+        h += `<td class="cal-name">${examEsc(it.name)}${linked}</td>`;
+        h += `<td>${it.date ? calDateHtml(it.date) : '<span class="exam-hint-empty">未設定</span>'}</td>`;
+      }
+      h += `<td class="cal-left">${left}</td></tr>`;
+    });
+    h += `</tbody></table></div><button class="exam-add-subj" onclick="addCalItem('${sem}')">＋ 新增${EXAM_SEMS[sem]}日程</button></div>`;
+    return h;
+  };
+  wrap.innerHTML = section('s1') + section('s2');
   wrap.querySelectorAll('.cal-d').forEach(el => el.addEventListener('click', () => { if (!APP.editMode) copyToClipboard(el.dataset.copy, '日期'); }));
-  const c = document.getElementById('cal-count'); if (c) c.textContent = `${EXAM_SEMS[sem]}：共 ${items.length} 項日程`;
+  const c = document.getElementById('cal-count'); if (c) c.textContent = `上學期 ${APP.calData.s1.items.length} 項、下學期 ${APP.calData.s2.items.length} 項日程`;
   const e = document.getElementById('last-edit-cal'); if (e) e.textContent = APP.calLastEdit ? '最後編輯：' + APP.calLastEdit : '';
 };
-function calItem(id) { return APP.calData[APP.examSem].items.find(x => x.id === id); }
-window.setCalName = function(id, v) { const it = calItem(id); if (!it || !v.trim()) return; it.name = v.trim(); APP.pendingChanges = true; renderCal(); };
-window.setCalDate = function(id, v) { const it = calItem(id); if (!it) return; it.date = v.trim(); APP.pendingChanges = true; renderCal(); };
-window.addCalItem = function() {
+function calItem(sem, id) { return APP.calData[sem].items.find(x => x.id === id); }
+window.setCalName = function(sem, id, v) { const it = calItem(sem, id); if (!it || !v.trim()) return; it.name = v.trim(); APP.pendingChanges = true; renderCal(); };
+window.setCalDate = function(sem, id, v) { const it = calItem(sem, id); if (!it) return; it.date = v.trim(); APP.pendingChanges = true; renderCal(); };
+window.addCalItem = function(sem) {
   if (!APP.editMode) return;
-  const name = prompt('請輸入新日程名稱（例如：運動會、補課日）：', '');
+  const name = prompt(`請輸入新的${EXAM_SEMS[sem]}日程名稱（例如：運動會、補課日）：`, '');
   if (!name || !name.trim()) return;
-  APP.calData[APP.examSem].items.push({ id: 'c' + Date.now() + Math.floor(Math.random() * 1000), name: name.trim(), date: '', role: '' });
+  APP.calData[sem].items.push({ id: 'c' + Date.now() + Math.floor(Math.random() * 1000), name: name.trim(), date: '', role: '' });
   APP.pendingChanges = true; renderCal();
 };
-window.delCalItem = function(id) {
+window.delCalItem = function(sem, id) {
   if (!APP.editMode) return;
-  const it = calItem(id); if (!it) return;
+  const it = calItem(sem, id); if (!it) return;
   if (!confirm(`確定刪除「${it.name}」？`)) return;
-  APP.calData[APP.examSem].items = APP.calData[APP.examSem].items.filter(x => x.id !== id);
+  APP.calData[sem].items = APP.calData[sem].items.filter(x => x.id !== id);
   APP.pendingChanges = true; renderCal();
 };
 function buildCalPrint() {
