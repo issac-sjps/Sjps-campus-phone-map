@@ -3208,7 +3208,7 @@ window.openRentalCopyModal = function(entryId) {
   // 各棟並排成欄：每棟一欄，可整棟全選
   let html = '';
   let nCols = 0;
-  Object.keys(BNAMES).forEach(b => {
+  ['F','B','C','Z','A','X'].forEach(b => { // 與場地配置分頁的棟別順序一致
     if (!APP.mapData[b]) return;
     const rooms = [];
     Object.keys(APP.mapData[b]).forEach(floor => {
