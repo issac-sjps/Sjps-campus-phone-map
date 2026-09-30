@@ -449,6 +449,11 @@
   .sem-title { font-size: 16px; font-weight: 700; margin: 0 0 10px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   .sem-name { padding: 2px 12px; border-radius: 16px; color: #fff; background: var(--primary); }
   .sem-name.s2 { background: #c4621d; }
+  .sem-name-btn { font: inherit; font-size: 15px; font-weight: 700; padding: 3px 14px; border-radius: 16px; cursor: pointer; border: 1.5px solid var(--border); background: var(--surface); color: var(--text-light); display: inline-flex; align-items: center; gap: 6px; transition: all 0.15s; }
+  .sem-name-btn:hover:not(.active) { border-color: var(--primary-mid); color: var(--primary); background: var(--primary-light); }
+  .sem-name-btn.s2:hover:not(.active) { border-color: #c4621d; color: #c4621d; background: var(--accent-light); }
+  .sem-name-btn.active { color: #fff; background: var(--primary); border-color: var(--primary); cursor: default; }
+  .sem-name-btn.s2.active { background: #c4621d; border-color: #c4621d; }
   .sem-chip { font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 10px; }
   .sem-chip.now { background: var(--success-light); color: var(--success); }
   .sem-chip.other { background: #f0f0f3; color: var(--text-muted); }
@@ -1324,14 +1329,8 @@
 
   <!-- ── Exam Teachers Panel (出題教師) ── -->
   <div class="tab-panel" id="panel-exam">
-    <div class="exam-title-row">
-      <div class="sem-title" id="exam-title"></div>
-      <div class="sem-switch" id="sem-switch" title="切換上／下學期">
-        <button id="sem-btn-s1" onclick="setSem('s1')">上學期<span class="sem-now" style="display:none">現在</span></button>
-        <button id="sem-btn-s2" onclick="setSem('s2')">下學期<span class="sem-now" style="display:none">現在</span></button>
-      </div>
-    </div>
-    <div class="mtg-page-hint">快速查閱各科命題老師：上方是考試日期與節次科目（日期由「學期日程」分頁帶入，星期自動顯示；學期請用最上方的切換鈕），下方橫向為期中考／期末考各年級，每格上面是班級代碼、下面是出題老師；輸入班級代碼會自動帶出分機一覽表中的老師姓名（科任或找不到代碼時，可在姓名欄手動輸入）。點一下格子即可複製。</div>
+    <div class="sem-title" id="exam-title"></div>
+    <div class="mtg-page-hint">快速查閱各科命題老師：上方是考試日期與節次科目（日期由「學期日程」分頁帶入，星期自動顯示；學期請點上方標題的「上學期／下學期」按鈕），下方橫向為期中考／期末考各年級，每格上面是班級代碼、下面是出題老師；輸入班級代碼會自動帶出分機一覽表中的老師姓名（科任或找不到代碼時，可在姓名欄手動輸入）。點一下格子即可複製。</div>
     <div class="mtg-toolbar">
             <button class="toolbar-btn primary" onclick="printExam('sem')">
         <svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="5" width="12" height="8" rx="1"/><path d="M5 5V2h6v3M5 12h6"/></svg>
@@ -3685,7 +3684,8 @@ function updateSemUI() {
   document.body.classList.toggle('sem-s2', sem === 's2');
   const chip = info.now === sem ? '<span class="sem-chip now">本學期</span>' : (info.now ? '<span class="sem-chip other">非本學期</span>' : '');
   const head = `<span class="sem-name ${sem}">${APP.currentYear}學年度 ${EXAM_SEMS[sem]}</span>${chip}`;
-  const a = document.getElementById('exam-title'); if (a) a.innerHTML = head + '<span class="sem-sub">出題教師</span>';
+  const a = document.getElementById('exam-title');
+  if (a) a.innerHTML = ['s1', 's2'].map(k => `<button type="button" class="sem-name-btn ${k}${k === sem ? ' active' : ''}" onclick="setSem('${k}')" title="切換到${APP.currentYear}學年度 ${EXAM_SEMS[k]}">${APP.currentYear}學年度 ${EXAM_SEMS[k]}${info.now === k ? '<span class="sem-now">現在</span>' : ''}</button>`).join('') + '<span class="sem-sub">出題教師</span>';
   const b2 = document.getElementById('cal-title'); if (b2) b2.innerHTML = `<span class="sem-name">${APP.currentYear}學年度</span><span class="sem-sub">學期日程（上、下學期一次看）</span>`;
   const lbl = document.getElementById('exam-print-sem-label'); if (lbl) lbl.textContent = EXAM_SEMS[sem];
 }
