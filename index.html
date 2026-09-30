@@ -389,6 +389,30 @@
   .cat-header.cat-intern  td { background: #f0d9ea; color: #8a2d6e; }
   .cat-header.cat-adminsupport td { background: #ede4d0; color: #6b4f1e; }
 
+
+  /* ── Exam teachers tab (出題教師) ── */
+  .exam-sem-group { display: inline-flex; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: var(--surface); }
+  .exam-sem-btn { padding: 6px 16px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; background: transparent; color: var(--text-muted); transition: all 0.15s; }
+  .exam-sem-btn + .exam-sem-btn { border-left: 1px solid var(--border); }
+  .exam-sem-btn:hover:not(.active) { background: var(--primary-light); color: var(--primary); }
+  .exam-sem-btn.active { background: var(--primary); color: #fff; }
+  table.exam-grid { width: 100%; min-width: 980px; border-collapse: collapse; font-size: 12.5px; }
+  table.exam-grid thead th { background: var(--primary); color: #fff; font-weight: 700; padding: 7px 6px; text-align: center; white-space: nowrap; border: 1px solid rgba(255,255,255,0.25); }
+  table.exam-grid thead tr.exam-term-row th { font-size: 14px; letter-spacing: 0.2em; }
+  table.exam-grid thead tr.exam-term-row th.term-fin { background: #a2531b; }
+  table.exam-grid thead tr.exam-grade-row th.term-fin { background: #c46a2b; }
+  table.exam-grid td { border: 1px solid var(--border); padding: 0; vertical-align: middle; }
+  table.exam-grid td.exam-fin-first, table.exam-grid th.exam-fin-first { border-left: 3px solid var(--primary); }
+  table.exam-grid tbody tr { background: #f7fafd; }
+  table.exam-grid tbody tr:nth-child(even) { background: #fff; }
+  td.exam-subj { padding: 8px 10px !important; font-weight: 700; font-size: 14px; position: relative; min-width: 84px; white-space: nowrap; }
+  .exam-subj-text { cursor: copy; border-radius: 4px; padding: 1px 3px; margin: -1px -3px; }
+  body:not(.edit-mode) .exam-subj-text:hover { background: var(--primary-light); }
+  body.edit-mode .exam-subj-text { cursor: pointer; }
+  body.edit-mode .exam-subj-text:hover { background: #fff8e1; }
+  .exam-add-subj { display: none; margin: 10px 0 0; padding: 7px 14px; border: 1px dashed var(--primary-mid); background: var(--primary-light); color: var(--primary); border-radius: var(--radius); font-size: 13px; cursor: pointer; }
+  body.edit-mode .exam-add-subj { display: inline-block; }
+
   /* ── Meeting reps tab (學年會議代表) — spreadsheet-style grid, all grades in one table ── */
   .mtg-wrap { display: flex; flex-direction: column; }
   .mtg-page-hint { font-size: 12.5px; color: var(--text-light); margin-bottom: 10px; line-height: 1.5; }
@@ -878,11 +902,30 @@
     .mtg-print-grade th.mp-codecol, .mtg-print-grade td.mp-codecol { width: 90px; text-align: center; font-family: monospace; }
     .mtg-print-grade td.mp-namecol { padding: 5px 10px; }
     .mtg-print-grade td:last-child { padding: 5px 10px; font-weight: 600; }
+
+    /* ── Exam teachers print ── */
+    #panel-exam .mtg-page-hint,
+    #panel-exam .mtg-toolbar,
+    #panel-exam .mtg-wrap,
+    #panel-exam .exam-add-subj { display: none !important; }
+    #exam-print-root { display: block !important; }
+    #exam-print-root table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    #exam-print-root th, #exam-print-root td { border: 1px solid #999; }
+    #exam-print-root thead th { background: #1a5c8a !important; color: #fff !important; padding: 4px 4px; font-size: 11px; font-weight: 700; text-align: center; }
+    #exam-print-root thead th.term-fin { background: #a2531b !important; }
+    #exam-print-root th.ep-subj { width: 8%; }
+    #exam-print-root td.ep-subj { text-align: center; font-weight: 700; font-size: 13px; padding: 4px; }
+    #exam-print-root td.ep-cell { text-align: center; padding: 6px 3px; }
+    #exam-print-root .ep-code { color: #1a5c8a; font-weight: 700; font-family: monospace; font-size: 11px; border-bottom: 1px dashed #bbb; padding-bottom: 2px; margin-bottom: 3px; }
+    #exam-print-root .ep-name { font-size: 13px; font-weight: 600; }
+    #exam-print-root td.ep-fin-first, #exam-print-root th.ep-fin-first { border-left: 2.5px solid #1a5c8a; }
+    #exam-print-root .ep-page + .ep-page { page-break-before: always; }
   }
   /* Hidden on screen, shown on print */
   #phone-print-root { display: none; }
   #map-print-root { display: none; }
   #meeting-print-root { display: none; }
+  #exam-print-root { display: none; }
 
   /* ══════════════════════ Responsive (tablet / mobile) ══════════════════════ */
   /* header-top 一律維持單行：校名／分頁（不夠寬就自己橫向捲動）＋編輯按鈕永遠在第一行，
@@ -982,6 +1025,10 @@
       <div class="tab" onclick="switchTab('meeting', this)" id="tab-meeting">
         <svg width="13" height="13" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M1.5 3h12M1.5 7.5h12M1.5 12h7"/></svg>
         會議代表
+      </div>
+      <div class="tab" onclick="switchTab('exam', this)" id="tab-exam">
+        <svg width="13" height="13" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 1.5h9v12H3z"/><path d="M5.5 5h4M5.5 8h4M5.5 11h2"/></svg>
+        出題教師
       </div>
       <div class="tab-legend" id="tab-legend-map" style="display:none">
         <span><span class="dot" style="background:#f0f5fa;border:1.5px solid #1a5c8a"></span>班級</span>
@@ -1168,6 +1215,30 @@
     <!-- Print-only meeting layout -->
     <div id="meeting-print-root"></div>
   </div>
+
+  <!-- ── Exam Teachers Panel (出題教師) ── -->
+  <div class="tab-panel" id="panel-exam">
+    <div class="mtg-page-hint">快速查閱各科命題老師：橫向為期中考／期末考各年級，每格上面是班級代碼、下面是出題老師；輸入班級代碼會自動帶出分機一覽表中的老師姓名（科任或找不到代碼時，可在姓名欄手動輸入）。點一下格子即可複製。</div>
+    <div class="mtg-toolbar">
+      <div class="exam-sem-group">
+        <button class="exam-sem-btn" id="exam-sem-s1" onclick="setExamSem('s1')">上學期</button>
+        <button class="exam-sem-btn" id="exam-sem-s2" onclick="setExamSem('s2')">下學期</button>
+      </div>
+      <span class="mtg-toolbar-sep"></span>
+      <button class="toolbar-btn primary" onclick="printExam('sem')">
+        <svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="5" width="12" height="8" rx="1"/><path d="M5 5V2h6v3M5 12h6"/></svg>
+        全部列印（<span id="exam-print-sem-label">上學期</span>，供處室留存）
+      </button>
+      <button class="mtg-grade-print-btn" onclick="printExam('both')">列印整學年（上＋下學期）</button>
+    </div>
+    <div class="mtg-wrap" id="exam-wrap"></div>
+    <button class="exam-add-subj" onclick="addExamSubject()">＋ 新增科目</button>
+    <div class="meta-bar">
+      <span id="exam-count"></span>
+      <span id="last-edit-exam"></span>
+    </div>
+    <div id="exam-print-root"></div>
+  </div>
 </main>
 
 <!-- Room edit modal -->
@@ -1326,7 +1397,8 @@ async function loadYear(year) {
     const mapRef = doc(db, 'rooms', String(year));
     const rentalRef = doc(db, 'rentals', String(year));
     const meetingRef = doc(db, 'meetings', String(year));
-    const [phoneSnap, mapSnap, rentalSnap, meetingSnap] = await Promise.all([getDoc(phoneRef), getDoc(mapRef), getDoc(rentalRef), getDoc(meetingRef)]);
+    const examRef = doc(db, 'exams', String(year));
+    const [phoneSnap, mapSnap, rentalSnap, meetingSnap, examSnap] = await Promise.all([getDoc(phoneRef), getDoc(mapRef), getDoc(rentalRef), getDoc(meetingRef), getDoc(examRef)]);
 
     if (phoneSnap.exists()) {
       window.APP.phoneData = phoneSnap.data().staff || window.APP.defaultPhone;
@@ -1357,17 +1429,26 @@ async function loadYear(year) {
       window.APP.meetingData = [];
       window.APP.meetingLastEdit = '';
     }
+    if (examSnap.exists()) {
+      window.APP.examData = examSnap.data().data || {};
+      window.APP.examLastEdit = examSnap.data().last_edited || '';
+    } else {
+      window.APP.examData = {};
+      window.APP.examLastEdit = '';
+    }
   } catch(e) {
     console.warn('Firebase load failed, using local data:', e);
     window.APP.phoneData = JSON.parse(JSON.stringify(window.APP.defaultPhone));
     window.APP.mapData = JSON.parse(JSON.stringify(window.APP.defaultMap));
     window.APP.rentalData = [];
     window.APP.meetingData = [];
+    window.APP.examData = {};
   }
   window.renderPhone();
   window.renderMap();
   if (window.renderRentalMap) window.renderRentalMap();
   if (window.renderMeeting) window.renderMeeting();
+  if (window.renderExam) window.renderExam();
 }
 
 async function saveToFirebase(year) {
@@ -1392,16 +1473,23 @@ async function saveToFirebase(year) {
       list: window.APP.meetingData || [],
       last_edited: now
     });
+    await window._setDoc(window._doc(window._db, 'exams', String(year)), {
+      data: window.APP.examData || {},
+      last_edited: now
+    });
     window.APP.phoneLastEdit = now;
     window.APP.mapLastEdit = now;
     window.APP.rentalLastEdit = now;
     window.APP.meetingLastEdit = now;
+    window.APP.examLastEdit = now;
     document.getElementById('last-edit-phone').textContent = '最後編輯：' + now;
     document.getElementById('last-edit-map').textContent = '最後編輯：' + now;
     const rentalEditEl = document.getElementById('last-edit-rental');
     if (rentalEditEl) rentalEditEl.textContent = '最後編輯：' + now;
     const meetingEditEl = document.getElementById('last-edit-meeting');
     if (meetingEditEl) meetingEditEl.textContent = '最後編輯：' + now;
+    const examEditEl = document.getElementById('last-edit-exam');
+    if (examEditEl) examEditEl.textContent = '最後編輯：' + now;
     return true;
   } catch(e) {
     alert('儲存失敗，請確認網路連線。\n' + e.message);
@@ -1442,7 +1530,8 @@ async function deleteYearData(year) {
       window._deleteDoc(window._doc(window._db, 'extensions', String(year))),
       window._deleteDoc(window._doc(window._db, 'rooms', String(year))),
       window._deleteDoc(window._doc(window._db, 'rentals', String(year))),
-      window._deleteDoc(window._doc(window._db, 'meetings', String(year)))
+      window._deleteDoc(window._doc(window._db, 'meetings', String(year))),
+      window._deleteDoc(window._doc(window._db, 'exams', String(year)))
     ]);
     return true;
   } catch (e) {
@@ -1480,6 +1569,10 @@ window.APP = {
   mapLastEdit: '',
   rentalLastEdit: '',
   meetingLastEdit: '',
+  examData: {},
+  examLastEdit: '',
+  examSem: (function(){ const m = new Date().getMonth() + 1; return (m >= 2 && m <= 7) ? 's2' : 's1'; })(),
+  examPrintMode: 'sem',
   meetingPrintMode: 'all', // 'all' = 全部列印（給各處室參考）；'1'~'6' = 該年級獨自列印
   currentBuilding: 'F',
   currentRentalBuilding: 'F',
@@ -2505,12 +2598,16 @@ window.addEventListener('beforeprint', () => {
   document.getElementById('map-print-root').innerHTML = buildMapPrint();
   const mp = document.getElementById('meeting-print-root');
   if (mp) mp.innerHTML = buildMeetingPrint();
+  const ep = document.getElementById('exam-print-root');
+  if (ep) ep.innerHTML = buildExamPrint();
 });
 window.addEventListener('afterprint', () => {
   document.getElementById('phone-print-root').innerHTML = '';
   document.getElementById('map-print-root').innerHTML = '';
   const mp = document.getElementById('meeting-print-root');
   if (mp) mp.innerHTML = '';
+  const ep = document.getElementById('exam-print-root');
+  if (ep) ep.innerHTML = '';
 });
 
 // ─── Room modal ───────────────────────────────────────────
@@ -3020,6 +3117,7 @@ function _enterEditMode() {
   document.getElementById('edit-label').textContent = '編輯中';
   document.getElementById('edit-bar').classList.add('visible');
   renderPhone(document.getElementById('phone-search').value);
+  if (window.renderExam) renderExam();
 }
 
 function _exitEditMode() {
@@ -3029,6 +3127,7 @@ function _exitEditMode() {
   document.getElementById('edit-label').textContent = '編輯';
   document.getElementById('edit-bar').classList.remove('visible');
   renderPhone(document.getElementById('phone-search').value);
+  if (window.renderExam) renderExam();
 }
 
 // Generic password gate: opens the shared password modal, then runs `onSuccess`
@@ -3133,6 +3232,7 @@ window.switchTab = function(name, el) {
   if (name === 'map') renderMap();
   if (name === 'rental') renderRentalMap();
   if (name === 'meeting') renderMeeting();
+  if (name === 'exam') renderExam();
   if (window.autoFitHeader) autoFitHeader();
 };
 
@@ -3295,6 +3395,174 @@ window.deleteMeetingRow = function(e, id) {
 };
 
 
+
+// ─── 出題教師 (Exam Teachers) ─────────────────────────────
+// 每學年一份資料，內含上／下學期；每學期＝科目列 × (期中考／期末考) × 六個年級。
+// 每格存 { code: 班級代碼, ov: 手動姓名 }，姓名優先由班級代碼對應分機一覽表帶出。
+const EXAM_TERMS = [{ key: 'mid', label: '期中考' }, { key: 'fin', label: '期末考' }];
+const EXAM_SEMS = { s1: '上學期', s2: '下學期' };
+const EXAM_DEFAULT_SUBJECTS = [['chi', '國語'], ['math', '數學'], ['sci', '自然'], ['soc', '社會']];
+
+function examEsc(t) { return String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
+function examEnsure() {
+  if (!APP.examData || typeof APP.examData !== 'object') APP.examData = {};
+  ['s1', 's2'].forEach(k => {
+    if (!APP.examData[k]) APP.examData[k] = {};
+    const d = APP.examData[k];
+    if (!Array.isArray(d.subjects) || !d.subjects.length) d.subjects = EXAM_DEFAULT_SUBJECTS.map(([id, name]) => ({ id, name }));
+    if (!d.cells) d.cells = {};
+  });
+}
+function examCell(sem, sid, term, g) {
+  const c = APP.examData[sem].cells[sid + '|' + term + '|' + g];
+  return c || { code: '', ov: '' };
+}
+function examSetCell(sem, sid, term, g, patch) {
+  const key = sid + '|' + term + '|' + g;
+  const cur = APP.examData[sem].cells[key] || { code: '', ov: '' };
+  APP.examData[sem].cells[key] = Object.assign(cur, patch);
+}
+function examResolve(sem, sid, term, g) {
+  const c = examCell(sem, sid, term, g);
+  const code = (c.code || '').trim();
+  if (code) {
+    const hit = (APP.phoneData || []).find(r => String(r.title).trim() === code);
+    if (hit) return { code, name: hit.name, source: 'code' };
+  }
+  const ov = (c.ov || '').trim();
+  return { code, name: ov, source: ov ? 'manual' : 'none' };
+}
+
+window.setExamSem = function(sem) { APP.examSem = sem; renderExam(); };
+
+window.renderExam = function() {
+  const wrap = document.getElementById('exam-wrap');
+  if (!wrap) return;
+  examEnsure();
+  const sem = APP.examSem;
+  const d = APP.examData[sem];
+  ['s1', 's2'].forEach(k => { const b = document.getElementById('exam-sem-' + k); if (b) b.classList.toggle('active', k === sem); });
+  const lbl = document.getElementById('exam-print-sem-label'); if (lbl) lbl.textContent = EXAM_SEMS[sem];
+
+  let html = `<div class="mtg-table-scroll"><table class="exam-grid"><thead>
+    <tr class="exam-term-row"><th rowspan="2">科目</th>
+      ${EXAM_TERMS.map(t => `<th colspan="${MTG_GRADES.length}" class="${t.key === 'fin' ? 'term-fin exam-fin-first' : ''}">${t.label}</th>`).join('')}
+    </tr>
+    <tr class="exam-grade-row">
+      ${EXAM_TERMS.map(t => MTG_GRADES.map((g, i) => `<th class="${t.key === 'fin' ? 'term-fin' : ''}${t.key === 'fin' && i === 0 ? ' exam-fin-first' : ''}">${MTG_GRADE_LABELS[g]}</th>`).join('')).join('')}
+    </tr></thead><tbody>`;
+
+  d.subjects.forEach(sub => {
+    html += `<tr><td class="exam-subj"><span class="exam-subj-text" onclick="examSubjectClick('${sub.id}')" title="${APP.editMode ? '點擊修改科目名稱' : '點擊複製科目名稱'}">${examEsc(sub.name)}</span><button class="mtg-del-btn" onclick="deleteExamSubject(event,'${sub.id}')" title="刪除此科目">✕</button></td>`;
+    EXAM_TERMS.forEach(t => {
+      MTG_GRADES.forEach((g, i) => {
+        const r = examResolve(sem, sub.id, t.key, g);
+        const codeLine = r.code ? examEsc(r.code) : `<span class="mtg-code-empty">－</span>`;
+        const nameLine = r.name ? examEsc(r.name) : `<span class="mtg-name-empty">未設定</span>`;
+        const codeTitle = APP.editMode ? `點擊輸入${MTG_GRADE_LABELS[g]}${t.label}的班級代碼（例如 105），會自動帶出老師姓名` : (r.code ? '點擊複製班級代碼' : '尚未設定班級代碼');
+        const nameTitle = APP.editMode ? '科任或找不到班級代碼時，可手動輸入出題老師姓名' : (r.name ? '點擊複製出題老師姓名' : '尚未設定');
+        html += `<td class="mtg-grid-cell${t.key === 'fin' && i === 0 ? ' exam-fin-first' : ''}">
+          <div class="mtg-code-line" onclick="editExamCode('${sub.id}','${t.key}','${g}')" title="${codeTitle}">${codeLine}</div>
+          <div class="mtg-name-line" onclick="editExamName('${sub.id}','${t.key}','${g}')" title="${nameTitle}">${nameLine}</div>
+        </td>`;
+      });
+    });
+    html += `</tr>`;
+  });
+  html += `</tbody></table></div>`;
+  wrap.innerHTML = html;
+
+  let filled = 0;
+  d.subjects.forEach(sub => EXAM_TERMS.forEach(t => MTG_GRADES.forEach(g => { if (examResolve(sem, sub.id, t.key, g).name) filled++; })));
+  const total = d.subjects.length * EXAM_TERMS.length * MTG_GRADES.length;
+  const c = document.getElementById('exam-count'); if (c) c.textContent = `${EXAM_SEMS[sem]}：共 ${d.subjects.length} 科，已填 ${filled} / ${total} 格`;
+  const e = document.getElementById('last-edit-exam'); if (e) e.textContent = APP.examLastEdit ? '最後編輯：' + APP.examLastEdit : '';
+};
+
+window.editExamCode = function(sid, term, g) {
+  const sem = APP.examSem;
+  const cur = examCell(sem, sid, term, g);
+  if (!APP.editMode) { if (cur.code) copyToClipboard(cur.code, '班級代碼'); return; }
+  const val = prompt(`請輸入${MTG_GRADE_LABELS[g]}${EXAM_TERMS.find(t => t.key === term).label}的班級代碼（例如 105），會自動帶出分機一覽表中的老師姓名；留空則清除：`, cur.code || '');
+  if (val === null) return;
+  examSetCell(sem, sid, term, g, { code: val.trim() });
+  APP.pendingChanges = true;
+  renderExam();
+};
+window.editExamName = function(sid, term, g) {
+  const sem = APP.examSem;
+  if (!APP.editMode) {
+    const nm = examResolve(sem, sid, term, g).name;
+    if (nm) copyToClipboard(nm, '出題老師');
+    return;
+  }
+  const cur = examCell(sem, sid, term, g);
+  const shown = examResolve(sem, sid, term, g).name;
+  const val = prompt('手動輸入出題老師姓名（若已設定班級代碼且找得到老師，會以代碼帶出的姓名為主；適合科任老師或無班級代碼者）：', cur.ov || shown || '');
+  if (val === null) return;
+  examSetCell(sem, sid, term, g, { ov: val.trim() });
+  APP.pendingChanges = true;
+  renderExam();
+};
+window.examSubjectClick = function(sid) {
+  const sub = APP.examData[APP.examSem].subjects.find(s => s.id === sid);
+  if (!sub) return;
+  if (!APP.editMode) { copyToClipboard(sub.name, '科目'); return; }
+  const val = prompt('修改科目名稱（上、下學期同步更名）：', sub.name);
+  if (val === null || !val.trim()) return;
+  ['s1', 's2'].forEach(k => { const x = APP.examData[k].subjects.find(s => s.id === sid); if (x) x.name = val.trim(); });
+  APP.pendingChanges = true;
+  renderExam();
+};
+window.addExamSubject = function() {
+  if (!APP.editMode) return;
+  const name = prompt('請輸入新科目名稱（上、下學期都會新增）：', '');
+  if (!name || !name.trim()) return;
+  const id = 'x' + Date.now() + Math.floor(Math.random() * 1000);
+  ['s1', 's2'].forEach(k => APP.examData[k].subjects.push({ id, name: name.trim() }));
+  APP.pendingChanges = true;
+  renderExam();
+};
+window.deleteExamSubject = function(e, sid) {
+  e.stopPropagation();
+  if (!APP.editMode) return;
+  const sub = APP.examData[APP.examSem].subjects.find(s => s.id === sid);
+  if (!sub) return;
+  if (!confirm(`確定刪除「${sub.name}」？上、下學期該科目的出題資料都會一併刪除。`)) return;
+  ['s1', 's2'].forEach(k => {
+    APP.examData[k].subjects = APP.examData[k].subjects.filter(s => s.id !== sid);
+    Object.keys(APP.examData[k].cells).forEach(key => { if (key.startsWith(sid + '|')) delete APP.examData[k].cells[key]; });
+  });
+  APP.pendingChanges = true;
+  renderExam();
+};
+
+window.printExam = function(mode) { APP.examPrintMode = mode; window.print(); };
+
+function buildExamPrintOne(sem) {
+  examEnsure();
+  const d = APP.examData[sem];
+  const head1 = `<tr><th class="ep-subj" rowspan="2">科目</th>${EXAM_TERMS.map(t => `<th colspan="${MTG_GRADES.length}" class="${t.key === 'fin' ? 'term-fin ep-fin-first' : ''}">${t.label}</th>`).join('')}</tr>`;
+  const head2 = `<tr>${EXAM_TERMS.map(t => MTG_GRADES.map((g, i) => `<th class="${t.key === 'fin' ? 'term-fin' : ''}${t.key === 'fin' && i === 0 ? ' ep-fin-first' : ''}">${MTG_GRADE_LABELS[g]}</th>`).join('')).join('')}</tr>`;
+  let rows = '';
+  d.subjects.forEach(sub => {
+    rows += `<tr><td class="ep-subj">${examEsc(sub.name)}</td>`;
+    EXAM_TERMS.forEach(t => MTG_GRADES.forEach((g, i) => {
+      const r = examResolve(sem, sub.id, t.key, g);
+      rows += `<td class="ep-cell${t.key === 'fin' && i === 0 ? ' ep-fin-first' : ''}"><div class="ep-code">${r.code ? examEsc(r.code) : '－'}</div><div class="ep-name">${r.name ? examEsc(r.name) : '未設定'}</div></td>`;
+    }));
+    rows += `</tr>`;
+  });
+  return `<div class="ep-page">
+    <div class="print-header"><h1>新莊國小 ${APP.currentYear}學年度 ${EXAM_SEMS[sem]} 出題教師一覽表</h1>
+    <p>最後更新：${APP.examLastEdit || '—'}</p></div>
+    <table><thead>${head1}${head2}</thead><tbody>${rows}</tbody></table></div>`;
+}
+function buildExamPrint() {
+  return APP.examPrintMode === 'both' ? buildExamPrintOne('s1') + buildExamPrintOne('s2') : buildExamPrintOne(APP.examSem);
+}
+
 // ─── 「其他功能」下拉選單（列印／下載 Excel／匯出匯入 JSON）─────────
 window.toggleMoreMenu = function() {
   const dd = document.getElementById('more-dropdown');
@@ -3372,6 +3640,8 @@ async function _doNewYear() {
   const prevYears = APP.years.slice();
   APP.years.push(next);
   const fromYear = APP.currentYear;
+  const prevExam = APP.examData, prevExamEdit = APP.examLastEdit;
+  APP.examData = {}; APP.examLastEdit = ''; // 出題教師每學年重新安排，不沿用上一學年
   APP.currentYear = next;
   document.getElementById('current-year-label').textContent = next + '學年度';
   document.getElementById('year-dropdown').classList.remove('visible');
@@ -3384,11 +3654,13 @@ async function _doNewYear() {
   ]);
 
   if (dataOk && listOk) {
-    showToast(`✅ ${next}學年度已建立（複製自 ${fromYear}學年度）`);
+    if (window.renderExam) renderExam();
+    showToast(`✅ ${next}學年度已建立（複製自 ${fromYear}學年度；出題教師需重新填寫）`);
   } else {
     // Roll back so the UI doesn't show a year that didn't actually save
     APP.years = prevYears;
     APP.currentYear = fromYear;
+    APP.examData = prevExam; APP.examLastEdit = prevExamEdit;
     document.getElementById('current-year-label').textContent = fromYear + '學年度';
   }
 }
@@ -3458,7 +3730,8 @@ window.exportJSON = function() {
     map: APP.mapData,
     floorOrder: APP.floorOrder || {},
     rental: APP.rentalData || [],
-    meeting: APP.meetingData || []
+    meeting: APP.meetingData || [],
+    exam: APP.examData || {}
   };
   const blob = new Blob([JSON.stringify(payload, null, 2)], {type: 'application/json'});
   const url = URL.createObjectURL(blob);
@@ -3491,6 +3764,7 @@ window.importJSON = function(e) {
       APP.floorOrder = data.floorOrder || {};
       APP.rentalData = data.rental || [];
       APP.meetingData = data.meeting || [];
+      APP.examData = data.exam || {};
       if (data.year && !APP.years.includes(data.year)) {
         APP.years.push(data.year);
       }
@@ -3501,6 +3775,7 @@ window.importJSON = function(e) {
       renderMap();
       renderRentalMap();
       renderMeeting();
+      renderExam();
       showToast(`✅ 匯入完成（${importYear}學年度），請記得儲存到 Firebase`);
     } catch(err) {
       alert('JSON 解析失敗：' + err.message);
@@ -3523,6 +3798,7 @@ setTimeout(() => {
     renderMap();
     renderRentalMap();
     renderMeeting();
+    renderExam();
   }
 }, 1500);
 </script>
