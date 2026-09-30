@@ -788,6 +788,11 @@
   .copy-building-title { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: var(--primary); margin-bottom: 6px; padding-bottom: 5px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: #f7fafd; }
   .copy-building-title label { display: flex; align-items: center; gap: 6px; cursor: pointer; flex: 1; }
   .copy-building-title .cnt { font-size: 11px; font-weight: 500; color: var(--text-light); }
+  .copy-floor-block { margin-bottom: 6px; }
+  .copy-floor { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: #a2531b; margin: 8px 0 2px; cursor: pointer; }
+  .copy-floor::after { content: ''; flex: 1; border-top: 1.5px solid #e6c9b3; }
+  .copy-floor input { flex-shrink: 0; }
+  .copy-floor span { flex-shrink: 0; }
   .copy-room-item { display: flex; align-items: flex-start; gap: 6px; font-size: 12.5px; padding: 3px 2px; border-radius: 4px; cursor: pointer; line-height: 1.35; }
   .copy-room-item:hover:not(.self) { background: var(--primary-light); }
   .copy-room-item input { margin-top: 2px; flex-shrink: 0; }
@@ -1416,7 +1421,7 @@
 <div class="modal-overlay" id="rental-copy-modal" style="z-index:220">
   <div class="modal copy-modal">
     <h3>複製這筆租借到其他教室</h3>
-    <div style="font-size:12px;color:var(--text-muted);margin:-8px 0 12px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><span>勾選要複製到的教室，會建立相同的團體／日期／星期／時段設定（點棟別標題旁的方塊可整棟全選）</span><b id="rental-copy-count" style="color:var(--primary)">已選 0 間</b></div>
+    <div style="font-size:12px;color:var(--text-muted);margin:-8px 0 12px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><span>勾選要複製到的教室，會建立相同的團體／日期／星期／時段設定（棟別、樓層標題旁的方塊可整棟／整層全選）</span><b id="rental-copy-count" style="color:var(--primary)">已選 0 間</b></div>
     <div id="rental-copy-room-list" class="copy-cols"></div>
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeRentalCopyModal()">取消</button>
@@ -3210,22 +3215,28 @@ window.openRentalCopyModal = function(entryId) {
   let nCols = 0;
   ['F','B','C','Z','A','X'].forEach(b => { // 與場地配置分頁的棟別順序一致
     if (!APP.mapData[b]) return;
-    const rooms = [];
-    Object.keys(APP.mapData[b]).forEach(floor => {
-      (APP.mapData[b][floor] || []).forEach(room => {
-        if (room.code && room.code.trim()) rooms.push(room);
-      });
+    // 依場地配置分頁的樓層順序（例如 5F→4F→3F…）分層列出，每層一個標題
+    const floors = [];
+    getFloorOrder(b).forEach(floor => {
+      const rs = (APP.mapData[b][floor] || []).filter(room => room.code && room.code.trim());
+      if (rs.length) floors.push({ floor, rooms: rs });
     });
-    if (!rooms.length) return;
+    if (!floors.length) return;
     nCols++;
-    const selectable = rooms.filter(r => r.code.trim() !== entry.code).length;
-    html += `<div class="copy-building-group"><div class="copy-building-title"><label><input type="checkbox" class="copy-bld-all" ${selectable ? '' : 'disabled'}>${BNAMES[b]} <span class="cnt">${rooms.length} 間</span></label></div>`;
-    rooms.forEach(room => {
-      const isSelf = room.code.trim() === entry.code;
-      html += `<label class="copy-room-item ${isSelf ? 'self' : ''}">
+    const total = floors.reduce((n, f) => n + f.rooms.length, 0);
+    const selectable = floors.reduce((n, f) => n + f.rooms.filter(r => r.code.trim() !== entry.code).length, 0);
+    html += `<div class="copy-building-group"><div class="copy-building-title"><label><input type="checkbox" class="copy-bld-all" ${selectable ? '' : 'disabled'}>${BNAMES[b]} <span class="cnt">${total} 間</span></label></div>`;
+    floors.forEach(f => {
+      const fSel = f.rooms.filter(r => r.code.trim() !== entry.code).length;
+      html += `<div class="copy-floor-block"><label class="copy-floor" title="整層全選"><input type="checkbox" class="copy-floor-all" ${fSel ? '' : 'disabled'}><span>${f.floor}</span></label>`;
+      f.rooms.forEach(room => {
+        const isSelf = room.code.trim() === entry.code;
+        html += `<label class="copy-room-item ${isSelf ? 'self' : ''}">
         <input type="checkbox" class="copy-room-cb" value="${room.code.trim()}" ${isSelf ? 'disabled' : ''}>
         <span>${room.name || '（未命名）'} <span class="ci-code">${room.code}</span>${isSelf ? ' — 本教室' : ''}</span>
       </label>`;
+      });
+      html += `</div>`;
     });
     html += `</div>`;
   });
@@ -3241,19 +3252,24 @@ function updateRentalCopyCount() {
   const el = document.getElementById('rental-copy-count');
   if (el) el.textContent = `已選 ${n} 間`;
   // 同步各棟「全選」方塊的狀態（全部勾選＝勾、部分＝半選）
-  document.querySelectorAll('#rental-copy-room-list .copy-building-group').forEach(g => {
-    const all = g.querySelector('.copy-bld-all');
-    const cbs = Array.from(g.querySelectorAll('input.copy-room-cb:not(:disabled)'));
+  const sync = (box, all) => {
+    const cbs = Array.from(box.querySelectorAll('input.copy-room-cb:not(:disabled)'));
     if (!all || !cbs.length) return;
     const c = cbs.filter(x => x.checked).length;
     all.checked = c === cbs.length;
     all.indeterminate = c > 0 && c < cbs.length;
+  };
+  document.querySelectorAll('#rental-copy-room-list .copy-building-group').forEach(g => {
+    sync(g, g.querySelector('.copy-bld-all'));
+    g.querySelectorAll('.copy-floor-block').forEach(fb => sync(fb, fb.querySelector('.copy-floor-all')));
   });
 }
 document.getElementById('rental-copy-room-list').addEventListener('change', function(e) {
   const t = e.target;
   if (t.classList.contains('copy-bld-all')) {
     t.closest('.copy-building-group').querySelectorAll('input.copy-room-cb:not(:disabled)').forEach(cb => { cb.checked = t.checked; });
+  } else if (t.classList.contains('copy-floor-all')) {
+    t.closest('.copy-floor-block').querySelectorAll('input.copy-room-cb:not(:disabled)').forEach(cb => { cb.checked = t.checked; });
   }
   updateRentalCopyCount();
 });
