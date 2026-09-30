@@ -436,6 +436,39 @@
   body.edit-mode .exam-day-add { display: inline-block; }
   .exam-wd { color: var(--accent); font-weight: 700; }
   .exam-hint-empty { color: var(--text-light); font-weight: 400; font-style: italic; }
+
+  /* ── Header semester switch ── */
+  .sem-switch { display: inline-flex; align-items: center; flex-shrink: 0; border: 1px solid rgba(255,255,255,0.45); border-radius: 20px; overflow: hidden; background: rgba(255,255,255,0.12); }
+  .sem-switch button { border: none; background: transparent; color: rgba(255,255,255,0.85); font-size: calc(12px * var(--hscale)); font-weight: 600; padding: calc(3px * var(--hscale)) calc(12px * var(--hscale)); cursor: pointer; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px; transition: all 0.15s; }
+  .sem-switch button:hover:not(.active) { background: rgba(255,255,255,0.22); color: #fff; }
+  .sem-switch button.active { background: #fff; color: var(--primary); }
+  .sem-switch button#sem-btn-s2.active { color: #c4621d; }
+  .sem-now { font-size: 9px; font-weight: 700; background: var(--success); color: #fff; border-radius: 8px; padding: 0 5px; line-height: 14px; }
+  .sem-title { font-size: 16px; font-weight: 700; margin: 0 0 10px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .sem-name { padding: 2px 12px; border-radius: 16px; color: #fff; background: var(--primary); }
+  .sem-name.s2 { background: #c4621d; }
+  .sem-chip { font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 10px; }
+  .sem-chip.now { background: var(--success-light); color: var(--success); }
+  .sem-chip.other { background: #f0f0f3; color: var(--text-muted); }
+  .sem-sub { font-weight: 500; color: var(--text-muted); }
+  /* ── 學期日程 ── */
+  table.cal-tbl { width: 100%; border-collapse: collapse; font-size: 14px; }
+  table.cal-tbl thead th { background: var(--primary); color: #fff; padding: 8px 12px; text-align: left; font-size: 13px; }
+  body.sem-s2 table.cal-tbl thead th { background: #c4621d; }
+  table.cal-tbl td { border-bottom: 1px solid var(--border); padding: 9px 12px; vertical-align: middle; }
+  table.cal-tbl td.cal-name { font-weight: 700; white-space: nowrap; width: 200px; position: relative; }
+  table.cal-tbl td.cal-left { color: var(--text-muted); font-size: 12.5px; white-space: nowrap; width: 110px; }
+  table.cal-tbl tr.cal-past td { opacity: 0.5; }
+  table.cal-tbl tr.cal-next td { background: var(--accent-light); }
+  table.cal-tbl tr.cal-next td.cal-left { color: #a2531b; font-weight: 700; }
+  .cal-d { margin-right: 6px; white-space: nowrap; cursor: copy; border-radius: 4px; padding: 1px 3px; }
+  body:not(.edit-mode) .cal-d:hover { background: var(--primary-light); }
+  .cal-bad { color: #c0392b; font-weight: 700; margin-right: 6px; }
+  .cal-link { display: inline-block; margin-left: 6px; font-size: 10.5px; font-weight: 600; color: var(--primary); background: var(--primary-light); border-radius: 8px; padding: 0 6px; }
+  .cal-in { font: inherit; font-size: 13px; padding: 4px 8px; border: 1px solid var(--border); border-radius: 6px; width: 100%; max-width: 320px; }
+  .cal-in.name { max-width: 170px; font-weight: 700; }
+  .exam-date-lock { font-weight: 700; }
+  .exam-goto { border: none; background: var(--primary-light); color: var(--primary); font-size: 10.5px; border-radius: 8px; padding: 1px 7px; cursor: pointer; margin-left: 4px; }
   .exam-add-subj { display: none; margin: 10px 0 0; padding: 7px 14px; border: 1px dashed var(--primary-mid); background: var(--primary-light); color: var(--primary); border-radius: var(--radius); font-size: 13px; cursor: pointer; }
   body.edit-mode .exam-add-subj { display: inline-block; }
 
@@ -948,6 +981,17 @@
     #exam-print-root .ep-page + .ep-page { page-break-before: always; }
 
     #panel-exam .exam-sched { display: none !important; }
+
+    /* ── 學期日程 print ── */
+    #panel-cal .cal-screen { display: none !important; }
+    #cal-print-root { display: block !important; }
+    #cal-print-root .cp-wrap { display: flex; gap: 8mm; }
+    #cal-print-root .cp-wrap > div { flex: 1; }
+    #cal-print-root .cp-title { background: #1a5c8a !important; color: #fff !important; font-weight: 700; font-size: 13px; padding: 4px 8px; }
+    #cal-print-root .cp-title.s2 { background: #c4621d !important; }
+    #cal-print-root table { width: 100%; border-collapse: collapse; }
+    #cal-print-root td { border: 1px solid #999; padding: 5px 8px; font-size: 12px; }
+    #cal-print-root td.n { font-weight: 700; width: 34%; }
     #exam-print-root .ep-sched { display: flex; gap: 6mm; margin-bottom: 4mm; }
     #exam-print-root .ep-sched > div { flex: 1; }
     #exam-print-root .ep-sched-title { background: #1a5c8a !important; color: #fff !important; font-size: 11px; font-weight: 700; padding: 3px 6px; }
@@ -963,6 +1007,7 @@
   #map-print-root { display: none; }
   #meeting-print-root { display: none; }
   #exam-print-root { display: none; }
+  #cal-print-root { display: none; }
 
   /* ══════════════════════ Responsive (tablet / mobile) ══════════════════════ */
   /* header-top 一律維持單行：校名／分頁（不夠寬就自己橫向捲動）＋編輯按鈕永遠在第一行，
@@ -1047,6 +1092,10 @@
           </div>
         </div>
       </div>
+      <div class="sem-switch" id="sem-switch" style="display:none" title="切換上／下學期（出題教師、學期日程共用）">
+        <button id="sem-btn-s1" onclick="setSem('s1')">上學期<span class="sem-now" style="display:none">現在</span></button>
+        <button id="sem-btn-s2" onclick="setSem('s2')">下學期<span class="sem-now" style="display:none">現在</span></button>
+      </div>
       <div class="tab active" onclick="switchTab('phone', this)" id="tab-phone">
         <svg width="13" height="13" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 2h3l1.5 3-2 1.5a9 9 0 003 3L10 8l3 1.5V13a1 1 0 01-1 1C5 14 1 10 1 4a1 1 0 011-1z"/></svg>
         分機一覽
@@ -1066,6 +1115,10 @@
       <div class="tab" onclick="switchTab('exam', this)" id="tab-exam">
         <svg width="13" height="13" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 1.5h9v12H3z"/><path d="M5.5 5h4M5.5 8h4M5.5 11h2"/></svg>
         出題教師
+      </div>
+      <div class="tab" onclick="switchTab('cal', this)" id="tab-cal">
+        <svg width="13" height="13" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="1.5" y="2.5" width="12" height="11" rx="1.5"/><path d="M1.5 6h12M4.5 1v3M10.5 1v3"/></svg>
+        學期日程
       </div>
       <div class="tab-legend" id="tab-legend-map" style="display:none">
         <span><span class="dot" style="background:#f0f5fa;border:1.5px solid #1a5c8a"></span>班級</span>
@@ -1255,14 +1308,10 @@
 
   <!-- ── Exam Teachers Panel (出題教師) ── -->
   <div class="tab-panel" id="panel-exam">
-    <div class="mtg-page-hint">快速查閱各科命題老師：上方是考試日期與節次科目（日期輸入 1151105 會自動顯示星期），下方橫向為期中考／期末考各年級，每格上面是班級代碼、下面是出題老師；輸入班級代碼會自動帶出分機一覽表中的老師姓名（科任或找不到代碼時，可在姓名欄手動輸入）。點一下格子即可複製。</div>
+    <div class="sem-title" id="exam-title"></div>
+    <div class="mtg-page-hint">快速查閱各科命題老師：上方是考試日期與節次科目（日期由「學期日程」分頁帶入，星期自動顯示；學期請用最上方的切換鈕），下方橫向為期中考／期末考各年級，每格上面是班級代碼、下面是出題老師；輸入班級代碼會自動帶出分機一覽表中的老師姓名（科任或找不到代碼時，可在姓名欄手動輸入）。點一下格子即可複製。</div>
     <div class="mtg-toolbar">
-      <div class="exam-sem-group">
-        <button class="exam-sem-btn" id="exam-sem-s1" onclick="setExamSem('s1')">上學期</button>
-        <button class="exam-sem-btn" id="exam-sem-s2" onclick="setExamSem('s2')">下學期</button>
-      </div>
-      <span class="mtg-toolbar-sep"></span>
-      <button class="toolbar-btn primary" onclick="printExam('sem')">
+            <button class="toolbar-btn primary" onclick="printExam('sem')">
         <svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="5" width="12" height="8" rx="1"/><path d="M5 5V2h6v3M5 12h6"/></svg>
         全部列印（<span id="exam-print-sem-label">上學期</span>，供處室留存）
       </button>
@@ -1276,6 +1325,24 @@
       <span id="last-edit-exam"></span>
     </div>
     <div id="exam-print-root"></div>
+  </div>
+
+  <!-- ── 學期日程 Panel ── -->
+  <div class="tab-panel" id="panel-cal">
+    <div class="cal-screen">
+      <div class="sem-title" id="cal-title"></div>
+      <div class="mtg-page-hint">輸入 1151105 會自動顯示星期；同一項目有多天時用「.」或「、」分開，例如 1151105.1151106。<b>「期中考」「期末考」的日期會自動帶到「出題教師」分頁</b>，不用重複輸入。點日期可複製。</div>
+      <div class="mtg-toolbar">
+        <button class="toolbar-btn primary" onclick="window.print()">
+          <svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="5" width="12" height="8" rx="1"/><path d="M5 5V2h6v3M5 12h6"/></svg>
+          列印學期日程（上＋下學期）
+        </button>
+      </div>
+      <div class="mtg-wrap" id="cal-wrap"></div>
+      <button class="exam-add-subj" onclick="addCalItem()">＋ 新增日程</button>
+      <div class="meta-bar"><span id="cal-count"></span><span id="last-edit-cal"></span></div>
+    </div>
+    <div id="cal-print-root"></div>
   </div>
 </main>
 
@@ -1436,7 +1503,8 @@ async function loadYear(year) {
     const rentalRef = doc(db, 'rentals', String(year));
     const meetingRef = doc(db, 'meetings', String(year));
     const examRef = doc(db, 'exams', String(year));
-    const [phoneSnap, mapSnap, rentalSnap, meetingSnap, examSnap] = await Promise.all([getDoc(phoneRef), getDoc(mapRef), getDoc(rentalRef), getDoc(meetingRef), getDoc(examRef)]);
+    const calRef = doc(db, 'calendars', String(year));
+    const [phoneSnap, mapSnap, rentalSnap, meetingSnap, examSnap, calSnap] = await Promise.all([getDoc(phoneRef), getDoc(mapRef), getDoc(rentalRef), getDoc(meetingRef), getDoc(examRef), getDoc(calRef)]);
 
     if (phoneSnap.exists()) {
       window.APP.phoneData = phoneSnap.data().staff || window.APP.defaultPhone;
@@ -1474,6 +1542,13 @@ async function loadYear(year) {
       window.APP.examData = {};
       window.APP.examLastEdit = '';
     }
+    if (calSnap.exists()) {
+      window.APP.calData = calSnap.data().data || {};
+      window.APP.calLastEdit = calSnap.data().last_edited || '';
+    } else {
+      window.APP.calData = {};
+      window.APP.calLastEdit = '';
+    }
   } catch(e) {
     console.warn('Firebase load failed, using local data:', e);
     window.APP.phoneData = JSON.parse(JSON.stringify(window.APP.defaultPhone));
@@ -1481,12 +1556,15 @@ async function loadYear(year) {
     window.APP.rentalData = [];
     window.APP.meetingData = [];
     window.APP.examData = {};
+    window.APP.calData = {};
   }
+  if (window.autoPickSem) window.autoPickSem();
   window.renderPhone();
   window.renderMap();
   if (window.renderRentalMap) window.renderRentalMap();
   if (window.renderMeeting) window.renderMeeting();
   if (window.renderExam) window.renderExam();
+  if (window.renderCal) window.renderCal();
 }
 
 async function saveToFirebase(year) {
@@ -1515,11 +1593,16 @@ async function saveToFirebase(year) {
       data: window.APP.examData || {},
       last_edited: now
     });
+    await window._setDoc(window._doc(window._db, 'calendars', String(year)), {
+      data: window.APP.calData || {},
+      last_edited: now
+    });
     window.APP.phoneLastEdit = now;
     window.APP.mapLastEdit = now;
     window.APP.rentalLastEdit = now;
     window.APP.meetingLastEdit = now;
     window.APP.examLastEdit = now;
+    window.APP.calLastEdit = now;
     document.getElementById('last-edit-phone').textContent = '最後編輯：' + now;
     document.getElementById('last-edit-map').textContent = '最後編輯：' + now;
     const rentalEditEl = document.getElementById('last-edit-rental');
@@ -1528,6 +1611,8 @@ async function saveToFirebase(year) {
     if (meetingEditEl) meetingEditEl.textContent = '最後編輯：' + now;
     const examEditEl = document.getElementById('last-edit-exam');
     if (examEditEl) examEditEl.textContent = '最後編輯：' + now;
+    const calEditEl = document.getElementById('last-edit-cal');
+    if (calEditEl) calEditEl.textContent = '最後編輯：' + now;
     return true;
   } catch(e) {
     alert('儲存失敗，請確認網路連線。\n' + e.message);
@@ -1569,7 +1654,8 @@ async function deleteYearData(year) {
       window._deleteDoc(window._doc(window._db, 'rooms', String(year))),
       window._deleteDoc(window._doc(window._db, 'rentals', String(year))),
       window._deleteDoc(window._doc(window._db, 'meetings', String(year))),
-      window._deleteDoc(window._doc(window._db, 'exams', String(year)))
+      window._deleteDoc(window._doc(window._db, 'exams', String(year))),
+      window._deleteDoc(window._doc(window._db, 'calendars', String(year)))
     ]);
     return true;
   } catch (e) {
@@ -1609,6 +1695,9 @@ window.APP = {
   meetingLastEdit: '',
   examData: {},
   examLastEdit: '',
+  calData: {},
+  calLastEdit: '',
+  _semPickedYear: null,
   examSem: (function(){ const m = new Date().getMonth() + 1; return (m >= 2 && m <= 7) ? 's2' : 's1'; })(),
   examPrintMode: 'sem',
   meetingPrintMode: 'all', // 'all' = 全部列印（給各處室參考）；'1'~'6' = 該年級獨自列印
@@ -2638,6 +2727,8 @@ window.addEventListener('beforeprint', () => {
   if (mp) mp.innerHTML = buildMeetingPrint();
   const ep = document.getElementById('exam-print-root');
   if (ep) ep.innerHTML = buildExamPrint();
+  const cp = document.getElementById('cal-print-root');
+  if (cp) cp.innerHTML = buildCalPrint();
 });
 window.addEventListener('afterprint', () => {
   document.getElementById('phone-print-root').innerHTML = '';
@@ -2646,6 +2737,8 @@ window.addEventListener('afterprint', () => {
   if (mp) mp.innerHTML = '';
   const ep = document.getElementById('exam-print-root');
   if (ep) ep.innerHTML = '';
+  const cp = document.getElementById('cal-print-root');
+  if (cp) cp.innerHTML = '';
 });
 
 // ─── Room modal ───────────────────────────────────────────
@@ -3156,6 +3249,7 @@ function _enterEditMode() {
   document.getElementById('edit-bar').classList.add('visible');
   renderPhone(document.getElementById('phone-search').value);
   if (window.renderExam) renderExam();
+  if (window.renderCal) renderCal();
 }
 
 function _exitEditMode() {
@@ -3166,6 +3260,7 @@ function _exitEditMode() {
   document.getElementById('edit-bar').classList.remove('visible');
   renderPhone(document.getElementById('phone-search').value);
   if (window.renderExam) renderExam();
+  if (window.renderCal) renderCal();
 }
 
 // Generic password gate: opens the shared password modal, then runs `onSuccess`
@@ -3271,6 +3366,9 @@ window.switchTab = function(name, el) {
   if (name === 'rental') renderRentalMap();
   if (name === 'meeting') renderMeeting();
   if (name === 'exam') renderExam();
+  if (name === 'cal') renderCal();
+  const semSw = document.getElementById('sem-switch');
+  if (semSw) semSw.style.display = (name === 'exam' || name === 'cal') ? 'inline-flex' : 'none';
   if (window.autoFitHeader) autoFitHeader();
 };
 
@@ -3478,6 +3576,167 @@ function examResolve(sem, sid, term, g) {
 }
 
 
+
+// ─── 學期日程 (Semester Calendar) ─────────────────────────
+// calData = { s1:{items:[{id,name,date,role}]}, s2:{...} }
+// date 是使用者輸入的原始字串（例如 "1151105.1151106"），顯示時自動補上星期。
+// role：open 開學日／mid 期中考／fin 期末考／end 放假開始日 —— 其中 mid、fin 會連動到「出題教師」分頁。
+function calDefaults(year) {
+  const seed = (year === 115); // 115 學年度先預填使用者提供的日程；其他學年只放空白項目
+  const I = (id, name, date, role) => ({ id, name, date: seed ? (date || '') : '', role: role || '' });
+  return {
+    s1: { items: [
+      I('open', '開學日', '1150831', 'open'),
+      I('mid', '期中考', '1151105.1151106', 'mid'),
+      I('c1', '校慶', '1151205'),
+      I('c2', '校慶補假', '1151207'),
+      I('fin', '期末考', '1160111.1160112', 'fin'),
+      I('end', '寒假開始日', '1160121', 'end')
+    ] },
+    s2: { items: [
+      I('open', '開學日', '1160211', 'open'),
+      I('mid', '期中考', '1160415.1160416', 'mid'),
+      I('g1', '六年級畢業考', '1160524.1160525'),
+      I('g2', '六年級畢業典禮', '1160614'),
+      I('fin', '期末考', '1160621.1160622', 'fin'),
+      I('end', '暑假開始日', '1160701', 'end')
+    ] }
+  };
+}
+function calEnsure() {
+  examEnsure();
+  if (!APP.calData || typeof APP.calData !== 'object') APP.calData = {};
+  const def = calDefaults(APP.currentYear);
+  ['s1', 's2'].forEach(k => {
+    if (!APP.calData[k] || !Array.isArray(APP.calData[k].items) || !APP.calData[k].items.length) APP.calData[k] = def[k];
+    // 舊版曾在出題教師分頁輸入日期：日程裡期中／期末還是空白時，把舊日期搬過來（只搬一次）
+    ['mid', 'fin'].forEach(role => {
+      const it = APP.calData[k].items.find(x => x.role === role);
+      if (it && !(it.date || '').trim()) {
+        const old = (APP.examData[k].schedule[role] || []).map(d => examDateNorm(d.date)).filter(Boolean);
+        if (old.length) it.date = old.join('.');
+      }
+    });
+  });
+}
+function calNormToken(t) { let d = String(t); if (d.length === 6) d = '0' + d; return d.length === 7 && examWeekday(d) ? d : ''; }
+function calDateObj(tok) { return new Date(+tok.slice(0, 3) + 1911, +tok.slice(3, 5) - 1, +tok.slice(5, 7)); }
+function calTokens(str) { return (String(str || '').match(/\d+/g) || []).map(calNormToken).filter(Boolean); }
+function calDateHtml(str) {
+  return examEsc(str).replace(/\d+/g, m => {
+    const d = calNormToken(m);
+    return d ? `<span class="cal-d" data-copy="${d}(${examWeekday(d)})">${d}<span class="exam-wd">(${examWeekday(d)})</span></span>` : `<span class="cal-bad" title="日期格式有誤，請檢查位數">${m}?</span>`;
+  });
+}
+function calDateText(str) {
+  return String(str || '').replace(/\d+/g, m => { const d = calNormToken(m); return d ? `${d}(${examWeekday(d)})` : m; });
+}
+function calFirstDate(it) { const t = calTokens(it.date)[0]; return t ? calDateObj(t) : null; }
+function calSorted(sem) {
+  return APP.calData[sem].items.map((it, i) => ({ it, i, d: calFirstDate(it) }))
+    .sort((a, b) => (a.d && b.d) ? (a.d - b.d || a.i - b.i) : a.d ? -1 : b.d ? 1 : a.i - b.i).map(x => x.it);
+}
+function calRoleDate(sem, role) { const it = APP.calData[sem].items.find(x => x.role === role); return it ? calFirstDate(it) : null; }
+// 依今天的日期判斷「現在是哪一學期」（now）與載入時預設顯示哪一學期（pick）
+function calSemInfo() {
+  calEnsure();
+  const t = new Date(); const today = new Date(t.getFullYear(), t.getMonth(), t.getDate());
+  const o1 = calRoleDate('s1', 'open'), e1 = calRoleDate('s1', 'end'), o2 = calRoleDate('s2', 'open'), e2 = calRoleDate('s2', 'end');
+  if (o2 && today >= o2) return { now: (e2 && today > e2) ? null : 's2', pick: 's2' };
+  if (o1 && today >= o1) return { now: (e1 && today > e1) ? null : 's1', pick: (e1 && today > e1) ? 's2' : 's1' };
+  return { now: null, pick: null };
+}
+window.autoPickSem = function() {
+  if (APP._semPickedYear === APP.currentYear) return;
+  APP._semPickedYear = APP.currentYear;
+  const info = calSemInfo();
+  if (info.pick) APP.examSem = info.pick;
+};
+
+function updateSemUI() {
+  const sem = APP.examSem, info = calSemInfo();
+  ['s1', 's2'].forEach(k => {
+    const b = document.getElementById('sem-btn-' + k);
+    if (!b) return;
+    b.classList.toggle('active', k === sem);
+    const n = b.querySelector('.sem-now'); if (n) n.style.display = (info.now === k) ? 'inline-block' : 'none';
+  });
+  document.body.classList.toggle('sem-s1', sem === 's1');
+  document.body.classList.toggle('sem-s2', sem === 's2');
+  const chip = info.now === sem ? '<span class="sem-chip now">本學期</span>' : (info.now ? '<span class="sem-chip other">非本學期</span>' : '');
+  const head = `<span class="sem-name ${sem}">${APP.currentYear}學年度 ${EXAM_SEMS[sem]}</span>${chip}`;
+  const a = document.getElementById('exam-title'); if (a) a.innerHTML = head + '<span class="sem-sub">出題教師</span>';
+  const b2 = document.getElementById('cal-title'); if (b2) b2.innerHTML = head + '<span class="sem-sub">學期日程</span>';
+  const lbl = document.getElementById('exam-print-sem-label'); if (lbl) lbl.textContent = EXAM_SEMS[sem];
+}
+window.setSem = function(sem) {
+  APP.examSem = sem;
+  renderExam(); renderCal();
+};
+window.goCal = function() { switchTab('cal', document.getElementById('tab-cal')); };
+
+window.renderCal = function() {
+  const wrap = document.getElementById('cal-wrap');
+  if (!wrap) return;
+  calEnsure(); updateSemUI();
+  const sem = APP.examSem, edit = APP.editMode, items = calSorted(sem);
+  const t = new Date(); const today = new Date(t.getFullYear(), t.getMonth(), t.getDate());
+  let nextId = null, best = Infinity;
+  items.forEach(it => { const d = calFirstDate(it); if (d && d >= today && d < best) { best = d; nextId = it.id; } });
+  let h = `<div class="mtg-table-scroll"><table class="cal-tbl"><thead><tr><th>項目</th><th>日期</th><th>距今</th></tr></thead><tbody>`;
+  items.forEach(it => {
+    const toks = calTokens(it.date);
+    const last = toks.length ? calDateObj(toks[toks.length - 1]) : null;
+    const first = toks.length ? calDateObj(toks[0]) : null;
+    let left = '';
+    if (first) {
+      const diff = Math.round((first - today) / 86400000);
+      if (diff > 0) left = `還有 ${diff} 天`;
+      else if (last >= today) left = '進行中／今天';
+      else left = '已過';
+    }
+    const past = last && last < today;
+    const locked = ['mid', 'fin', 'open', 'end'].includes(it.role);
+    h += `<tr class="${past ? 'cal-past' : ''}${it.id === nextId ? ' cal-next' : ''}">`;
+    if (edit) {
+      h += `<td class="cal-name">${['mid', 'fin'].includes(it.role) ? examEsc(it.name) + '<span class="cal-link">連動出題教師</span>' : `<input class="cal-in name" value="${examEsc(it.name)}" onchange="setCalName('${it.id}',this.value)">`}${locked ? '' : `<button class="mtg-del-btn" onclick="delCalItem('${it.id}')" title="刪除">✕</button>`}</td>`;
+      h += `<td><input class="cal-in" value="${examEsc(it.date)}" placeholder="1151105 或 1151105.1151106" onchange="setCalDate('${it.id}',this.value)"> <span style="font-size:12px">${it.date ? calDateHtml(it.date) : ''}</span></td>`;
+    } else {
+      h += `<td class="cal-name">${examEsc(it.name)}${['mid', 'fin'].includes(it.role) ? '<span class="cal-link">連動出題教師</span>' : ''}</td>`;
+      h += `<td>${it.date ? calDateHtml(it.date) : '<span class="exam-hint-empty">未設定</span>'}</td>`;
+    }
+    h += `<td class="cal-left">${left}</td></tr>`;
+  });
+  h += `</tbody></table></div>`;
+  wrap.innerHTML = h;
+  wrap.querySelectorAll('.cal-d').forEach(el => el.addEventListener('click', () => { if (!APP.editMode) copyToClipboard(el.dataset.copy, '日期'); }));
+  const c = document.getElementById('cal-count'); if (c) c.textContent = `${EXAM_SEMS[sem]}：共 ${items.length} 項日程`;
+  const e = document.getElementById('last-edit-cal'); if (e) e.textContent = APP.calLastEdit ? '最後編輯：' + APP.calLastEdit : '';
+};
+function calItem(id) { return APP.calData[APP.examSem].items.find(x => x.id === id); }
+window.setCalName = function(id, v) { const it = calItem(id); if (!it || !v.trim()) return; it.name = v.trim(); APP.pendingChanges = true; renderCal(); };
+window.setCalDate = function(id, v) { const it = calItem(id); if (!it) return; it.date = v.trim(); APP.pendingChanges = true; renderCal(); };
+window.addCalItem = function() {
+  if (!APP.editMode) return;
+  const name = prompt('請輸入新日程名稱（例如：運動會、補課日）：', '');
+  if (!name || !name.trim()) return;
+  APP.calData[APP.examSem].items.push({ id: 'c' + Date.now() + Math.floor(Math.random() * 1000), name: name.trim(), date: '', role: '' });
+  APP.pendingChanges = true; renderCal();
+};
+window.delCalItem = function(id) {
+  if (!APP.editMode) return;
+  const it = calItem(id); if (!it) return;
+  if (!confirm(`確定刪除「${it.name}」？`)) return;
+  APP.calData[APP.examSem].items = APP.calData[APP.examSem].items.filter(x => x.id !== id);
+  APP.pendingChanges = true; renderCal();
+};
+function buildCalPrint() {
+  calEnsure();
+  const col = k => `<div><div class="cp-title ${k}">${EXAM_SEMS[k]}</div><table>` +
+    calSorted(k).map(it => `<tr><td class="n">${examEsc(it.name)}</td><td>${it.date ? examEsc(calDateText(it.date)) : '未設定'}</td></tr>`).join('') + `</table></div>`;
+  return `<div class="print-header"><h1>新莊國小 ${APP.currentYear}學年度 學期日程</h1><p>最後更新：${APP.calLastEdit || '—'}</p></div><div class="cp-wrap">${col('s1')}${col('s2')}</div>`;
+}
+
 // 民國日期 1151105 → 星期幾（四）。接受 1151105 / 115/11/05 / 115-11-05；不合法回傳空字串
 function examWeekday(str) {
   let d = String(str || '').replace(/\D/g, '');
@@ -3504,13 +3763,23 @@ function examOrderText(sem, term) {
   const sc = APP.examData[sem].schedule;
   const subs = APP.examData[sem].subjects;
   let out = '';
-  (sc[term] || []).forEach(day => {
+  examDays(sem, term).forEach(x => {
     for (let i = 0; i < sc.periods.length; i++) {
-      const sub = subs.find(x => x.id === (day.s || [])[i]);
+      const sub = subs.find(z => z.id === (x.day.s || [])[i]);
       if (sub && sub.name) out += sub.name.charAt(0);
     }
   });
   return out;
+}
+// 考試天數與日期由「學期日程」的期中考／期末考帶入；日程尚未填日期時，沿用先前存的天數
+function examDays(sem, term) {
+  calEnsure();
+  const sc = APP.examData[sem].schedule;
+  const it = APP.calData[sem].items.find(x => x.role === term);
+  const toks = it ? calTokens(it.date) : [];
+  const n = toks.length || sc[term].length;
+  while (sc[term].length < n) sc[term].push({ date: '', s: [] });
+  return Array.from({ length: n }, (_, i) => ({ day: sc[term][i], date: toks[i] || '' }));
 }
 
 window.setExamDate = function(term, idx, val) {
@@ -3549,18 +3818,15 @@ function renderExamSchedule(sem) {
   if (!box) return;
   const d = APP.examData[sem], sc = d.schedule, edit = APP.editMode;
   box.innerHTML = EXAM_TERMS.map(t => {
-    const days = sc[t.key];
+    const days = examDays(sem, t.key);
     const order = examOrderText(sem, t.key);
     let h = `<div class="exam-sched-card ${t.key}"><div class="exam-sched-title"><span>${t.label}日程</span><span class="order">${order ? '科目順序：' + examEsc(order) : ''}</span></div>`;
     h += `<div style="overflow-x:auto"><table class="exam-sched-tbl"><thead><tr><th></th>`;
-    days.forEach((day, i) => {
-      const w = examWeekday(day.date);
-      if (edit) {
-        h += `<th><input class="date-in" type="text" maxlength="10" placeholder="1151105" value="${examEsc(day.date)}" onchange="setExamDate('${t.key}',${i},this.value)"> <span class="exam-wd">${w ? '(' + w + ')' : ''}</span><button class="exam-day-del" onclick="delExamDay('${t.key}',${i})" title="刪除這一天">✕</button></th>`;
-      } else {
-        const txt = examDateText(day.date);
-        h += `<th>${txt ? `<span class="exam-date-copy" onclick="copyExamDate('${t.key}',${i})" title="點擊複製日期">${examEsc(day.date)}<span class="exam-wd">${w ? '(' + w + ')' : ''}</span></span>` : '<span class="exam-hint-empty">未設定日期</span>'}</th>`;
-      }
+    days.forEach(x => {
+      const w = examWeekday(x.date);
+      if (!x.date) h += `<th><span class="exam-hint-empty">未設定日期</span>${edit ? `<button class="exam-goto" onclick="goCal()">到學期日程設定</button>` : ''}</th>`;
+      else if (edit) h += `<th><span class="exam-date-lock">${x.date}</span><span class="exam-wd">(${w})</span><button class="exam-goto" onclick="goCal()" title="日期請到「學期日程」修改">改日期</button></th>`;
+      else h += `<th><span class="exam-date-copy" onclick="copyToClipboard('${x.date}(${w})','考試日期')" title="點擊複製日期">${x.date}<span class="exam-wd">(${w})</span></span></th>`;
     });
     h += `</tr></thead><tbody>`;
     sc.periods.forEach((per, pi) => {
@@ -3569,19 +3835,18 @@ function renderExamSchedule(sem) {
         ? `<input class="per-label" value="${examEsc(per.label)}" onchange="setExamPeriod(${pi},'label',this.value)"><br><input class="per-time" value="${examEsc(per.time)}" onchange="setExamPeriod(${pi},'time',this.value)">`
         : `<b>${examEsc(per.label)}</b>${examEsc(per.time)}`;
       h += `</td>`;
-      days.forEach((day, i) => {
-        const cur = (day.s || [])[pi] || '';
+      days.forEach((x, i) => {
+        const cur = (x.day.s || [])[pi] || '';
         if (edit) {
           h += `<td class="subj"><select onchange="setExamSubj('${t.key}',${i},${pi},this.value)"><option value="">－</option>${d.subjects.map(sb => `<option value="${sb.id}"${sb.id === cur ? ' selected' : ''}>${examEsc(sb.name)}</option>`).join('')}</select></td>`;
         } else {
-          const sub = d.subjects.find(x => x.id === cur);
+          const sub = d.subjects.find(z => z.id === cur);
           h += `<td class="subj">${sub ? examEsc(sub.name) : '<span class="exam-hint-empty">－</span>'}</td>`;
         }
       });
       h += `</tr>`;
     });
-    h += `</tbody></table></div>`;
-    h += `<button class="exam-day-add" onclick="addExamDay('${t.key}')">＋ 新增考試日</button></div>`;
+    h += `</tbody></table></div></div>`;
     return h;
   }).join('');
 }
@@ -3594,8 +3859,7 @@ window.renderExam = function() {
   examEnsure();
   const sem = APP.examSem;
   const d = APP.examData[sem];
-  ['s1', 's2'].forEach(k => { const b = document.getElementById('exam-sem-' + k); if (b) b.classList.toggle('active', k === sem); });
-  const lbl = document.getElementById('exam-print-sem-label'); if (lbl) lbl.textContent = EXAM_SEMS[sem];
+  updateSemUI();
   renderExamSchedule(sem);
 
   let html = `<div class="mtg-table-scroll"><table class="exam-grid"><thead>
@@ -3701,10 +3965,10 @@ function buildExamPrintOne(sem) {
 
   const sc = d.schedule;
   const schedHtml = `<div class="ep-sched">` + EXAM_TERMS.map(t => {
-    const days = sc[t.key];
-    let h = `<div><div class="ep-sched-title ${t.key}">${t.label}日程</div><table><thead><tr><th></th>${days.map(day => { const tx = examDateText(day.date); return `<th>${tx || '未設定'}</th>`; }).join('')}</tr></thead><tbody>`;
+    const days = examDays(sem, t.key);
+    let h = `<div><div class="ep-sched-title ${t.key}">${t.label}日程</div><table><thead><tr><th></th>${days.map(x => { const tx = examDateText(x.date); return `<th>${tx || '未設定'}</th>`; }).join('')}</tr></thead><tbody>`;
     sc.periods.forEach((per, pi) => {
-      h += `<tr><td class="per">${examEsc(per.label)}<br>${examEsc(per.time)}</td>` + days.map(day => { const sub = d.subjects.find(x => x.id === (day.s || [])[pi]); return `<td class="subj">${sub ? examEsc(sub.name) : '－'}</td>`; }).join('') + `</tr>`;
+      h += `<tr><td class="per">${examEsc(per.label)}<br>${examEsc(per.time)}</td>` + days.map(x => { const sub = d.subjects.find(z => z.id === (x.day.s || [])[pi]); return `<td class="subj">${sub ? examEsc(sub.name) : '－'}</td>`; }).join('') + `</tr>`;
     });
     return h + `</tbody></table></div>`;
   }).join('') + `</div>`;
@@ -3806,6 +4070,9 @@ async function _doNewYear() {
   const fromYear = APP.currentYear;
   const prevExam = APP.examData, prevExamEdit = APP.examLastEdit;
   APP.examData = {}; APP.examLastEdit = ''; // 出題教師每學年重新安排，不沿用上一學年
+  const prevCal = APP.calData, prevCalEdit = APP.calLastEdit;
+  APP.calData = {}; APP.calLastEdit = ''; // 學期日程日期每年不同，一併清空
+  APP.currentYear = next; calEnsure(); APP.currentYear = fromYear;
   APP.currentYear = next;
   document.getElementById('current-year-label').textContent = next + '學年度';
   document.getElementById('year-dropdown').classList.remove('visible');
@@ -3819,12 +4086,14 @@ async function _doNewYear() {
 
   if (dataOk && listOk) {
     if (window.renderExam) renderExam();
+    if (window.renderCal) renderCal();
     showToast(`✅ ${next}學年度已建立（複製自 ${fromYear}學年度；出題教師需重新填寫）`);
   } else {
     // Roll back so the UI doesn't show a year that didn't actually save
     APP.years = prevYears;
     APP.currentYear = fromYear;
     APP.examData = prevExam; APP.examLastEdit = prevExamEdit;
+    APP.calData = prevCal; APP.calLastEdit = prevCalEdit;
     document.getElementById('current-year-label').textContent = fromYear + '學年度';
   }
 }
@@ -3895,7 +4164,8 @@ window.exportJSON = function() {
     floorOrder: APP.floorOrder || {},
     rental: APP.rentalData || [],
     meeting: APP.meetingData || [],
-    exam: APP.examData || {}
+    exam: APP.examData || {},
+    calendar: APP.calData || {}
   };
   const blob = new Blob([JSON.stringify(payload, null, 2)], {type: 'application/json'});
   const url = URL.createObjectURL(blob);
@@ -3929,6 +4199,7 @@ window.importJSON = function(e) {
       APP.rentalData = data.rental || [];
       APP.meetingData = data.meeting || [];
       APP.examData = data.exam || {};
+      APP.calData = data.calendar || {};
       if (data.year && !APP.years.includes(data.year)) {
         APP.years.push(data.year);
       }
@@ -3940,6 +4211,7 @@ window.importJSON = function(e) {
       renderRentalMap();
       renderMeeting();
       renderExam();
+      renderCal();
       showToast(`✅ 匯入完成（${importYear}學年度），請記得儲存到 Firebase`);
     } catch(err) {
       alert('JSON 解析失敗：' + err.message);
@@ -3963,6 +4235,7 @@ setTimeout(() => {
     renderRentalMap();
     renderMeeting();
     renderExam();
+    renderCal();
   }
 }, 1500);
 </script>
