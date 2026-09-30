@@ -469,6 +469,17 @@
   .cal-in.name { max-width: 170px; font-weight: 700; }
   .exam-date-lock { font-weight: 700; }
   .exam-goto { border: none; background: var(--primary-light); color: var(--primary); font-size: 10.5px; border-radius: 8px; padding: 1px 7px; cursor: pointer; margin-left: 4px; }
+
+  .exam-grad-note { font-weight: 500; font-size: 12px; margin-left: 8px; opacity: 0.95; }
+  .exam-grade-sub { display: block; font-size: 10.5px; font-weight: 500; opacity: 0.9; letter-spacing: 0.05em; }
+  table.exam-sched-tbl tr.exam-grp td { background: #eef2f6; color: var(--text-muted); font-size: 11.5px; font-weight: 700; text-align: left; padding: 3px 10px; letter-spacing: 0.05em; }
+  table.exam-sched-tbl tr.exam-grp.low td { background: #f3eefa; color: #6b4fa0; }
+  td.exam-na { background-image: linear-gradient(to top right, transparent calc(50% - 0.7px), #8a98a8 calc(50% - 0.7px), #8a98a8 calc(50% + 0.7px), transparent calc(50% + 0.7px)); min-width: 78px; height: 52px; text-align: center; position: relative; }
+  td.mtg-grid-cell.exam-cell-edit { position: relative; }
+  .exam-na-btn { display: none; position: absolute; top: 1px; right: 1px; z-index: 1; font-size: 10px; line-height: 1; padding: 2px 4px; border: 1px solid var(--border); background: #fff; color: var(--text-muted); border-radius: 4px; cursor: pointer; }
+  .exam-na-btn:hover { background: #fff8e1; color: #a2531b; }
+  td.exam-na .exam-na-btn { top: 50%; right: 50%; transform: translate(50%, -50%); font-size: 11px; padding: 3px 8px; background: #fff; }
+  body.edit-mode .exam-na-btn { display: inline-block; }
   .exam-add-subj { display: none; margin: 10px 0 0; padding: 7px 14px; border: 1px dashed var(--primary-mid); background: var(--primary-light); color: var(--primary); border-radius: var(--radius); font-size: 13px; cursor: pointer; }
   body.edit-mode .exam-add-subj { display: inline-block; }
 
@@ -1000,6 +1011,11 @@
     #exam-print-root .ep-sched table th { background: #eef4fa !important; font-weight: 700; }
     #exam-print-root .ep-sched td.per { font-size: 10px; width: 22%; }
     #exam-print-root .ep-sched td.subj { font-weight: 700; font-size: 12px; }
+    #exam-print-root td.ep-na { background-image: linear-gradient(to top right, transparent calc(50% - 0.7px), #666 calc(50% - 0.7px), #666 calc(50% + 0.7px), transparent calc(50% + 0.7px)) !important; }
+    #exam-print-root .ep-sched tr.grp td { background: #eef2f6 !important; font-size: 9.5px !important; font-weight: 700; text-align: left !important; padding: 1px 4px !important; }
+    #exam-print-root .ep-sched tr.grp.low td { background: #f3eefa !important; }
+    #exam-print-root .ep-grade-sub { display: block; font-size: 8.5px; font-weight: 500; }
+    #exam-print-root .ep-grad-note { font-weight: 500; font-size: 10px; margin-left: 6px; }
     #exam-print-root .ep-term-sub { font-size: 9.5px; font-weight: 500; margin-left: 4px; }
   }
   /* Hidden on screen, shown on print */
@@ -3547,6 +3563,7 @@ function examEnsure() {
     if (!APP.examData[k]) APP.examData[k] = {};
     const d = APP.examData[k];
     if (!Array.isArray(d.subjects) || !d.subjects.length) d.subjects = EXAM_DEFAULT_SUBJECTS.map(([id, name]) => ({ id, name }));
+    d.subjects.forEach(sb => { if (!Array.isArray(sb.na)) sb.na = (sb.id === 'sci' || sb.id === 'soc') ? ['1', '2'] : []; }); // 一、二年級不考自然、社會
     if (!d.cells) d.cells = {};
     if (!d.schedule) d.schedule = {};
     const sc = d.schedule;
@@ -3596,7 +3613,7 @@ function calDefaults(year) {
     s2: { items: [
       I('open', '開學日', '1160211', 'open'),
       I('mid', '期中考', '1160415.1160416', 'mid'),
-      I('g1', '六年級畢業考', '1160524.1160525'),
+      I('g1', '六年級畢業考', '1160524.1160525', 'grad'),
       I('g2', '六年級畢業典禮', '1160614'),
       I('fin', '期末考', '1160621.1160622', 'fin'),
       I('end', '暑假開始日', '1160701', 'end')
@@ -3779,7 +3796,30 @@ function examDays(sem, term) {
   const toks = it ? calTokens(it.date) : [];
   const n = toks.length || sc[term].length;
   while (sc[term].length < n) sc[term].push({ date: '', s: [] });
-  return Array.from({ length: n }, (_, i) => ({ day: sc[term][i], date: toks[i] || '' }));
+  return Array.from({ length: n }, (_, i) => {
+    const day = sc[term][i];
+    if (!Array.isArray(day.low)) day.low = i === 0 ? ['chi'] : i === 1 ? ['math'] : []; // 低年級預設：第一天國語、第二天數學（只考第一節）
+    return { day, date: toks[i] || '' };
+  });
+}
+const EXAM_LOW_GRADES = ['1', '2'];
+function examLowOrderText(sem, term) {
+  const subs = APP.examData[sem].subjects;
+  let out = '';
+  examDays(sem, term).forEach(x => (x.day.low || []).forEach(id => { const sb = subs.find(z => z.id === id); if (sb && sb.name) out += sb.name.charAt(0); }));
+  return out;
+}
+// 一、二年級欄位表頭下方的小字（科目順序與中高年級不同時才顯示）
+function examGradeSub(sem, term, g) {
+  if (!EXAM_LOW_GRADES.includes(g)) return '';
+  const low = examLowOrderText(sem, term);
+  return low && low !== examOrderText(sem, term) ? low : '';
+}
+function examGradeNa(sem, sub, g) { return (sub.na || []).includes(g); }
+function examGradeNote(sem) {
+  calEnsure();
+  const g = APP.calData[sem].items.find(x => x.role === 'grad' || x.id === 'g1');
+  return g && (g.date || '').trim() ? { name: g.name, text: calDateText(g.date) } : null;
 }
 
 window.setExamDate = function(term, idx, val) {
@@ -3790,6 +3830,25 @@ window.setExamSubj = function(term, idx, pi, sid) {
   const day = APP.examData[APP.examSem].schedule[term][idx];
   if (!day.s) day.s = [];
   day.s[pi] = sid;
+  APP.pendingChanges = true; renderExam();
+};
+window.setExamLow = function(term, idx, pi, sid) {
+  const day = APP.examData[APP.examSem].schedule[term][idx];
+  if (!Array.isArray(day.low)) day.low = [];
+  day.low[pi] = sid;
+  APP.pendingChanges = true; renderExam();
+};
+window.toggleExamNa = function(sid, g) {
+  if (!APP.editMode) return;
+  const cur = APP.examData[APP.examSem].subjects.find(x => x.id === sid);
+  if (!cur) return;
+  const target = !(cur.na || []).includes(g);
+  ['s1', 's2'].forEach(k => {
+    const sb = APP.examData[k].subjects.find(x => x.id === sid);
+    if (!sb) return;
+    sb.na = (sb.na || []).filter(x => x !== g);
+    if (target) sb.na.push(g);
+  });
   APP.pendingChanges = true; renderExam();
 };
 window.setExamPeriod = function(pi, field, val) {
@@ -3817,10 +3876,15 @@ function renderExamSchedule(sem) {
   const box = document.getElementById('exam-schedule');
   if (!box) return;
   const d = APP.examData[sem], sc = d.schedule, edit = APP.editMode;
+  const lowSubs = d.subjects.filter(sb => !(sb.na || []).includes('1'));
+  const gradeNote = examGradeNote(sem);
   box.innerHTML = EXAM_TERMS.map(t => {
     const days = examDays(sem, t.key);
-    const order = examOrderText(sem, t.key);
-    let h = `<div class="exam-sched-card ${t.key}"><div class="exam-sched-title"><span>${t.label}日程</span><span class="order">${order ? '科目順序：' + examEsc(order) : ''}</span></div>`;
+    const cols = days.length + 1;
+    const order = examOrderText(sem, t.key), lowOrder = examLowOrderText(sem, t.key);
+    const orderTxt = order ? '科目順序：' + examEsc(order) + (lowOrder && lowOrder !== order ? `（低年級：${examEsc(lowOrder)}）` : '') : '';
+    const note = (t.key === 'fin' && gradeNote) ? `<span class="exam-grad-note">（${examEsc(gradeNote.name)} ${examEsc(gradeNote.text)}）</span>` : '';
+    let h = `<div class="exam-sched-card ${t.key}"><div class="exam-sched-title"><span>${t.label}日程${note}</span><span class="order">${orderTxt}</span></div>`;
     h += `<div style="overflow-x:auto"><table class="exam-sched-tbl"><thead><tr><th></th>`;
     days.forEach(x => {
       const w = examWeekday(x.date);
@@ -3829,22 +3893,22 @@ function renderExamSchedule(sem) {
       else h += `<th><span class="exam-date-copy" onclick="copyToClipboard('${x.date}(${w})','考試日期')" title="點擊複製日期">${x.date}<span class="exam-wd">(${w})</span></span></th>`;
     });
     h += `</tr></thead><tbody>`;
+    const perCell = (per, pi) => `<td class="per">` + (edit
+      ? `<input class="per-label" value="${examEsc(per.label)}" onchange="setExamPeriod(${pi},'label',this.value)"><br><input class="per-time" value="${examEsc(per.time)}" onchange="setExamPeriod(${pi},'time',this.value)">`
+      : `<b>${examEsc(per.label)}</b>${examEsc(per.time)}`) + `</td>`;
+    const selCell = (opts, cur, handler) => edit
+      ? `<td class="subj"><select onchange="${handler}"><option value="">－</option>${opts.map(sb => `<option value="${sb.id}"${sb.id === cur ? ' selected' : ''}>${examEsc(sb.name)}</option>`).join('')}</select></td>`
+      : (() => { const sub = d.subjects.find(z => z.id === cur); return `<td class="subj">${sub ? examEsc(sub.name) : '<span class="exam-hint-empty">－</span>'}</td>`; })();
+
+    h += `<tr class="exam-grp"><td colspan="${cols}">中高年級（三～六年級）</td></tr>`;
     sc.periods.forEach((per, pi) => {
-      h += `<tr><td class="per">`;
-      h += edit
-        ? `<input class="per-label" value="${examEsc(per.label)}" onchange="setExamPeriod(${pi},'label',this.value)"><br><input class="per-time" value="${examEsc(per.time)}" onchange="setExamPeriod(${pi},'time',this.value)">`
-        : `<b>${examEsc(per.label)}</b>${examEsc(per.time)}`;
-      h += `</td>`;
-      days.forEach((x, i) => {
-        const cur = (x.day.s || [])[pi] || '';
-        if (edit) {
-          h += `<td class="subj"><select onchange="setExamSubj('${t.key}',${i},${pi},this.value)"><option value="">－</option>${d.subjects.map(sb => `<option value="${sb.id}"${sb.id === cur ? ' selected' : ''}>${examEsc(sb.name)}</option>`).join('')}</select></td>`;
-        } else {
-          const sub = d.subjects.find(z => z.id === cur);
-          h += `<td class="subj">${sub ? examEsc(sub.name) : '<span class="exam-hint-empty">－</span>'}</td>`;
-        }
-      });
-      h += `</tr>`;
+      h += `<tr>${perCell(per, pi)}` + days.map((x, i) => selCell(d.subjects, (x.day.s || [])[pi] || '', `setExamSubj('${t.key}',${i},${pi},this.value)`)).join('') + `</tr>`;
+    });
+    h += `<tr class="exam-grp low"><td colspan="${cols}">低年級（一、二年級）</td></tr>`;
+    let shown = sc.periods.map((_, pi) => pi).filter(pi => edit || days.some(x => (x.day.low || [])[pi]));
+    if (!shown.length) shown = [0];
+    shown.forEach(pi => {
+      h += `<tr>${perCell(sc.periods[pi], pi)}` + days.map((x, i) => selCell(lowSubs, (x.day.low || [])[pi] || '', `setExamLow('${t.key}',${i},${pi},this.value)`)).join('') + `</tr>`;
     });
     h += `</tbody></table></div></div>`;
     return h;
@@ -3867,19 +3931,23 @@ window.renderExam = function() {
       ${EXAM_TERMS.map(t => `<th colspan="${MTG_GRADES.length}" class="${t.key === 'fin' ? 'term-fin exam-fin-first' : ''}">${t.label}${examOrderText(sem, t.key) ? `<span class="exam-term-sub">(${examEsc(examOrderText(sem, t.key))})</span>` : ''}</th>`).join('')}
     </tr>
     <tr class="exam-grade-row">
-      ${EXAM_TERMS.map(t => MTG_GRADES.map((g, i) => `<th class="${t.key === 'fin' ? 'term-fin' : ''}${t.key === 'fin' && i === 0 ? ' exam-fin-first' : ''}">${MTG_GRADE_LABELS[g]}</th>`).join('')).join('')}
+      ${EXAM_TERMS.map(t => MTG_GRADES.map((g, i) => `<th class="${t.key === 'fin' ? 'term-fin' : ''}${t.key === 'fin' && i === 0 ? ' exam-fin-first' : ''}">${MTG_GRADE_LABELS[g]}${examGradeSub(sem, t.key, g) ? `<span class="exam-grade-sub">${examEsc(examGradeSub(sem, t.key, g))}</span>` : ''}</th>`).join('')).join('')}
     </tr></thead><tbody>`;
 
   d.subjects.forEach(sub => {
     html += `<tr><td class="exam-subj"><span class="exam-subj-text" onclick="examSubjectClick('${sub.id}')" title="${APP.editMode ? '點擊修改科目名稱' : '點擊複製科目名稱'}">${examEsc(sub.name)}</span><button class="mtg-del-btn" onclick="deleteExamSubject(event,'${sub.id}')" title="刪除此科目">✕</button></td>`;
     EXAM_TERMS.forEach(t => {
       MTG_GRADES.forEach((g, i) => {
+        if (examGradeNa(sem, sub, g)) {
+          html += `<td class="exam-na${t.key === 'fin' && i === 0 ? ' exam-fin-first' : ''}" title="${MTG_GRADE_LABELS[g]}不考${examEsc(sub.name)}"><button class="exam-na-btn" onclick="toggleExamNa('${sub.id}','${g}')" title="恢復為要考">恢復</button></td>`;
+          return;
+        }
         const r = examResolve(sem, sub.id, t.key, g);
         const codeLine = r.code ? examEsc(r.code) : `<span class="mtg-code-empty">－</span>`;
         const nameLine = r.name ? examEsc(r.name) : `<span class="mtg-name-empty">未設定</span>`;
         const codeTitle = APP.editMode ? `點擊輸入${MTG_GRADE_LABELS[g]}${t.label}的班級代碼（例如 105），會自動帶出老師姓名` : (r.code ? '點擊複製班級代碼' : '尚未設定班級代碼');
         const nameTitle = APP.editMode ? '科任或找不到班級代碼時，可手動輸入出題老師姓名' : (r.name ? '點擊複製出題老師姓名' : '尚未設定');
-        html += `<td class="mtg-grid-cell${t.key === 'fin' && i === 0 ? ' exam-fin-first' : ''}">
+        html += `<td class="mtg-grid-cell exam-cell-edit${t.key === 'fin' && i === 0 ? ' exam-fin-first' : ''}"><button class="exam-na-btn" onclick="toggleExamNa('${sub.id}','${g}')" title="標示「${MTG_GRADE_LABELS[g]}不考${examEsc(sub.name)}」（畫斜線）">⊘</button>
           <div class="mtg-code-line" onclick="editExamCode('${sub.id}','${t.key}','${g}')" title="${codeTitle}">${codeLine}</div>
           <div class="mtg-name-line" onclick="editExamName('${sub.id}','${t.key}','${g}')" title="${nameTitle}">${nameLine}</div>
         </td>`;
@@ -3891,8 +3959,8 @@ window.renderExam = function() {
   wrap.innerHTML = html;
 
   let filled = 0;
-  d.subjects.forEach(sub => EXAM_TERMS.forEach(t => MTG_GRADES.forEach(g => { if (examResolve(sem, sub.id, t.key, g).name) filled++; })));
-  const total = d.subjects.length * EXAM_TERMS.length * MTG_GRADES.length;
+  let total = 0;
+  d.subjects.forEach(sub => EXAM_TERMS.forEach(t => MTG_GRADES.forEach(g => { if (examGradeNa(sem, sub, g)) return; total++; if (examResolve(sem, sub.id, t.key, g).name) filled++; })));
   const c = document.getElementById('exam-count'); if (c) c.textContent = `${EXAM_SEMS[sem]}：共 ${d.subjects.length} 科，已填 ${filled} / ${total} 格`;
   const e = document.getElementById('last-edit-exam'); if (e) e.textContent = APP.examLastEdit ? '最後編輯：' + APP.examLastEdit : '';
 };
@@ -3961,14 +4029,25 @@ function buildExamPrintOne(sem) {
   examEnsure();
   const d = APP.examData[sem];
   const head1 = `<tr><th class="ep-subj" rowspan="2">科目</th>${EXAM_TERMS.map(t => `<th colspan="${MTG_GRADES.length}" class="${t.key === 'fin' ? 'term-fin ep-fin-first' : ''}">${t.label}${examOrderText(sem, t.key) ? `<span class="ep-term-sub">(${examEsc(examOrderText(sem, t.key))})</span>` : ''}</th>`).join('')}</tr>`;
-  const head2 = `<tr>${EXAM_TERMS.map(t => MTG_GRADES.map((g, i) => `<th class="${t.key === 'fin' ? 'term-fin' : ''}${t.key === 'fin' && i === 0 ? ' ep-fin-first' : ''}">${MTG_GRADE_LABELS[g]}</th>`).join('')).join('')}</tr>`;
+  const head2 = `<tr>${EXAM_TERMS.map(t => MTG_GRADES.map((g, i) => `<th class="${t.key === 'fin' ? 'term-fin' : ''}${t.key === 'fin' && i === 0 ? ' ep-fin-first' : ''}">${MTG_GRADE_LABELS[g]}${examGradeSub(sem, t.key, g) ? `<span class="ep-grade-sub">${examEsc(examGradeSub(sem, t.key, g))}</span>` : ''}</th>`).join('')).join('')}</tr>`;
 
   const sc = d.schedule;
+  const lowSubs = d.subjects.filter(sb => !(sb.na || []).includes('1'));
+  const gradeNote = examGradeNote(sem);
   const schedHtml = `<div class="ep-sched">` + EXAM_TERMS.map(t => {
     const days = examDays(sem, t.key);
-    let h = `<div><div class="ep-sched-title ${t.key}">${t.label}日程</div><table><thead><tr><th></th>${days.map(x => { const tx = examDateText(x.date); return `<th>${tx || '未設定'}</th>`; }).join('')}</tr></thead><tbody>`;
+    const cols = days.length + 1;
+    const note = (t.key === 'fin' && gradeNote) ? `<span class="ep-grad-note">（${examEsc(gradeNote.name)} ${examEsc(gradeNote.text)}）</span>` : '';
+    let h = `<div><div class="ep-sched-title ${t.key}">${t.label}日程${note}</div><table><thead><tr><th></th>${days.map(x => { const tx = examDateText(x.date); return `<th>${tx || '未設定'}</th>`; }).join('')}</tr></thead><tbody>`;
+    h += `<tr class="grp"><td colspan="${cols}">中高年級（三～六年級）</td></tr>`;
     sc.periods.forEach((per, pi) => {
       h += `<tr><td class="per">${examEsc(per.label)}<br>${examEsc(per.time)}</td>` + days.map(x => { const sub = d.subjects.find(z => z.id === (x.day.s || [])[pi]); return `<td class="subj">${sub ? examEsc(sub.name) : '－'}</td>`; }).join('') + `</tr>`;
+    });
+    h += `<tr class="grp low"><td colspan="${cols}">低年級（一、二年級）</td></tr>`;
+    let shown = sc.periods.map((_, pi) => pi).filter(pi => days.some(x => (x.day.low || [])[pi]));
+    if (!shown.length) shown = [0];
+    shown.forEach(pi => {
+      h += `<tr><td class="per">${examEsc(sc.periods[pi].label)}<br>${examEsc(sc.periods[pi].time)}</td>` + days.map(x => { const sub = lowSubs.find(z => z.id === (x.day.low || [])[pi]); return `<td class="subj">${sub ? examEsc(sub.name) : '－'}</td>`; }).join('') + `</tr>`;
     });
     return h + `</tbody></table></div>`;
   }).join('') + `</div>`;
@@ -3976,6 +4055,7 @@ function buildExamPrintOne(sem) {
   d.subjects.forEach(sub => {
     rows += `<tr><td class="ep-subj">${examEsc(sub.name)}</td>`;
     EXAM_TERMS.forEach(t => MTG_GRADES.forEach((g, i) => {
+      if (examGradeNa(sem, sub, g)) { rows += `<td class="ep-cell ep-na${t.key === 'fin' && i === 0 ? ' ep-fin-first' : ''}"></td>`; return; }
       const r = examResolve(sem, sub.id, t.key, g);
       rows += `<td class="ep-cell${t.key === 'fin' && i === 0 ? ' ep-fin-first' : ''}"><div class="ep-code">${r.code ? examEsc(r.code) : '－'}</div><div class="ep-name">${r.name ? examEsc(r.name) : '未設定'}</div></td>`;
     }));
